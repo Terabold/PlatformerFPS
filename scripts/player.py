@@ -31,9 +31,11 @@ class Player:
 
         self.velocity[0] += (int(keys['right']) - int(keys['left'])) * PLAYER_SPEED
         self.velocity[0] = max(-MAX_X_SPEED, min(MAX_X_SPEED, self.velocity[0] * (1 - ACCELERAION)))
-        self.velocity[1] = max(-MAX_X_SPEED, min(MAX_X_SPEED, self.velocity[1] + GRAVITY))
+        self.velocity[1] = max(-MAX_Y_SPEED, min(MAX_Y_SPEED, self.velocity[1] + GRAVITY))
         if keys['jump'] and self.grounded:
             self.velocity[1] = -JUMP_SPEED
+            self.air_time = 5
+            self.grounded = False
         
         self.pos[0] += self.velocity[0]
         entity_rect = self.rect()

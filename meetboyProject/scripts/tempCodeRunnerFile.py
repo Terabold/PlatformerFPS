@@ -1,0 +1,1 @@
+for tile in self.offgrid_tiles:

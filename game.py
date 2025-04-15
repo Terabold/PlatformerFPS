@@ -37,9 +37,11 @@ class Game:
         self.scroll = [0, 0]
 
     def run(self):
-
+        
         self.display.blit(self.assets['background'], (0, 0))
             
+        
+
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
                 pygame.quit()
@@ -59,8 +61,8 @@ class Game:
                 if event.key == pygame.K_SPACE:
                     self.keys['jump'] = False
 
-        self.scroll[0] += (self.player.rect().centerx - self.display.get_width() / 3 - self.scroll[0]) / 20
-        self.scroll[1] += (self.player.rect().centery - self.display.get_height() / 2 - self.scroll[1]) / 20
+        self.scroll[0] += (self.player.rect().centerx - self.display.get_width() / 3 - self.scroll[0]) / 15
+        self.scroll[1] += (self.player.rect().centery - self.display.get_height() / 2 - self.scroll[1]) / 15
         render_scroll = (int(self.scroll[0]), int(self.scroll[1]))
             
         self.clouds.update()

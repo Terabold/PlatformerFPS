@@ -15,6 +15,7 @@ class Player:
         self.action = ''
         self.anim_offset = (0 ,0)
         self.deg = 0
+        self.facing_right = True
         self.set_action('run')
     
     def rect(self):
@@ -57,7 +58,12 @@ class Player:
                     entity_rect.top = rect.bottom
                     self.collisions['up'] = True
                 self.pos[1] = entity_rect.y
-      
+
+        if keys['right'] and not keys['left']:
+            self.facing_right = True
+        elif keys['left'] and not keys['right']:
+            self.facing_right = False
+
         if self.collisions['right'] or self.collisions['left']:
             self.velocity[0] = 0
         if self.collisions['down'] or self.collisions['up']:
@@ -75,8 +81,14 @@ class Player:
     def render(self, surf, offset=(0, 0)):
         # Get the original image
         original_img = self.animation.img()
-        # Rotate the image around its center
+        
+        # Flip the image horizontally if facing left
+        if not self.facing_right:
+            original_img = pygame.transform.flip(original_img, True, False)
+        
+        # Rotate the image around its center (if you still want rotation)
         rotated_img = pygame.transform.rotate(original_img, -self.deg)
+        
         # Get the rectangle of the rotated image
         rotated_rect = rotated_img.get_rect(center=(self.pos[0] + self.size[0] // 2 - offset[0],
                                                 self.pos[1] + self.size[1] // 2 - offset[1]))

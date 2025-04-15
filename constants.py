@@ -4,11 +4,11 @@ FPS = 60
 
 TILE_SIZE = 36 # tilemap tile size
 
-PLAYER_SPEED = 3 # added per frame
-JUMP_SPEED = 13 # initial jump velocity
+PLAYER_SPEED = 1 # added per frame
+JUMP_SPEED = 15 # initial jump velocity
 GRAVITY = 0.6 # subtracted from y velocity every frame
-ACCELERAION = 0.05 # friction with the ground on the x axis, between 0 and 1 (0 < Acc < 1)
-MAX_X_SPEED = 20 # x axis speed limit
+ACCELERAION = 0.03 # friction with the ground on the x axis, between 0 and 1 (0 < Acc < 1)
+MAX_X_SPEED = 15 # x axis speed limit
 MAX_Y_SPEED = 20 # y axis speed limit
 
 

@@ -29,7 +29,15 @@ PLAYERS_IMAGE_SIZE = (PLAYERS_SIZE[0], PLAYERS_SIZE[1]) # size of the player ima
 
 PHYSICS_TILES = {'grass', 'stone'}
 AUTOTILE_TYPES = {'grass', 'stone'}
+INTERACTIVE_TILES = {'spike', 'finish'}
+SPIKE_SIZE = (1, 0.3)
 
 FONT = None # deafult font for text and buttons
 
 EDITOR_SCROLL_SPEED = 10 # how fast you can move in the editor using WASD
+
+RECT = 'data\images\Rect.png'
+MENUBG = r'data\images\backgroundmenu.jpeg'
+
+MENUTXTCOLOR = (186,248,186)
+WHITE = (255, 255, 255)

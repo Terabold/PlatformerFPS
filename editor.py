@@ -4,7 +4,7 @@ import pygame
 
 from scripts.utils import load_images, load_image
 from scripts.tilemap import Tilemap
-from constants import TILE_SIZE, DISPLAY_SIZE, FPS, PHYSICS_TILES
+from scripts.constants import TILE_SIZE, DISPLAY_SIZE, FPS, PHYSICS_TILES
 
 class Editor:
     def __init__(self):
@@ -38,23 +38,36 @@ class Editor:
         self.shift = False
         self.ongrid = True
 
+        # Display spawner counts
+        self.font = pygame.font.SysFont('Arial', 16)
+
     def reload_assets(self):
         IMGscale = (self.tilemap.tile_size, self.tilemap.tile_size)
         return {
             'decor': load_images('tiles/decor', scale=IMGscale),
             'grass': load_images('tiles/grass', scale=IMGscale),
             'stone': load_images('tiles/stone', scale=IMGscale),
+            'spawners': load_images('tiles/spawners', scale=IMGscale),
+            'spikes': load_images('tiles/spikes', scale=IMGscale),
+            'checkpoint': load_images('tiles/Checkpoint', scale=IMGscale),
         }
+    
+    def count_spawners(self):
+        return len(self.tilemap.extract([('spawners', 0), ('spawners', 1)], keep=True))
         
     def run(self):
         while True:
-            self.display.blit(self.background_image, (0, 0))
+            self.display.fill((20, 20, 20))
+            for x in range(0, DISPLAY_SIZE[0], self.tilemap.tile_size):
+                pygame.draw.line(self.display, (50, 50, 50), (x - self.scroll[0] % self.tilemap.tile_size, 0), (x - self.scroll[0] % self.tilemap.tile_size, DISPLAY_SIZE[1]))
+            for y in range(0, DISPLAY_SIZE[1], self.tilemap.tile_size):
+                pygame.draw.line(self.display, (50, 50, 50), (0, y - self.scroll[1] % self.tilemap.tile_size), (DISPLAY_SIZE[0], y - self.scroll[1] % self.tilemap.tile_size))
             
             self.scroll[0] += (self.movement[1] - self.movement[0]) * 8
             self.scroll[1] += (self.movement[3] - self.movement[2]) * 8
             render_scroll = (int(self.scroll[0]), int(self.scroll[1]))
             
-            self.tilemap.render(self.display, offset=render_scroll, zoom= self.zoom)
+            self.tilemap.render(self.display, offset=render_scroll, zoom=self.zoom)
             
             current_tile_img = self.assets[self.tile_list[self.tile_group]][self.tile_variant].copy()
             current_tile_img.set_alpha(100)
@@ -67,8 +80,17 @@ class Editor:
             else:
                 self.display.blit(current_tile_img, mpos)
             
+            # Handle spawner placement logic - only allow one spawner
             if self.clicking and self.ongrid:
+                if self.tile_list[self.tile_group] == 'spawners':
+                    # If placing a spawner, remove any existing spawners first
+                    existing_spawners = self.count_spawners()
+                    if existing_spawners > 0:
+                        self.tilemap.extract([('spawners', 0), ('spawners', 1)], keep=False)
+                
+                # Now add the new tile
                 self.tilemap.tilemap[str(tile_pos[0]) + ';' + str(tile_pos[1])] = {'type': self.tile_list[self.tile_group], 'variant': self.tile_variant, 'pos': tile_pos}
+            
             if self.right_clicking:
                 tile_loc = str(tile_pos[0]) + ';' + str(tile_pos[1])
                 if tile_loc in self.tilemap.tilemap:
@@ -79,7 +101,18 @@ class Editor:
                     if tile_r.collidepoint(mpos):
                         self.tilemap.offgrid_tiles.remove(tile)
             
+            # Display current tile and spawner count info
             self.display.blit(current_tile_img, (5, 5))
+            
+            # Show spawner count
+            spawner_count = self.count_spawners()
+            spawner_text = self.font.render(f"Spawners: {spawner_count}/1", True, (255, 255, 255))
+            self.display.blit(spawner_text, (5, 40))
+            
+            # Display current tile group/variant
+            tile_info = self.font.render(f"Type: {self.tile_list[self.tile_group]} ({self.tile_variant})", True, (255, 255, 255))
+            self.display.blit(tile_info, (5, 60))
+            
             for event in pygame.event.get():
                 if event.type == pygame.QUIT:
                     pygame.quit()
@@ -90,7 +123,10 @@ class Editor:
                         self.clicking = True
                         if not self.ongrid:
                             tile_type = self.tile_list[self.tile_group]
-                            if (tile_type not in PHYSICS_TILES):
+                            if tile_type == 'spawners' and self.count_spawners() > 0:
+                                # Don't allow adding offgrid spawners if one already exists
+                                pass
+                            elif (tile_type not in PHYSICS_TILES):
                                 tile_pos = ((mpos[0] + self.scroll[0]) / self.tilemap.tile_size, (mpos[1] + self.scroll[1]) / self.tilemap.tile_size)
                                 self.tilemap.offgrid_tiles.append({'type': self.tile_list[self.tile_group], 'variant': self.tile_variant, 'pos': tile_pos})
                     if event.button == 3:

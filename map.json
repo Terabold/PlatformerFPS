@@ -553,7 +553,7 @@
             ]
         },
         "20;3": {
-            "type": "decor",
+            "type": "spikes",
             "variant": 0,
             "pos": [
                 20,
@@ -561,7 +561,7 @@
             ]
         },
         "22;3": {
-            "type": "decor",
+            "type": "spikes",
             "variant": 0,
             "pos": [
                 22,
@@ -569,7 +569,7 @@
             ]
         },
         "21;3": {
-            "type": "decor",
+            "type": "spikes",
             "variant": 0,
             "pos": [
                 21,
@@ -878,6 +878,86 @@
             "pos": [
                 18,
                 -3
+            ]
+        },
+        "14;3": {
+            "type": "spikes",
+            "variant": 0,
+            "pos": [
+                14,
+                3
+            ]
+        },
+        "13;3": {
+            "type": "spikes",
+            "variant": 0,
+            "pos": [
+                13,
+                3
+            ]
+        },
+        "11;3": {
+            "type": "spikes",
+            "variant": 0,
+            "pos": [
+                11,
+                3
+            ]
+        },
+        "12;3": {
+            "type": "spikes",
+            "variant": 0,
+            "pos": [
+                12,
+                3
+            ]
+        },
+        "19;3": {
+            "type": "spikes",
+            "variant": 0,
+            "pos": [
+                19,
+                3
+            ]
+        },
+        "3;3": {
+            "type": "spawners",
+            "variant": 0,
+            "pos": [
+                3,
+                3
+            ]
+        },
+        "53;3": {
+            "type": "checkpoint",
+            "variant": 0,
+            "pos": [
+                53,
+                3
+            ]
+        },
+        "53;2": {
+            "type": "checkpoint",
+            "variant": 0,
+            "pos": [
+                53,
+                2
+            ]
+        },
+        "54;2": {
+            "type": "checkpoint",
+            "variant": 0,
+            "pos": [
+                54,
+                2
+            ]
+        },
+        "54;3": {
+            "type": "checkpoint",
+            "variant": 0,
+            "pos": [
+                54,
+                3
             ]
         }
     },

@@ -1,4 +1,4 @@
-from constants import *
+from scripts.constants import *
 
 import pygame
 
@@ -19,6 +19,9 @@ class Player:
         self.facing_right = True
         self.jump_clicked = False
         self.action = ''
+        self.death = False 
+        self.finishLevel = False 
+        self.respawn = False
         self.set_action('run')
 
     def reset(self):
@@ -67,6 +70,15 @@ class Player:
                     entity_rect.top = rect.bottom
                     self.collisions['up'] = True
                 self.pos[1] = entity_rect.y
+
+        entity_rect = self.rect()
+        for rect, tile_info in tilemap.interactive_rects_around(self.pos):
+            if entity_rect.colliderect(rect):
+                tile_type, variant = tile_info
+                if tile_type == 'spike':
+                    self.death = True 
+                elif tile_type == 'finish':
+                    self.finishLevel = True  
 
         if keys['right'] and not keys['left']:
             self.facing_right = True

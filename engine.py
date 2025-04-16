@@ -1,8 +1,8 @@
 import pygame
-from constants import DISPLAY_SIZE, FPS
-from game import Game
-from menu import Menu
-from gameStateManager import game_state_manager
+from scripts.constants import DISPLAY_SIZE, FPS
+from scripts.game import Game
+from scripts.menu import Menu
+from scripts.gameStateManager import game_state_manager
 
 class Engine:
 

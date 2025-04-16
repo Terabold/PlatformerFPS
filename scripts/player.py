@@ -95,8 +95,19 @@ class Player:
             self.air_time = 0
         self.grounded = self.air_time <= 4
 
-        if self.grounded: self.set_action('run')
-        else: self.set_action('jump')
+        if self.death:
+            self.set_action('idle') # death
+        elif not self.grounded:
+            if (self.collisions['left'] or self.collisions['right']) and self.velocity[1] > 0:
+                self.set_action('wallslide')
+            elif self.velocity[1] < 0:
+                self.set_action('idle') # jump
+            elif self.velocity[1] > 0:
+                self.set_action('idle') # fall
+        elif abs(self.velocity[0]) > 0.1:  
+            self.set_action('run')
+        else:
+            self.set_action('idle')
         self.animation.update()
         
         if not self.jump_clicked and keys['jump']: self.jump_clicked = True

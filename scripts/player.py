@@ -72,7 +72,6 @@ class Player:
                 self.pos[1] = entity_rect.y
 
         entity_rect = self.rect()
-        print(tilemap.interactive_rects_around(self.pos))
         for rect, tile_info in tilemap.interactive_rects_around(self.pos):
             if entity_rect.colliderect(rect):
                 tile_type, variant = tile_info

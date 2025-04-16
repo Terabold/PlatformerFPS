@@ -143,4 +143,6 @@ class Game:
             self.player.reset()
 
         if self.player.finishLevel:
-            self.blitMenu(False, False)
+            self.menu = True
+
+        if self.menu: self.blitMenu(False, False)

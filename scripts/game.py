@@ -37,7 +37,7 @@ class Game:
         self.pos = self.tilemap.extract([('spawners', 0), ('spawners', 1)])
         self.default_pos = self.pos[0]['pos'] if self.pos else [10, 10]
         self.player = Player(self, self.default_pos, PLAYERS_SIZE)
-        
+
         self.buffer_time = 0
         
         self.scroll = [0, 0]
@@ -138,3 +138,9 @@ class Game:
         
         self.player.update(self.tilemap, self.keys)
         self.player.render(self.display, offset=render_scroll)
+
+        if self.player.death:
+            self.reset()
+
+        if self.player.finishLevel:
+            self.blitMenu(False, False)

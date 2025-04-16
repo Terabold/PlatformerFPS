@@ -64,16 +64,12 @@ class Tilemap:
         return matches
 
     def save(self, path):
-        # First check if there are multiple spawners and keep only one if needed
         spawner_tiles = self.extract([('spawners', 0), ('spawners', 1)], keep=True)
         if len(spawner_tiles) > 1:
-            # Remove all spawners first
             self.extract([('spawners', 0), ('spawners', 1)], keep=False)
-            # Then add back only the first one
             spawner = spawner_tiles[0]
             if 'pos' in spawner:
                 pos = spawner['pos'].copy()
-                # Convert back to tile coordinates if it was scaled
                 if len(str(pos[0]).split('.')) == 1:  # Integer check
                     pos[0] = pos[0] // self.tile_size
                     pos[1] = pos[1] // self.tile_size
@@ -95,20 +91,15 @@ class Tilemap:
         f.close()
         
         self.tilemap = map_data['tilemap']
-        #self.tile_size = map_data['tile_size']
         self.offgrid_tiles = map_data['offgrid']
         
-        # Ensure only one spawner is present after loading
         spawner_tiles = self.extract([('spawners', 0), ('spawners', 1)], keep=True)
         if len(spawner_tiles) > 1:
-            # Remove all spawners
             self.extract([('spawners', 0), ('spawners', 1)], keep=False)
-            # Add back only the first one
             spawner = spawner_tiles[0]
             if 'pos' in spawner:
                 pos = spawner['pos'].copy()
-                # Convert back to tile coordinates
-                if len(str(pos[0]).split('.')) == 1:  # Integer check
+                if len(str(pos[0]).split('.')) == 1: 
                     pos[0] = pos[0] // self.tile_size
                     pos[1] = pos[1] // self.tile_size
                 

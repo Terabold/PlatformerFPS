@@ -120,11 +120,12 @@ class Tilemap:
     def interactive_rects_around(self, pos):
         tiles = []
         for tile in self.tiles_around(pos):
-            if tile['type'].split()[0] in INTERACTIVE_TILES:
-                match tile['type'].split()[0]:
+            print(tile['type'])
+            if tile['type'] in INTERACTIVE_TILES:
+                match tile['type']:
                     case 'finish':
-                        tiles.append((pygame.Rect(tile['pos'][0] * self.tile_size, tile['pos'][1] * self.tile_size, self.tile_size, self.tile_size), (tile['type'].split()[0], tile['variant'])))
-                    case 'spike':
+                        tiles.append((pygame.Rect(tile['pos'][0] * self.tile_size, tile['pos'][1] * self.tile_size, self.tile_size, self.tile_size), (tile['type'], tile['variant'])))
+                    case 'spikes':
                         colrect = pygame.Rect(
                             self.tile_size * tile['pos'][0], 
                             self.tile_size * tile['pos'][1], 

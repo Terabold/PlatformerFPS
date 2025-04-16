@@ -29,7 +29,7 @@ PLAYERS_IMAGE_SIZE = (PLAYERS_SIZE[0], PLAYERS_SIZE[1]) # size of the player ima
 
 PHYSICS_TILES = {'grass', 'stone'}
 AUTOTILE_TYPES = {'grass', 'stone'}
-INTERACTIVE_TILES = {'spike', 'finish'}
+INTERACTIVE_TILES = {'spikes', 'finish'}
 SPIKE_SIZE = (1, 0.3)
 
 FONT = None # deafult font for text and buttons

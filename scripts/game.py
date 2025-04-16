@@ -140,7 +140,7 @@ class Game:
         self.player.render(self.display, offset=render_scroll)
 
         if self.player.death:
-            self.reset()
+            self.player.reset()
 
         if self.player.finishLevel:
             self.blitMenu(False, False)

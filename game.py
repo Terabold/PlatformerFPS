@@ -33,6 +33,7 @@ class Game:
         self.clouds = Clouds(self.assets['clouds'], count=16)
         
         self.player = Player(self, PLAYER_POS, PLAYERS_SIZE)
+        self.buffer_time = 0
         
         self.scroll = [0, 0]
 
@@ -40,8 +41,6 @@ class Game:
         
         self.display.blit(self.assets['background'], (0, 0))
             
-        
-
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
                 pygame.quit()
@@ -53,6 +52,7 @@ class Game:
                     self.keys['left'] = True
                 if event.key == pygame.K_SPACE:
                     self.keys['jump'] = True
+
             if event.type == pygame.KEYUP:
                 if event.key == pygame.K_d:
                     self.keys['right'] = False
@@ -60,6 +60,14 @@ class Game:
                     self.keys['left'] = False
                 if event.key == pygame.K_SPACE:
                     self.keys['jump'] = False
+                    self.buffer_time = 0
+
+        if self.keys['jump']:
+            self.buffer_time += 1
+            if self.buffer_time > PLAYER_BUFFER:
+                self.buffer_time = PLAYER_BUFFER + 1
+            
+
 
         self.scroll[0] += (self.player.rect().centerx - self.display.get_width() / 3 - self.scroll[0]) / 15
         self.scroll[1] += (self.player.rect().centery - self.display.get_height() / 2 - self.scroll[1]) / 15
@@ -69,6 +77,6 @@ class Game:
         self.clouds.render(self.display, offset=render_scroll)
             
         self.tilemap.render(self.display, offset=render_scroll)
-            
+        
         self.player.update(self.tilemap, self.keys)
         self.player.render(self.display, offset=render_scroll)

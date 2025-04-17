@@ -24,7 +24,7 @@ MAX_Y_SPEED = 20   *TILE_SIZE/36 # y axis speed limit
 PLAYER_BUFFER = 5 # amount of frame buffer
 
 PLAYER_POS = (50, 50) # player position when the level start
-PLAYERS_SIZE = (TILE_SIZE, TILE_SIZE) # size of actual player hitbox
+PLAYERS_SIZE = (TILE_SIZE-8, TILE_SIZE-8) # size of actual player hitbox
 PLAYERS_IMAGE_SIZE = (PLAYERS_SIZE[0], PLAYERS_SIZE[1]) # size of the player image
 
 PHYSICS_TILES = {'grass', 'stone'}
@@ -32,7 +32,7 @@ AUTOTILE_TYPES = {'grass', 'stone'}
 INTERACTIVE_TILES = {'spikes', 'finish'}
 SPIKE_SIZE = (1, 0.3)
 
-FONT = None # deafult font for text and buttons
+FONT = r'data\fonts\Menu.ttf' 
 
 EDITOR_SCROLL_SPEED = 10 # how fast you can move in the editor using WASD
 

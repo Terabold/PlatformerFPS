@@ -49,7 +49,7 @@ class Editor:
             'stone': load_images('tiles/stone', scale=IMGscale),
             'spawners': load_images('tiles/spawners', scale=IMGscale),
             'spikes': load_images('tiles/spikes', scale=IMGscale),
-            'checkpoint': load_images('tiles/Checkpoint', scale=IMGscale),
+            'finish': load_images('tiles/Checkpoint', scale=IMGscale),
         }
     
     def count_spawners(self):

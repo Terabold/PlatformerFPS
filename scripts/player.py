@@ -17,7 +17,7 @@ class Player:
         self.air_time = 5
         self.grounded = False
         self.facing_right = True
-        self.jump_clicked = False
+        self.jump_available = True  # Single flag to control jump availability
         self.action = ''
         self.death = False 
         self.finishLevel = False 
@@ -35,7 +35,8 @@ class Player:
         if action != self.action:
             self.action = action
             self.animation = self.game.assets['player/' + self.action].copy()
-        
+    
+    
     def update(self, tilemap, keys):
         self.collisions = {'up': False, 'down': False, 'right': False, 'left': False}
 
@@ -110,24 +111,33 @@ class Player:
             self.set_action('idle')
         self.animation.update()
         
-        if not self.jump_clicked and keys['jump']: self.jump_clicked = True
-        elif not keys['jump']: self.jump_clicked = False
+        # Reset jump availability when key is released
+        if not keys['jump']:
+            self.jump_available = True
         
-        # handle jumps
-        if not self.grounded and (self.collisions['left'] or self.collisions['right']):
-            if self.jump_clicked:
+        # Handle jumps - Only if jump is available and key is pressed
+        elif keys['jump'] and self.jump_available:
+            self.jump_available = False  # Prevent more jumps until key is released
+            
+            # Wall jump logic
+            if not self.grounded and (self.collisions['left'] or self.collisions['right']):
                 self.velocity[1] = -WALLJUMP_Y_SPEED
                 if self.collisions['right']: self.velocity[0] = -WALLJUMP_X_SPEED
                 if self.collisions['left']: self.velocity[0] = WALLJUMP_X_SPEED
-            else:
-                self.velocity[1] = min(WALLSLIDE_SPEED, self.velocity[1])
-        if keys['jump'] and self.grounded and self.game.buffer_time <= PLAYER_BUFFER:
-            self.velocity[1] = -JUMP_SPEED
-            self.air_time = 5
-            self.grounded = False
-        elif not keys['jump'] and self.velocity[1] < 0:
+            
+            # Regular jump logic
+            elif self.grounded and self.game.buffer_time <= PLAYER_BUFFER:
+                self.velocity[1] = -JUMP_SPEED
+                self.air_time = 5
+                self.grounded = False
+        
+        # Wall slide logic
+        if not self.grounded and (self.collisions['left'] or self.collisions['right']) and self.velocity[1] > 0:
+            self.velocity[1] = min(WALLSLIDE_SPEED, self.velocity[1])
+        
+        # Cut jump short if key released
+        if not keys['jump'] and self.velocity[1] < 0:
             self.velocity[1] = 0
-
         
     def render(self, surf, offset=(0, 0)):
         # Get the original image

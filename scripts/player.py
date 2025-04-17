@@ -75,11 +75,13 @@ class Player:
         entity_rect = self.rect()
         for rect, tile_info in tilemap.interactive_rects_around(self.pos):
             if entity_rect.colliderect(rect):
-                tile_type, variant = tile_info
+                tile_type, variant, *extra = tile_info
                 if tile_type == 'spikes':
                     self.death = True 
                 elif tile_type == 'finish':
-                    self.finishLevel = True  
+                    self.finishLevel = True
+                elif tile_type == 'saws':
+                    self.death = True 
 
         if keys['right'] and not keys['left']:
             self.facing_right = True
@@ -97,20 +99,23 @@ class Player:
         self.grounded = self.air_time <= 4
 
         if self.death:
-            self.set_action('idle') # death
-        elif not self.grounded:
-            if (self.collisions['left'] or self.collisions['right']) and self.velocity[1] > 0:
-                self.set_action('wallslide')
-            elif self.velocity[1] < 0:
-                self.set_action('idle') # jump
-            elif self.velocity[1] > 0:
-                self.set_action('idle') # fall
-        elif abs(self.velocity[0]) > 0.1:  
+            self.set_action('idle')  # death
+        elif (self.collisions['left'] or self.collisions['right']) and self.velocity[1] > 0 and not self.grounded:
+            self.set_action('wallslide')
+        elif (self.collisions['left'] or self.collisions['right']):
+            self.set_action('wallcollide')
+        elif abs(self.velocity[0]) > 0.5:
             self.set_action('run')
+        elif self.velocity[1] < 0:
+            self.set_action('idle')  # jump
+        elif self.velocity[1] > 0:
+            self.set_action('idle')  # fall
         else:
             self.set_action('idle')
+
         self.animation.update()
         
+
         # Reset jump availability when key is released
         if not keys['jump']:
             self.jump_available = True

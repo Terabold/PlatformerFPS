@@ -120,7 +120,6 @@ class Tilemap:
     def interactive_rects_around(self, pos):
         tiles = []
         for tile in self.tiles_around(pos):
-            print(tile['type'])
             if tile['type'] in INTERACTIVE_TILES:
                 match tile['type']:
                     case 'finish':
@@ -134,7 +133,7 @@ class Tilemap:
                         )
                         colrect.center = (
                             self.tile_size * tile['pos'][0] + self.tile_size//2, 
-                            self.tile_size * tile['pos'][1] + self.tile_size//2
+                            self.tile_size * tile['pos'][1] + self.tile_size
                         )
                         tiles.append((colrect, (tile['type'], tile['variant'])))
                     # case 'orb':

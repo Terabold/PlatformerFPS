@@ -16,38 +16,33 @@ class Menu:
         title_font = pygame.font.Font(FONT, 85)
         widget_font = pygame.font.Font(FONT, 50)
         
-        # Create a custom theme similar to your current design
+                # Define selection effect first
+        selection_effect = pygame_menu.widgets.LeftArrowSelection(arrow_size=(20, 30))
+
+        # Now create your theme
         my_theme = pygame_menu.themes.Theme(
-            background_color=(0, 0, 0, 0),  # Transparent background to show your image
+            background_color=(0, 0, 0, 0),
             title_background_color=(0, 0, 0, 0),
             title_font=title_font,
             title_font_color=WHITE,
+            title_offset=(DISPLAY_SIZE[0]/4, 20),  
             widget_font=widget_font,
             widget_font_color=MENUTXTCOLOR,
-            widget_margin=(0, 30),  # Space between widgets
+            widget_margin=(0, 30),
+            widget_selection_effect=selection_effect 
         )
-        
-        # Configure the selection effect correctly
-        selection_effect = pygame_menu.widgets.LeftArrowSelection(arrow_size=(20, 30))
-        # Alternative selection effects:
-        # selection_effect = pygame_menu.widgets.RightArrowSelection()
-        # selection_effect = pygame_menu.widgets.SimpleSelection()
-        
-        # Apply the selection effect to the theme
-        my_theme.widget_selection_effect = selection_effect
-        
+  
         # Main menu
         self.menu = pygame_menu.Menu(
             height=DISPLAY_SIZE[1],
             width=DISPLAY_SIZE[0],
-            title='Temu Celeste',
+            title='Super Terboy',
             theme=my_theme,
             center_content=True,
             mouse_motion_selection=True,
-            onclose=pygame_menu.events.EXIT
         )
         
-        # Add buttons with the same functionality
+        # Add buttons with the same functionality 
         self.menu.add.button('PLAY', self.play_game)
         self.menu.add.button('Train AI', self.train_ai)
         self.menu.add.button('QUIT', pygame_menu.events.EXIT)

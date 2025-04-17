@@ -38,6 +38,9 @@ class Editor:
         self.shift = False
         self.ongrid = True
 
+        self.saw_movement_type = 'horizontal'
+        self.saw_movement_range = 3  # in tiles
+        self.saw_movement_speed = 1
         # Display spawner counts
         self.font = pygame.font.SysFont('Arial', 16)
 
@@ -50,6 +53,7 @@ class Editor:
             'spawners': load_images('tiles/spawners', scale=IMGscale),
             'spikes': load_images('tiles/spikes', scale=IMGscale),
             'finish': load_images('tiles/Checkpoint', scale=IMGscale),
+            'saws': load_images('tiles/saws', scale=IMGscale),
         }
     
     def count_spawners(self):
@@ -91,6 +95,13 @@ class Editor:
                 # Now add the new tile
                 self.tilemap.tilemap[str(tile_pos[0]) + ';' + str(tile_pos[1])] = {'type': self.tile_list[self.tile_group], 'variant': self.tile_variant, 'pos': tile_pos}
             
+            if self.tile_list[self.tile_group] == 'saws':
+                saw_info = self.font.render(
+                    f"Saw: {self.saw_movement_type}, Range: {self.saw_movement_range}, Speed: {self.saw_movement_speed}",
+                    True, (255, 255, 255)
+                )
+                self.display.blit(saw_info, (5, 80))
+
             if self.right_clicking:
                 tile_loc = str(tile_pos[0]) + ';' + str(tile_pos[1])
                 if tile_loc in self.tilemap.tilemap:
@@ -150,6 +161,10 @@ class Editor:
                         self.right_clicking = False
                         
                 if event.type == pygame.KEYDOWN:
+                    if event.key == pygame.K_h:
+                        self.saw_movement_type = 'horizontal'
+                    if event.key == pygame.K_v:
+                        self.saw_movement_type = 'vertical'
                     if event.key == pygame.K_a:
                         self.movement[0] = True
                     if event.key == pygame.K_d:

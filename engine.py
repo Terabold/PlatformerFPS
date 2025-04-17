@@ -9,7 +9,7 @@ class Engine:
     def __init__(self):
         pygame.init()
 
-        pygame.display.set_caption('super terboy slime')
+        pygame.display.set_caption('Super Terboy')
         self.display = pygame.display.set_mode(DISPLAY_SIZE)
         self.clock = pygame.time.Clock()
         self.game = Game(self.display)

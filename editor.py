@@ -54,6 +54,9 @@ class Editor:
             'spikes': load_images('tiles/spikes', scale=IMGscale),
             'finish': load_images('tiles/Checkpoint', scale=IMGscale),
             'saws': load_images('tiles/saws', scale=IMGscale),
+            'ores': load_images('tiles/ores', scale=IMGscale),
+            'hardened clay': load_images('tiles/hardened clay', scale=IMGscale),
+            'weather': load_images('tiles/weather', scale=IMGscale),
         }
     
     def count_spawners(self):

@@ -32,7 +32,7 @@ class Menu:
         self.menu = pygame_menu.Menu(
             height=DISPLAY_SIZE[1],
             width=DISPLAY_SIZE[0],
-            title='Super Terboy',
+            title='',
             theme=my_theme,
             center_content=True,
             mouse_motion_selection=True,
@@ -51,11 +51,25 @@ class Menu:
     def run(self):
         self.screen.blit(self.background, (0, 0))
         
+        # Handle events
         events = pygame.event.get()
         for event in events:
             if event.type == pygame.QUIT:
                 pygame.quit()
                 sys.exit()
-                
+
+        # Render title and shadow manually
+        shadow_offset = (4, 4)
+        title_font = pygame.font.Font(FONT, 85)
+        title_text = 'Super Terboy'
+
+        shadow_surf = title_font.render(title_text, True, (0, 0, 0))  # Black shadow
+        title_surf = title_font.render(title_text, True, WHITE)
+
+        title_pos = (DISPLAY_SIZE[0] // 4, 20)
+        self.screen.blit(shadow_surf, (title_pos[0] + shadow_offset[0], title_pos[1] + shadow_offset[1]))
+        self.screen.blit(title_surf, title_pos)
+
+        # Update and draw menu
         self.menu.update(events)
         self.menu.draw(self.screen)

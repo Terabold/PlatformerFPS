@@ -36,7 +36,7 @@ FONT = r'data\fonts\Menu.ttf'
 
 EDITOR_SCROLL_SPEED = 10 # how fast you can move in the editor using WASD
 
-MENUBG = r'data\images\backgroundmenu.jpeg'
+MENUBG = r'data\images\menugbg.png'
 
 MENUTXTCOLOR = (186,248,186)
 WHITE = (255, 255, 255)

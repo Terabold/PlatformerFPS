@@ -57,10 +57,10 @@ class Game:
             title_background_color=(0, 0, 0, 0),
             title_font=title_font,  
             title_font_size=UIsize(2),
-            title_font_color=(255, 255, 255),
-            title_offset=(100, 20),
+            title_font_color=(255, 170, 0),
+            title_offset=(20, 20),
             widget_font=widget_font,  
-            widget_font_color=(255, 255, 255),
+            widget_font_color=WHITE,
             widget_margin=(0, 20),
         )
         

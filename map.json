@@ -1,45 +1,5 @@
 {
     "tilemap": {
-        "2;9": {
-            "type": "grass",
-            "variant": 0,
-            "pos": [
-                2,
-                9
-            ]
-        },
-        "3;9": {
-            "type": "grass",
-            "variant": 0,
-            "pos": [
-                3,
-                9
-            ]
-        },
-        "4;9": {
-            "type": "grass",
-            "variant": 0,
-            "pos": [
-                4,
-                9
-            ]
-        },
-        "5;9": {
-            "type": "grass",
-            "variant": 0,
-            "pos": [
-                5,
-                9
-            ]
-        },
-        "6;9": {
-            "type": "grass",
-            "variant": 0,
-            "pos": [
-                6,
-                9
-            ]
-        },
         "8;9": {
             "type": "grass",
             "variant": 1,
@@ -326,14 +286,6 @@
             "pos": [
                 16,
                 10
-            ]
-        },
-        "5;8": {
-            "type": "spawners",
-            "variant": 0,
-            "pos": [
-                5,
-                8
             ]
         },
         "14;8": {
@@ -810,7 +762,7 @@
         },
         "37;8": {
             "type": "stone",
-            "variant": 0,
+            "variant": 2,
             "pos": [
                 37,
                 8
@@ -878,6 +830,542 @@
             "pos": [
                 28,
                 8
+            ]
+        },
+        "2;20": {
+            "type": "stone",
+            "variant": 0,
+            "pos": [
+                2,
+                20
+            ]
+        },
+        "3;20": {
+            "type": "stone",
+            "variant": 0,
+            "pos": [
+                3,
+                20
+            ]
+        },
+        "4;20": {
+            "type": "stone",
+            "variant": 0,
+            "pos": [
+                4,
+                20
+            ]
+        },
+        "5;20": {
+            "type": "stone",
+            "variant": 0,
+            "pos": [
+                5,
+                20
+            ]
+        },
+        "6;20": {
+            "type": "stone",
+            "variant": 0,
+            "pos": [
+                6,
+                20
+            ]
+        },
+        "7;20": {
+            "type": "stone",
+            "variant": 0,
+            "pos": [
+                7,
+                20
+            ]
+        },
+        "8;20": {
+            "type": "stone",
+            "variant": 0,
+            "pos": [
+                8,
+                20
+            ]
+        },
+        "9;20": {
+            "type": "stone",
+            "variant": 0,
+            "pos": [
+                9,
+                20
+            ]
+        },
+        "10;20": {
+            "type": "stone",
+            "variant": 0,
+            "pos": [
+                10,
+                20
+            ]
+        },
+        "11;20": {
+            "type": "stone",
+            "variant": 0,
+            "pos": [
+                11,
+                20
+            ]
+        },
+        "12;20": {
+            "type": "stone",
+            "variant": 0,
+            "pos": [
+                12,
+                20
+            ]
+        },
+        "13;20": {
+            "type": "stone",
+            "variant": 0,
+            "pos": [
+                13,
+                20
+            ]
+        },
+        "14;20": {
+            "type": "stone",
+            "variant": 0,
+            "pos": [
+                14,
+                20
+            ]
+        },
+        "15;20": {
+            "type": "stone",
+            "variant": 0,
+            "pos": [
+                15,
+                20
+            ]
+        },
+        "16;20": {
+            "type": "stone",
+            "variant": 0,
+            "pos": [
+                16,
+                20
+            ]
+        },
+        "17;20": {
+            "type": "stone",
+            "variant": 0,
+            "pos": [
+                17,
+                20
+            ]
+        },
+        "18;20": {
+            "type": "stone",
+            "variant": 0,
+            "pos": [
+                18,
+                20
+            ]
+        },
+        "19;20": {
+            "type": "stone",
+            "variant": 0,
+            "pos": [
+                19,
+                20
+            ]
+        },
+        "20;20": {
+            "type": "stone",
+            "variant": 0,
+            "pos": [
+                20,
+                20
+            ]
+        },
+        "21;20": {
+            "type": "stone",
+            "variant": 0,
+            "pos": [
+                21,
+                20
+            ]
+        },
+        "22;20": {
+            "type": "stone",
+            "variant": 0,
+            "pos": [
+                22,
+                20
+            ]
+        },
+        "23;20": {
+            "type": "stone",
+            "variant": 0,
+            "pos": [
+                23,
+                20
+            ]
+        },
+        "24;20": {
+            "type": "stone",
+            "variant": 0,
+            "pos": [
+                24,
+                20
+            ]
+        },
+        "25;20": {
+            "type": "stone",
+            "variant": 0,
+            "pos": [
+                25,
+                20
+            ]
+        },
+        "26;20": {
+            "type": "stone",
+            "variant": 0,
+            "pos": [
+                26,
+                20
+            ]
+        },
+        "27;20": {
+            "type": "stone",
+            "variant": 4,
+            "pos": [
+                27,
+                20
+            ]
+        },
+        "27;19": {
+            "type": "stone",
+            "variant": 0,
+            "pos": [
+                27,
+                19
+            ]
+        },
+        "28;19": {
+            "type": "stone",
+            "variant": 0,
+            "pos": [
+                28,
+                19
+            ]
+        },
+        "29;19": {
+            "type": "stone",
+            "variant": 0,
+            "pos": [
+                29,
+                19
+            ]
+        },
+        "30;19": {
+            "type": "stone",
+            "variant": 0,
+            "pos": [
+                30,
+                19
+            ]
+        },
+        "31;19": {
+            "type": "stone",
+            "variant": 0,
+            "pos": [
+                31,
+                19
+            ]
+        },
+        "32;19": {
+            "type": "stone",
+            "variant": 0,
+            "pos": [
+                32,
+                19
+            ]
+        },
+        "33;19": {
+            "type": "stone",
+            "variant": 2,
+            "pos": [
+                33,
+                19
+            ]
+        },
+        "33;20": {
+            "type": "stone",
+            "variant": 6,
+            "pos": [
+                33,
+                20
+            ]
+        },
+        "34;20": {
+            "type": "stone",
+            "variant": 0,
+            "pos": [
+                34,
+                20
+            ]
+        },
+        "35;20": {
+            "type": "stone",
+            "variant": 0,
+            "pos": [
+                35,
+                20
+            ]
+        },
+        "36;20": {
+            "type": "stone",
+            "variant": 0,
+            "pos": [
+                36,
+                20
+            ]
+        },
+        "1;10": {
+            "type": "stone",
+            "variant": 0,
+            "pos": [
+                1,
+                10
+            ]
+        },
+        "1;11": {
+            "type": "stone",
+            "variant": 0,
+            "pos": [
+                1,
+                11
+            ]
+        },
+        "1;12": {
+            "type": "stone",
+            "variant": 0,
+            "pos": [
+                1,
+                12
+            ]
+        },
+        "1;13": {
+            "type": "stone",
+            "variant": 0,
+            "pos": [
+                1,
+                13
+            ]
+        },
+        "2;14": {
+            "type": "stone",
+            "variant": 0,
+            "pos": [
+                2,
+                14
+            ]
+        },
+        "2;15": {
+            "type": "stone",
+            "variant": 0,
+            "pos": [
+                2,
+                15
+            ]
+        },
+        "2;16": {
+            "type": "stone",
+            "variant": 0,
+            "pos": [
+                2,
+                16
+            ]
+        },
+        "2;17": {
+            "type": "stone",
+            "variant": 0,
+            "pos": [
+                2,
+                17
+            ]
+        },
+        "2;18": {
+            "type": "stone",
+            "variant": 4,
+            "pos": [
+                2,
+                18
+            ]
+        },
+        "1;18": {
+            "type": "stone",
+            "variant": 0,
+            "pos": [
+                1,
+                18
+            ]
+        },
+        "1;19": {
+            "type": "stone",
+            "variant": 0,
+            "pos": [
+                1,
+                19
+            ]
+        },
+        "1;20": {
+            "type": "stone",
+            "variant": 6,
+            "pos": [
+                1,
+                20
+            ]
+        },
+        "37;9": {
+            "type": "stone",
+            "variant": 0,
+            "pos": [
+                37,
+                9
+            ]
+        },
+        "37;10": {
+            "type": "stone",
+            "variant": 0,
+            "pos": [
+                37,
+                10
+            ]
+        },
+        "37;11": {
+            "type": "stone",
+            "variant": 0,
+            "pos": [
+                37,
+                11
+            ]
+        },
+        "37;12": {
+            "type": "stone",
+            "variant": 0,
+            "pos": [
+                37,
+                12
+            ]
+        },
+        "37;13": {
+            "type": "stone",
+            "variant": 0,
+            "pos": [
+                37,
+                13
+            ]
+        },
+        "37;14": {
+            "type": "stone",
+            "variant": 0,
+            "pos": [
+                37,
+                14
+            ]
+        },
+        "37;15": {
+            "type": "stone",
+            "variant": 0,
+            "pos": [
+                37,
+                15
+            ]
+        },
+        "37;16": {
+            "type": "stone",
+            "variant": 0,
+            "pos": [
+                37,
+                16
+            ]
+        },
+        "37;17": {
+            "type": "stone",
+            "variant": 0,
+            "pos": [
+                37,
+                17
+            ]
+        },
+        "37;18": {
+            "type": "stone",
+            "variant": 0,
+            "pos": [
+                37,
+                18
+            ]
+        },
+        "37;19": {
+            "type": "stone",
+            "variant": 0,
+            "pos": [
+                37,
+                19
+            ]
+        },
+        "37;20": {
+            "type": "stone",
+            "variant": 3,
+            "pos": [
+                37,
+                20
+            ]
+        },
+        "37;21": {
+            "type": "stone",
+            "variant": 0,
+            "pos": [
+                37,
+                21
+            ]
+        },
+        "4;19": {
+            "type": "spawners",
+            "variant": 0,
+            "pos": [
+                4,
+                19
+            ]
+        },
+        "5;9": {
+            "type": "grass",
+            "variant": 0,
+            "pos": [
+                5,
+                9
+            ]
+        },
+        "6;9": {
+            "type": "grass",
+            "variant": 1,
+            "pos": [
+                6,
+                9
+            ]
+        },
+        "3;9": {
+            "type": "grass",
+            "variant": 3,
+            "pos": [
+                3,
+                9
+            ]
+        },
+        "4;9": {
+            "type": "grass",
+            "variant": 3,
+            "pos": [
+                4,
+                9
             ]
         }
     },

@@ -106,10 +106,10 @@ class Player:
             self.set_action('wallcollide')
         elif abs(self.velocity[0]) > 0.5:
             self.set_action('run')
-        elif self.velocity[1] < 0:
-            self.set_action('idle')  # jump
-        elif self.velocity[1] > 0:
-            self.set_action('idle')  # fall
+        elif self.velocity[1] < 1 and not self.grounded:
+            self.set_action('jump')  # jump
+        elif self.velocity[1] > 1 and not self.grounded:
+            self.set_action('fall')  # fall
         else:
             self.set_action('idle')
 

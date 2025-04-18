@@ -31,7 +31,8 @@ class Game:
             'player/idle': Animation(load_images('player/idle', scale=PLAYERS_IMAGE_SIZE), img_dur=25),
             'player/wallslide': Animation(load_images('player/wallslide', scale=PLAYERS_IMAGE_SIZE), loop=False),
             'player/wallcollide': Animation(load_images('player/wallcollide', scale=PLAYERS_IMAGE_SIZE), loop=False),
-            'player/jump': Animation(load_images('player/jump', scale=PLAYERS_IMAGE_SIZE)),
+            'player/jump': Animation(load_images('player/jump', scale=PLAYERS_IMAGE_SIZE), img_dur=4, loop=False),
+            'player/fall': Animation(load_images('player/fall', scale=PLAYERS_IMAGE_SIZE), img_dur=4, loop=False),
             'spawners': load_images('tiles/spawners', scale=IMGscale),
             'spikes': load_images('tiles/spikes', scale=IMGscale),
             'finish': load_images('tiles/Checkpoint', scale=IMGscale),
@@ -133,6 +134,52 @@ class Game:
             current_menu.update(events)
             current_menu.draw(self.display)
 
+    def update_camera_with_box(self):
+        # Define the camera box (dead zone) dimensions
+        # The box will be centered on the screen with these offsets from center
+        box_width = 200  # Width of the box - adjust as needed
+        box_height = 250  # Height of the box - adjust as needed
+        
+        # Calculate the camera box boundaries
+        box_left = self.scroll[0] + (self.display.get_width() / 2) - (box_width / 2)
+        box_right = box_left + box_width
+        box_top = self.scroll[1] + (self.display.get_height() *0.8 ) - (box_height / 2) - 100
+        box_bottom = box_top + box_height
+        
+        # Get player position
+        player_x = self.player.rect().centerx
+        player_y = self.player.rect().centery
+        
+        # Calculate target camera position based on player's position relative to the box
+        target_x = self.scroll[0]
+        target_y = self.scroll[1]
+        
+        # Horizontal camera movement
+        if player_x < box_left:
+            target_x = self.scroll[0] - (box_left - player_x)
+        elif player_x > box_right:
+            target_x = self.scroll[0] + (player_x - box_right)
+        
+        # Vertical camera movement
+        if player_y < box_top:
+            target_y = self.scroll[1] - (box_top - player_y)
+        elif player_y > box_bottom:
+            target_y = self.scroll[1] + (player_y - box_bottom)
+        
+        # Apply smoothing for camera movement
+        self.scroll[0] += (target_x - self.scroll[0]) / 15
+        self.scroll[1] += (target_y - self.scroll[1]) / 15
+        
+        # Return box coordinates in screen space for visualization
+        screen_box = {
+            'left': box_left - self.scroll[0],
+            'right': box_right - self.scroll[0],
+            'top': box_top - self.scroll[1],
+            'bottom': box_bottom - self.scroll[1]
+        }
+        return screen_box
+
+
     def run(self):
         self.display.blit(self.assets['background'], (0, 0))
         events = pygame.event.get()  
@@ -164,8 +211,7 @@ class Game:
             if self.buffer_time > PLAYER_BUFFER:
                 self.buffer_time = PLAYER_BUFFER + 1
             
-        self.scroll[0] += (self.player.rect().centerx - self.display.get_width() / 3 - self.scroll[0]) / 15
-        self.scroll[1] += (self.player.rect().centery - self.display.get_height() / 2 - self.scroll[1]) / 15
+        self.update_camera_with_box()
         render_scroll = (int(self.scroll[0]), int(self.scroll[1]))
             
         self.clouds.update()

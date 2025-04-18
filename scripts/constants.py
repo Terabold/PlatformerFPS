@@ -16,21 +16,21 @@ WALLJUMP_X_SPEED = 20  *TILE_SIZE/36 # the x velocity of the player when jumping
 WALLJUMP_Y_SPEED = 15  *TILE_SIZE/36 # the y velocity of the player when jumpingoff of a wall
 GRAVITY_UP = 0.6   *TILE_SIZE/36 # subtracted from y velocity every frame when player going up
 GRAVITY_DOWN = 0.3  *TILE_SIZE/36 # subtracted from y velocity every frame when player going down
-ACCELERAION = 0.01  *TILE_SIZE/36 # friction with the ground on the x axis when starting to move, between 0 and 1 (0 < Acc < 1)
+ACCELERAION = 0.008  *TILE_SIZE/36 # friction with the ground on the x axis when starting to move, between 0 and 1 (0 < Acc < 1)
 DECCELARATION = 0.1   *TILE_SIZE/36 # friction with the ground on the x axis when stopping to move, between 0 and 1 (0 < Acc < 1)
 MAX_X_SPEED = 15   *TILE_SIZE/36 # x axis speed limit
 MAX_Y_SPEED = 20   *TILE_SIZE/36 # y axis speed limit
 
 PLAYER_BUFFER = 5 # amount of frame buffer
 
-PLAYER_POS = (50, 50) # player position when the level start
 PLAYERS_SIZE = (TILE_SIZE-8, TILE_SIZE-8) # size of actual player hitbox
 PLAYERS_IMAGE_SIZE = (PLAYERS_SIZE[0], PLAYERS_SIZE[1]) # size of the player image
 
 PHYSICS_TILES = {'grass', 'stone'}
 AUTOTILE_TYPES = {'grass', 'stone'}
-INTERACTIVE_TILES = {'spikes', 'finish'}
+INTERACTIVE_TILES = {'spikes', 'finish', 'saws'}
 SPIKE_SIZE = (1, 0.35)
+SAW_SIZE = 0.8
 
 FONT = r'data\fonts\Menu.ttf' 
 

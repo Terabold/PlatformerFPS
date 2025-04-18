@@ -23,7 +23,7 @@ MAX_Y_SPEED = 20   *TILE_SIZE/36 # y axis speed limit
 
 PLAYER_BUFFER = 5 # amount of frame buffer
 
-PLAYERS_SIZE = (TILE_SIZE-8, TILE_SIZE-8) # size of actual player hitbox
+PLAYERS_SIZE = (TILE_SIZE*0.8, TILE_SIZE*0.8) # size of actual player hitbox
 PLAYERS_IMAGE_SIZE = (PLAYERS_SIZE[0], PLAYERS_SIZE[1]) # size of the player image
 
 PHYSICS_TILES = {'grass', 'stone'}

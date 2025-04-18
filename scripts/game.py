@@ -11,7 +11,7 @@ from scripts.constants import *
 class Game:
     def __init__(self, display):
         self.display = display
-        self.menu = False
+        self.menu_active = False
         self.keys = {'left': False, 'right': False, 'jump': False}
         
         pygame.font.init()
@@ -49,30 +49,26 @@ class Game:
         
         self.scroll = [0, 0]
         
-        # Create pygame-menu compatible font objects
         title_font = pygame.font.Font(FONT, UIsize(2))
         widget_font = pygame.font.Font(FONT, UIsize(2))
         
-        # Create menu theme
         self.menu_theme = pygame_menu.themes.Theme(
             background_color=(0, 0, 0, 128),  
             title_background_color=(0, 0, 0, 0),
             title_font=title_font,  
             title_font_size=UIsize(2),
             title_font_color=(255, 255, 255),
-            title_offset=(DISPLAY_SIZE[0]/4 - 275, 20),
+            title_offset=(100, 20),
             widget_font=widget_font,  
             widget_font_color=(255, 255, 255),
             widget_margin=(0, 20),
         )
         
-        # Configure selection effect
         selection_effect = pygame_menu.widgets.LeftArrowSelection(arrow_size=(15, 20))
         self.menu_theme.widget_selection_effect = selection_effect
         
-        # Initialize pause menu
         self.pause_menu = pygame_menu.Menu(
-            height=DISPLAY_SIZE[1] // 3,
+            height=DISPLAY_SIZE[1] // 2.5,
             width=DISPLAY_SIZE[0] // 2,
             title='Game Paused',
             theme=self.menu_theme,
@@ -82,9 +78,9 @@ class Game:
 
         self.pause_menu.add.label('', font_size=1)
         self.pause_menu.add.button('Resume Game', self.resume_game)
+        self.pause_menu.add.button('Restart Level', self.reset)
         self.pause_menu.add.button('Main Menu', self.return_to_main)
         
-        # Initialize level complete menu
         self.level_complete_menu = pygame_menu.Menu(
             height=DISPLAY_SIZE[1] // 2,
             width=DISPLAY_SIZE[0] // 2,
@@ -97,80 +93,60 @@ class Game:
         self.level_complete_menu.add.label('', font_size=1)
         self.level_complete_menu.add.button('Play Again', self.reset)
         self.level_complete_menu.add.button('Main Menu', self.return_to_main)
-        
-        self.current_menu = None
+
+        self.death_menu = pygame_menu.Menu(
+            height=DISPLAY_SIZE[1] // 2.5,
+            width=DISPLAY_SIZE[0] // 2,
+            title='Game Over',
+            theme=self.menu_theme,
+            center_content=True,
+            mouse_motion_selection=True,
+        )
+
+        self.death_menu.add.label('', font_size=1)
+        self.death_menu.add.button('Restart Level', self.reset)
+        self.death_menu.add.button('Main Menu', self.return_to_main)
 
     def resume_game(self):
-        self.menu = False
+        self.menu_active = False
         
     def return_to_main(self):
         self.reset()
-        if self.player.finishLevel:
-            self.level_complete_menu.disable()
-        else:
-            self.pause_menu.disable()
         game_state_manager.returnToPrevState()
         
     def reset(self):
         self.player.reset()
         self.keys = {'left': False, 'right': False, 'jump': False}
-        self.menu = False
-
-    def blitMenu(self, events):
-        for event in events:
-            if event.type == pygame.QUIT:
-                pygame.quit()
-                sys.exit()
-            if event.type == pygame.KEYDOWN:
-                if event.key == pygame.K_ESCAPE and not self.player.finishLevel:
-                    self.resume_game()
-        
-        if self.player.finishLevel:
-            current_menu = self.level_complete_menu
-        else:
-            current_menu = self.pause_menu
-            
-        if current_menu.is_enabled():
-            current_menu.update(events)
-            current_menu.draw(self.display)
+        self.menu_active = False
 
     def update_camera_with_box(self):
-        # Define the camera box (dead zone) dimensions
-        # The box will be centered on the screen with these offsets from center
-        box_width = 200  # Width of the box - adjust as needed
-        box_height = 250  # Height of the box - adjust as needed
+        box_width = 200
+        box_height = 250
         
-        # Calculate the camera box boundaries
         box_left = self.scroll[0] + (self.display.get_width() / 2) - (box_width / 2)
         box_right = box_left + box_width
         box_top = self.scroll[1] + (self.display.get_height() *0.8 ) - (box_height / 2) - 100
         box_bottom = box_top + box_height
         
-        # Get player position
         player_x = self.player.rect().centerx
         player_y = self.player.rect().centery
         
-        # Calculate target camera position based on player's position relative to the box
         target_x = self.scroll[0]
         target_y = self.scroll[1]
         
-        # Horizontal camera movement
         if player_x < box_left:
             target_x = self.scroll[0] - (box_left - player_x)
         elif player_x > box_right:
             target_x = self.scroll[0] + (player_x - box_right)
         
-        # Vertical camera movement
         if player_y < box_top:
             target_y = self.scroll[1] - (box_top - player_y)
         elif player_y > box_bottom:
             target_y = self.scroll[1] + (player_y - box_bottom)
         
-        # Apply smoothing for camera movement
         self.scroll[0] += (target_x - self.scroll[0]) / 15
         self.scroll[1] += (target_y - self.scroll[1]) / 15
         
-        # Return box coordinates in screen space for visualization
         screen_box = {
             'left': box_left - self.scroll[0],
             'right': box_right - self.scroll[0],
@@ -179,23 +155,26 @@ class Game:
         }
         return screen_box
 
-
     def run(self):
         self.display.blit(self.assets['background'], (0, 0))
-        events = pygame.event.get()  
+        
+        events = pygame.event.get()
         for event in events:
             if event.type == pygame.QUIT:
                 pygame.quit()
                 sys.exit()
+                
             if event.type == pygame.KEYDOWN:
-                if event.key == pygame.K_d:
-                    self.keys['right'] = True
-                if event.key == pygame.K_a:
-                    self.keys['left'] = True
-                if event.key == pygame.K_SPACE:
-                    self.keys['jump'] = True
                 if event.key == pygame.K_ESCAPE:
-                    self.menu = True
+                    self.menu_active = not self.menu_active
+                
+                if not self.menu_active:
+                    if event.key == pygame.K_d:
+                        self.keys['right'] = True
+                    if event.key == pygame.K_a:
+                        self.keys['left'] = True
+                    if event.key == pygame.K_SPACE:
+                        self.keys['jump'] = True
 
             if event.type == pygame.KEYUP:
                 if event.key == pygame.K_d:
@@ -210,7 +189,7 @@ class Game:
             self.buffer_time += 1
             if self.buffer_time > PLAYER_BUFFER:
                 self.buffer_time = PLAYER_BUFFER + 1
-            
+        
         self.update_camera_with_box()
         render_scroll = (int(self.scroll[0]), int(self.scroll[1]))
             
@@ -219,18 +198,21 @@ class Game:
             
         self.tilemap.render(self.display, offset=render_scroll)
         
-        if not self.menu: self.player.update(self.tilemap, self.keys)
+        if not self.menu_active:
+            self.player.update(self.tilemap, self.keys)
+            
         self.player.render(self.display, offset=render_scroll)
 
         if self.player.death:
-            self.player.reset()
+            self.menu_active = True
+            menu = self.death_menu
 
-        if self.player.finishLevel:
-            self.menu = True
-            
-
-        if self.menu:
-            self.blitMenu(events)
-            pygame.display.update()
-
-        pygame.display.update()
+        elif self.player.finishLevel:
+            self.menu_active = True
+            menu = self.level_complete_menu
+        elif self.menu_active:
+            menu = self.pause_menu
+        
+        if self.menu_active:
+            menu.update(events)
+            menu.draw(self.display)

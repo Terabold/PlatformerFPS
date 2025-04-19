@@ -30,7 +30,7 @@ class Game:
             'player': load_image('player/player.png', scale=PLAYERS_IMAGE_SIZE),
             'background': load_image('background.png', scale=DISPLAY_SIZE),
             'clouds': load_images('clouds'),
-            'player/run': Animation(load_images('player/run', scale=PLAYERS_IMAGE_SIZE), img_dur=8),
+            'player/run': Animation(load_images('player/run', scale=PLAYERS_IMAGE_SIZE), img_dur=5),
             'player/idle': Animation(load_images('player/idle', scale=PLAYERS_IMAGE_SIZE), img_dur=25),
             'player/wallslide': Animation(load_images('player/wallslide', scale=PLAYERS_IMAGE_SIZE), loop=False),
             'player/wallcollide': Animation(load_images('player/wallcollide', scale=PLAYERS_IMAGE_SIZE), loop=False),
@@ -160,13 +160,15 @@ class Game:
 
     def run(self):
         self.display.blit(self.assets['background'], (0, 0))
+
         
+
         events = pygame.event.get()
         for event in events:
             if event.type == pygame.QUIT:
                 pygame.quit()
                 sys.exit()
-                
+        
             if event.type == pygame.KEYDOWN:
                 if event.key == pygame.K_ESCAPE:
                     self.menu_active = not self.menu_active
@@ -204,8 +206,17 @@ class Game:
         if not self.menu_active:
             self.player.update(self.tilemap, self.keys)
             
-        self.player.render(self.display, offset=render_scroll)
 
+        temp_surface = pygame.Surface((self.display.get_width(), self.display.get_height()), pygame.SRCALPHA)
+        
+        self.player.render(temp_surface, offset=render_scroll)
+        temp_mask = pygame.mask.from_surface(temp_surface)   
+        white_silhouette = temp_mask.to_surface(setcolor=(255, 255, 255), unsetcolor=(0,0,0,0))
+        for offset in [(-1, 0), (1, 0), (0, -1), (0, 1)]:
+            self.display.blit(white_silhouette, offset)
+
+        self.player.render(self.display, offset=render_scroll)
+        
         if self.player.death:
             self.menu_active = True
             menu = self.death_menu

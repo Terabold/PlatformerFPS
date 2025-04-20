@@ -1,8 +1,9 @@
 import sys
 import pygame
 import pygame_menu
+import random
 from scripts.gameStateManager import game_state_manager
-from scripts.utils import load_image, load_images, Animation, UIsize
+from scripts.utils import load_image, load_images, Animation, UIsize, load_sounds
 from scripts.player import Player
 from scripts.tilemap import Tilemap
 from scripts.clouds import Clouds
@@ -20,6 +21,9 @@ class Game:
         self.tilemap.load('map.json')
         IMGscale = (self.tilemap.tile_size, self.tilemap.tile_size)
 
+        self.death_sound_played = False
+        self.finish_sound_played = False
+
         self.assets = {
             'decor': load_images('tiles/decor', scale=IMGscale),
             'grass': load_images('tiles/grass', scale=IMGscale),
@@ -36,17 +40,24 @@ class Game:
             'player/wallcollide': Animation(load_images('player/wallcollide', scale=PLAYERS_IMAGE_SIZE), loop=False),
             'player/jump': Animation(load_images('player/jump', scale=PLAYERS_IMAGE_SIZE), img_dur=4, loop=False),
             'player/fall': Animation(load_images('player/fall', scale=PLAYERS_IMAGE_SIZE), img_dur=4, loop=False),
+            'player/death': Animation(load_images('player/death', scale=(PLAYERS_IMAGE_SIZE[0]*2, PLAYERS_IMAGE_SIZE[1])), img_dur=4, loop=False),
             'spawners': load_images('tiles/spawners', scale=IMGscale),
             'spikes': load_images('tiles/spikes', scale=IMGscale),
             'finish': load_images('tiles/Checkpoint', scale=IMGscale),
             'saws': load_images('tiles/saws', scale=IMGscale),
         }
         
-        self.clouds = Clouds(self.assets['clouds'], count=16)
-        
+        self.sfx = {
+            'death': load_sounds('death'),
+            'jump': load_sounds('jump'),
+            'collide': load_sounds('wallcollide'),
+            'finish': load_sounds('level_complete', volume=0.1),
+            'click': load_sounds('click'),
+        }
+
         self.pos = self.tilemap.extract([('spawners', 0), ('spawners', 1)])
         self.default_pos = self.pos[0]['pos'] if self.pos else [10, 10]
-        self.player = Player(self, self.default_pos, PLAYERS_SIZE)
+        self.player = Player(self, self.default_pos, PLAYERS_SIZE, self.sfx)
 
         self.buffer_time = 0
         
@@ -80,9 +91,15 @@ class Game:
         )
 
         self.pause_menu.add.label('', font_size=1)
-        self.pause_menu.add.button('Resume Game', self.resume_game)
-        self.pause_menu.add.button('Restart Level', self.reset)
-        self.pause_menu.add.button('Main Menu', self.return_to_main)
+
+        def button_click_with_sound(action_func):
+            def wrapper():
+                random.choice(self.sfx['click']).play()
+                action_func()
+            return wrapper
+        self.pause_menu.add.button('Resume Game', button_click_with_sound(self.resume_game))
+        self.pause_menu.add.button('Restart Level', button_click_with_sound(self.reset))
+        self.pause_menu.add.button('Main Menu', button_click_with_sound(self.return_to_main))
         
         self.level_complete_menu = pygame_menu.Menu(
             height=DISPLAY_SIZE[1] // 2,
@@ -94,8 +111,8 @@ class Game:
         )
 
         self.level_complete_menu.add.label('', font_size=1)
-        self.level_complete_menu.add.button('Play Again', self.reset)
-        self.level_complete_menu.add.button('Main Menu', self.return_to_main)
+        self.level_complete_menu.add.button('Play Again', button_click_with_sound(self.reset))
+        self.level_complete_menu.add.button('Main Menu', button_click_with_sound(self.return_to_main))
 
         self.death_menu = pygame_menu.Menu(
             height=DISPLAY_SIZE[1] // 2.5,
@@ -107,8 +124,10 @@ class Game:
         )
 
         self.death_menu.add.label('', font_size=1)
-        self.death_menu.add.button('Restart Level', self.reset)
-        self.death_menu.add.button('Main Menu', self.return_to_main)
+        self.death_menu.add.button('Restart Level', button_click_with_sound(self.reset))
+        self.death_menu.add.button('Main Menu', button_click_with_sound(self.return_to_main))
+
+        self.countdeathframes = 0
 
     def resume_game(self):
         self.menu_active = False
@@ -118,6 +137,9 @@ class Game:
         game_state_manager.returnToPrevState()
         
     def reset(self):
+        self.death_sound_played = False
+        self.finish_sound_played = False
+        self.countdeathframes = 0
         self.player.reset()
         self.keys = {'left': False, 'right': False, 'jump': False}
         self.menu_active = False
@@ -161,8 +183,6 @@ class Game:
     def run(self):
         self.display.blit(self.assets['background'], (0, 0))
 
-        
-
         events = pygame.event.get()
         for event in events:
             if event.type == pygame.QUIT:
@@ -198,15 +218,11 @@ class Game:
         self.update_camera_with_box()
         render_scroll = (int(self.scroll[0]), int(self.scroll[1]))
             
-        self.clouds.update()
-        self.clouds.render(self.display, offset=render_scroll)
-            
         self.tilemap.render(self.display, offset=render_scroll)
         
         if not self.menu_active:
             self.player.update(self.tilemap, self.keys)
             
-
         temp_surface = pygame.Surface((self.display.get_width(), self.display.get_height()), pygame.SRCALPHA)
         
         self.player.render(temp_surface, offset=render_scroll)
@@ -217,11 +233,19 @@ class Game:
 
         self.player.render(self.display, offset=render_scroll)
         
-        if self.player.death:
-            self.menu_active = True
-            menu = self.death_menu
+        if self.player.death: 
+            self.countdeathframes += 1
+            if not self.death_sound_played:
+                random.choice(self.sfx['death']).play()
+                self.death_sound_played = True
+            if self.countdeathframes >= 40:
+                self.menu_active = True
+                menu = self.death_menu
 
         elif self.player.finishLevel:
+            if not self.finish_sound_played:
+                random.choice(self.sfx['finish']).play()
+                self.finish_sound_played = True
             self.menu_active = True
             menu = self.level_complete_menu
         elif self.menu_active:

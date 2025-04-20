@@ -38,5 +38,5 @@ EDITOR_SCROLL_SPEED = 10 # how fast you can move in the editor using WASD
 
 MENUBG = r'data\images\menugbg.png'
 
-MENUTXTCOLOR = (186,248,186)
+MENUTXTCOLOR = (120, 83, 58)
 WHITE = (255, 255, 255)

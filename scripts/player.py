@@ -1,14 +1,14 @@
 from scripts.constants import *
-
+import random
 import pygame
 
 class Player:
-    def __init__(self, game, pos, size):
+    def __init__(self, game, pos, size, sfx):
         self.game = game
         self.start_pos = pos
         self.size = size
+        self.sfx = sfx
         self._initialize()
-
 
     def _initialize(self):
         self.pos = list(self.start_pos)
@@ -22,11 +22,11 @@ class Player:
         self.death = False 
         self.finishLevel = False 
         self.respawn = False
+        self.was_colliding_wall = False
         self.set_action('run')
 
     def reset(self):
         self._initialize()
-
     
     def rect(self):
         return pygame.Rect(self.pos[0], self.pos[1], self.size[0], self.size[1])
@@ -36,18 +36,17 @@ class Player:
             self.action = action
             self.animation = self.game.assets['player/' + self.action].copy()
     
-    
     def update(self, tilemap, keys):
         self.collisions = {'up': False, 'down': False, 'right': False, 'left': False}
 
-        self.velocity[0] += (int(keys['right']) - int(keys['left'])) * PLAYER_SPEED
-        x_acceleration = (1 - DECCELARATION) if int(keys['right']) - int(keys['left']) == 0 else (1 - ACCELERAION)
-        self.velocity[0] = max(-MAX_X_SPEED, min(MAX_X_SPEED, self.velocity[0] * x_acceleration))
+        if not self.death and not self.finishLevel:
+            self.velocity[0] += (int(keys['right']) - int(keys['left'])) * PLAYER_SPEED
+            x_acceleration = (1 - DECCELARATION) if int(keys['right']) - int(keys['left']) == 0 else (1 - ACCELERAION)
+            self.velocity[0] = max(-MAX_X_SPEED, min(MAX_X_SPEED, self.velocity[0] * x_acceleration))
 
-        gravity = GRAVITY_DOWN if self.velocity[1] > 0 and not keys['jump'] else GRAVITY_UP
-        self.velocity[1] = max(-MAX_Y_SPEED, min(MAX_Y_SPEED, self.velocity[1] + gravity))
+            gravity = GRAVITY_DOWN if self.velocity[1] > 0 and not keys['jump'] else GRAVITY_UP
+            self.velocity[1] = max(-MAX_Y_SPEED, min(MAX_Y_SPEED, self.velocity[1] + gravity))
 
-        
         self.pos[0] += self.velocity[0]
         entity_rect = self.rect()
         for rect in tilemap.physics_rects_around(self.pos):
@@ -78,6 +77,7 @@ class Player:
                 tile_type, variant, *extra = tile_info
                 if tile_type == 'spikes':
                     self.death = True 
+                    self.velocity[0] = 0
                 elif tile_type == 'finish':
                     self.finishLevel = True
                 elif tile_type == 'saws':
@@ -93,13 +93,19 @@ class Player:
         if self.collisions['down'] or self.collisions['up']:
             self.velocity[1] = 0
 
+        # Check if we just hit a wall this frame
+        now_colliding_wall = self.collisions['left'] or self.collisions['right']
+        if now_colliding_wall and not self.was_colliding_wall:  
+            random.choice(self.sfx['collide']).play()
+        self.was_colliding_wall = now_colliding_wall
+
         self.air_time += 1
         if self.collisions['down']:
             self.air_time = 0
         self.grounded = self.air_time <= 4
 
         if self.death:
-            self.set_action('idle')  # death
+            self.set_action('death')  # death
         elif (self.collisions['left'] or self.collisions['right']) and self.velocity[1] > 0 and not self.grounded:
             self.set_action('wallslide')
         elif (self.collisions['left'] or self.collisions['right']):
@@ -115,26 +121,27 @@ class Player:
 
         self.animation.update()
         
-
         # Reset jump availability when key is released
         if not keys['jump']:
             self.jump_available = True
         
         # Handle jumps - Only if jump is available and key is pressed
         elif keys['jump'] and self.jump_available:
-            self.jump_available = False  # Prevent more jumps until key is released
+            self.jump_available = False
             
             # Wall jump logic
             if not self.grounded and (self.collisions['left'] or self.collisions['right']):
                 self.velocity[1] = -WALLJUMP_Y_SPEED
                 if self.collisions['right']: self.velocity[0] = -WALLJUMP_X_SPEED
                 if self.collisions['left']: self.velocity[0] = WALLJUMP_X_SPEED
+                random.choice(self.sfx['jump']).play()  # Play jump sound directly
             
             # Regular jump logic
             elif self.grounded and self.game.buffer_time <= PLAYER_BUFFER:
                 self.velocity[1] = -JUMP_SPEED
                 self.air_time = 5
                 self.grounded = False
+                random.choice(self.sfx['jump']).play()
         
         # Wall slide logic
         if not self.grounded and (self.collisions['left'] or self.collisions['right']) and self.velocity[1] > 0:

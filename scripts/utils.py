@@ -11,6 +11,16 @@ def load_image(path, scale = None, remove_color = (0, 0, 0)):
         img = pygame.transform.scale(img, scale)
     return img
 
+def load_sounds(path, volume=0.3):  # Default to 50% volume
+    sounds = []
+    full_path = 'data/sfx/' + path
+    for snd_name in sorted(os.listdir(full_path)):
+        if snd_name.endswith('.mp3'):
+            sound = pygame.mixer.Sound(os.path.join(full_path, snd_name))
+            sound.set_volume(volume)  # Set the volume here
+            sounds.append(sound)
+    return sounds
+
 def load_images(path, scale = None, remove_color = (0, 0, 0)):
     images = []
     for img_name in sorted(os.listdir(BASE_IMG_PATH + path)):
@@ -46,3 +56,6 @@ def vh(width_precent, height_precent):
 
 def UIsize(size):
     return int(DISPLAY_SIZE[0] * size // 100)
+
+
+        

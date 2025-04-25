@@ -23,6 +23,8 @@ class Player:
         self.finishLevel = False 
         self.respawn = False
         self.was_colliding_wall = False
+        self.wall_contact_time = 0
+        self.wall_momentum_active = False
         self.set_action('run')
 
     def reset(self):
@@ -39,13 +41,20 @@ class Player:
     def update(self, tilemap, keys):
         self.collisions = {'up': False, 'down': False, 'right': False, 'left': False}
 
+        if tilemap.is_below_map(self.pos):
+            self.death = True
+            self.velocity = [0, 0]
+
         if not self.death and not self.finishLevel:
             self.velocity[0] += (int(keys['right']) - int(keys['left'])) * PLAYER_SPEED
             x_acceleration = (1 - DECCELARATION) if int(keys['right']) - int(keys['left']) == 0 else (1 - ACCELERAION)
             self.velocity[0] = max(-MAX_X_SPEED, min(MAX_X_SPEED, self.velocity[0] * x_acceleration))
-
-            gravity = GRAVITY_DOWN if self.velocity[1] > 0 and not keys['jump'] else GRAVITY_UP
-            self.velocity[1] = max(-MAX_Y_SPEED, min(MAX_Y_SPEED, self.velocity[1] + gravity))
+        else:
+            self.velocity[0] = 0    
+            self.velocity[1] = 0
+            
+        gravity = GRAVITY_DOWN if self.velocity[1] > 0 and not keys['jump'] else GRAVITY_UP
+        self.velocity[1] = max(-MAX_Y_SPEED, min(MAX_Y_SPEED, self.velocity[1] + gravity))
 
         self.pos[0] += self.velocity[0]
         entity_rect = self.rect()
@@ -105,7 +114,7 @@ class Player:
         self.grounded = self.air_time <= 4
 
         if self.death:
-            self.set_action('death')  # death
+            self.set_action('death') 
         elif (self.collisions['left'] or self.collisions['right']) and self.velocity[1] > 0 and not self.grounded:
             self.set_action('wallslide')
         elif (self.collisions['left'] or self.collisions['right']):
@@ -113,9 +122,9 @@ class Player:
         elif abs(self.velocity[0]) > 0.5:
             self.set_action('run')
         elif self.velocity[1] < 1 and not self.grounded:
-            self.set_action('jump')  # jump
+            self.set_action('jump')  
         elif self.velocity[1] > 1 and not self.grounded:
-            self.set_action('fall')  # fall
+            self.set_action('fall')  
         else:
             self.set_action('idle')
 
@@ -143,9 +152,21 @@ class Player:
                 self.grounded = False
                 random.choice(self.sfx['jump']).play()
         
-        # Wall slide logic
-        if not self.grounded and (self.collisions['left'] or self.collisions['right']) and self.velocity[1] > 0:
-            self.velocity[1] = min(WALLSLIDE_SPEED, self.velocity[1])
+        # Wall slide, wall slide momentum logic
+        if not self.grounded and (self.collisions['left'] or self.collisions['right']):
+            if not self.was_colliding_wall:
+                self.wall_contact_time = 0
+                if self.velocity[1] < 0:
+                    self.wall_momentum_active = True
+            
+            self.wall_contact_time += 1
+            
+            if self.wall_momentum_active and self.wall_contact_time <= WALL_MOMENTUM_FRAMES:
+                self.velocity[1] *= WALL_MOMENTUM_PRESERVE
+            else:
+                self.wall_momentum_active = False
+                if self.velocity[1] > 0:  
+                    self.velocity[1] = min(WALLSLIDE_SPEED, self.velocity[1])
         
         # Cut jump short if key released
         if not keys['jump'] and self.velocity[1] < 0:

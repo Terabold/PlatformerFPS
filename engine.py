@@ -12,7 +12,7 @@ class Engine:
         pygame.display.set_caption('Super Terboy')
         self.display = pygame.display.set_mode(DISPLAY_SIZE)
         self.clock = pygame.time.Clock()
-        self.game = Game(self.display)
+        self.game = Game(self.display, self.clock)
         self.menu = Menu(self.display)
 
         self.state = {'game': self.game, 'menu': self.menu}

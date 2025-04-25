@@ -16,8 +16,6 @@ AUTOTILE_MAP = {
 }
 
 NEIGHBOR_OFFSETS = [(-1, 0), (-1, -1), (0, -1), (1, -1), (1, 0), (0, 0), (-1, 1), (0, 1), (1, 1)]
-PHYSICS_TILES = {'grass', 'stone'}
-AUTOTILE_TYPES = {'grass', 'stone'}
 
 class Tilemap:
     def __init__(self, game, tile_size=16):
@@ -64,6 +62,11 @@ class Tilemap:
         return matches
 
     def save(self, path):
+        lowest_y = 0
+        for loc in self.tilemap:
+            tile = self.tilemap[loc]
+            lowest_y = max(lowest_y, tile['pos'][1])
+
         spawner_tiles = self.extract([('spawners', 0), ('spawners', 1)], keep=True)
         if len(spawner_tiles) > 1:
             self.extract([('spawners', 0), ('spawners', 1)], keep=False)
@@ -82,7 +85,11 @@ class Tilemap:
                 }
         
         f = open(path, 'w')
-        json.dump({'tilemap': self.tilemap, 'offgrid': self.offgrid_tiles}, f, indent=4)
+        json.dump({
+            'tilemap': self.tilemap, 
+            'offgrid': self.offgrid_tiles,
+            'lowest_y': lowest_y
+        }, f, indent=4)
         f.close()
         
     def load(self, path):
@@ -92,6 +99,7 @@ class Tilemap:
         
         self.tilemap = map_data['tilemap']
         self.offgrid_tiles = map_data['offgrid']
+        self.lowest_y = map_data.get('lowest_y', 0)
         
         spawner_tiles = self.extract([('spawners', 0), ('spawners', 1)], keep=True)
         if len(spawner_tiles) > 1:
@@ -117,6 +125,7 @@ class Tilemap:
                 rects.append(pygame.Rect(tile['pos'][0] * self.tile_size, tile['pos'][1] * self.tile_size, self.tile_size, self.tile_size))
         return rects
     
+    # Updated spike hitbox code for interactive_rects_around method
     def interactive_rects_around(self, pos):
         tiles = []
         for tile in self.tiles_around(pos):
@@ -125,20 +134,34 @@ class Tilemap:
                     case 'finish':
                         tiles.append((pygame.Rect(tile['pos'][0] * self.tile_size, tile['pos'][1] * self.tile_size, self.tile_size, self.tile_size), (tile['type'], tile['variant'])))
                     case 'spikes':
-                        colrect = pygame.Rect(
-                            self.tile_size * tile['pos'][0], 
-                            self.tile_size * tile['pos'][1], 
-                            int(self.tile_size*SPIKE_SIZE[0]), 
-                            int(self.tile_size*SPIKE_SIZE[1])
+                        # For spikes at the bottom of the tile
+                        spike_width = int(self.tile_size * SPIKE_SIZE[0])  # Use width from SPIKE_SIZE
+                        spike_height = int(self.tile_size * SPIKE_SIZE[1])  # Use height from SPIKE_SIZE
+                        
+                        # Create the spike rectangle
+                        spike_rect = pygame.Rect(
+                            0, 0,  # Placeholder - will position with centerx/bottom
+                            spike_width,
+                            spike_height
                         )
-                        colrect.center = (
-                            self.tile_size * tile['pos'][0] + self.tile_size//2, 
-                            self.tile_size * tile['pos'][1] + self.tile_size
-                        )
-                        tiles.append((colrect, (tile['type'], tile['variant'])))
+                        
+                        # Center horizontally
+                        spike_rect.centerx = self.tile_size * tile['pos'][0] + self.tile_size // 2
+                        
+                        # Position at the bottom of the tile
+                        spike_rect.bottom = self.tile_size * (tile['pos'][1] + 1)  # Bottom aligned
+                        
+                        tiles.append((spike_rect, (tile['type'], tile['variant'])))
                     # case 'orb':
                     #     tiles.append((pygame.Rect(tile['pos'][0] * self.tile_size, tile['pos'][1] * self.tile_size, self.tile_size, self.tile_size), (tile['type'], tile['variant'])))
         return tiles
+    
+    def is_below_map(self, entity_pos, tiles_threshold=2):
+        lowest_tile_y = self.lowest_y * self.tile_size
+        if entity_pos[1] > lowest_tile_y + (tiles_threshold * self.tile_size):
+            return True
+        return False
+        
     
     def autotile(self):
         for loc in self.tilemap:

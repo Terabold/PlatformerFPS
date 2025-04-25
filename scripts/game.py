@@ -3,19 +3,23 @@ import pygame
 import pygame_menu
 import random
 from scripts.gameStateManager import game_state_manager
-from scripts.utils import load_image, load_images, Animation, UIsize, load_sounds
+from scripts.utils import load_image, load_images, Animation, UIsize, load_sounds, draw_debug_info, update_camera_with_box
 from scripts.player import Player
 from scripts.tilemap import Tilemap
-from scripts.clouds import Clouds
+from scripts.humanagent import InputHandler
 from scripts.constants import *
 
+DEBUG_HITBOXES = True
+
 class Game:
-    def __init__(self, display):
+    def __init__(self, display, clock):
         self.display = display
+        self.clock = clock
         self.menu_active = False
         self.keys = {'left': False, 'right': False, 'jump': False}
-        
         pygame.font.init()
+
+        self.input_handler = InputHandler()
         
         self.tilemap = Tilemap(self, tile_size = TILE_SIZE)
         self.tilemap.load('map.json')
@@ -29,7 +33,7 @@ class Game:
             'grass': load_images('tiles/grass', scale=IMGscale),
             'stone': load_images('tiles/stone', scale=IMGscale),
             'ores': load_images('tiles/ores', scale=IMGscale),
-            'hardened clay': load_images('tiles/hardened clay', scale=IMGscale),
+            'hardened_clay': load_images('tiles/hardened clay', scale=IMGscale),
             'weather': load_images('tiles/weather', scale=IMGscale),
             'player': load_image('player/player.png', scale=PLAYERS_IMAGE_SIZE),
             'background': load_image('background.png', scale=DISPLAY_SIZE),
@@ -51,7 +55,7 @@ class Game:
             'death': load_sounds('death'),
             'jump': load_sounds('jump'),
             'collide': load_sounds('wallcollide'),
-            'finish': load_sounds('level_complete', volume=0.1),
+            'finish': load_sounds('level_complete'),
             'click': load_sounds('click'),
         }
 
@@ -62,6 +66,8 @@ class Game:
         self.buffer_time = 0
         
         self.scroll = [0, 0]
+        self.fps_font = pygame.font.Font(None, 36)
+        self.debug_hitboxes = False
         
         title_font = pygame.font.Font(FONT, UIsize(2))
         widget_font = pygame.font.Font(FONT, UIsize(2))
@@ -143,42 +149,8 @@ class Game:
         self.player.reset()
         self.keys = {'left': False, 'right': False, 'jump': False}
         self.menu_active = False
+        self.input_handler = InputHandler()
 
-    def update_camera_with_box(self):
-        box_width = 200
-        box_height = 250
-        
-        box_left = self.scroll[0] + (self.display.get_width() / 2) - (box_width / 2)
-        box_right = box_left + box_width
-        box_top = self.scroll[1] + (self.display.get_height() *0.8 ) - (box_height / 2) - 100
-        box_bottom = box_top + box_height
-        
-        player_x = self.player.rect().centerx
-        player_y = self.player.rect().centery
-        
-        target_x = self.scroll[0]
-        target_y = self.scroll[1]
-        
-        if player_x < box_left:
-            target_x = self.scroll[0] - (box_left - player_x)
-        elif player_x > box_right:
-            target_x = self.scroll[0] + (player_x - box_right)
-        
-        if player_y < box_top:
-            target_y = self.scroll[1] - (box_top - player_y)
-        elif player_y > box_bottom:
-            target_y = self.scroll[1] + (player_y - box_bottom)
-        
-        self.scroll[0] += (target_x - self.scroll[0]) / 15
-        self.scroll[1] += (target_y - self.scroll[1]) / 15
-        
-        screen_box = {
-            'left': box_left - self.scroll[0],
-            'right': box_right - self.scroll[0],
-            'top': box_top - self.scroll[1],
-            'bottom': box_bottom - self.scroll[1]
-        }
-        return screen_box
 
     def run(self):
         self.display.blit(self.assets['background'], (0, 0))
@@ -188,51 +160,33 @@ class Game:
             if event.type == pygame.QUIT:
                 pygame.quit()
                 sys.exit()
-        
+            
             if event.type == pygame.KEYDOWN:
+                if event.key == pygame.K_F3:  
+                    global DEBUG_HITBOXES
+                    DEBUG_HITBOXES = not DEBUG_HITBOXES
+                    print(f"Debug mode: {'ON' if DEBUG_HITBOXES else 'OFF'}")
                 if event.key == pygame.K_ESCAPE:
                     self.menu_active = not self.menu_active
-                
-                if not self.menu_active:
-                    if event.key == pygame.K_d:
-                        self.keys['right'] = True
-                    if event.key == pygame.K_a:
-                        self.keys['left'] = True
-                    if event.key == pygame.K_SPACE:
-                        self.keys['jump'] = True
 
-            if event.type == pygame.KEYUP:
-                if event.key == pygame.K_d:
-                    self.keys['right'] = False
-                if event.key == pygame.K_a:
-                    self.keys['left'] = False
-                if event.key == pygame.K_SPACE:
-                    self.keys['jump'] = False
-                    self.buffer_time = 0
+        self.keys, self.buffer_times = self.input_handler.process_events(events, self.menu_active)
 
-        if self.keys['jump']:
-            self.buffer_time += 1
-            if self.buffer_time > PLAYER_BUFFER:
-                self.buffer_time = PLAYER_BUFFER + 1
+        self.buffer_time = self.buffer_times['jump']
         
-        self.update_camera_with_box()
+        update_camera_with_box(self.player, self.scroll, DISPLAY_SIZE[0], DISPLAY_SIZE[1])
         render_scroll = (int(self.scroll[0]), int(self.scroll[1]))
             
         self.tilemap.render(self.display, offset=render_scroll)
-        
-        if not self.menu_active:
-            self.player.update(self.tilemap, self.keys)
-            
-        temp_surface = pygame.Surface((self.display.get_width(), self.display.get_height()), pygame.SRCALPHA)
-        
-        self.player.render(temp_surface, offset=render_scroll)
-        temp_mask = pygame.mask.from_surface(temp_surface)   
-        white_silhouette = temp_mask.to_surface(setcolor=(255, 255, 255), unsetcolor=(0,0,0,0))
-        for offset in [(-1, 0), (1, 0), (0, -1), (0, 1)]:
-            self.display.blit(white_silhouette, offset)
 
+        if DEBUG_HITBOXES and not self.menu_active:
+            draw_debug_info(self, self.display, render_scroll)  
+            fps = self.clock.get_fps()
+            fps_text = self.fps_font.render(f"FPS: {int(fps)}", True, (255, 255, 0))
+            self.display.blit(fps_text, (10, 10))
+
+        self.player.update(self.tilemap, self.keys)
         self.player.render(self.display, offset=render_scroll)
-        
+    
         if self.player.death: 
             self.countdeathframes += 1
             if not self.death_sound_played:

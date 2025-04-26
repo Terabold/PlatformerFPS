@@ -7,7 +7,8 @@ class gameStateManager:
         self.defualtState = self.currentState
         self.previousStates = deque()
         self.previousStates.append(self.defualtState)
-
+        self.player_type = 0 # 0 = human, 1 = ai
+        
     def getState(self):
         return self.currentState
     

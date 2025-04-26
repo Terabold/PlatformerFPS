@@ -21,7 +21,7 @@ DECCELARATION = 0.1   *TILE_SIZE/36 # friction with the ground on the x axis whe
 MAX_X_SPEED = 10   *TILE_SIZE/36 # x axis speed limit
 MAX_Y_SPEED = 18   *TILE_SIZE/36 # y axis speed limit
 
-WALL_MOMENTUM_PRESERVE = 0.25  # Percentage of upward velocity preserved when hitting wall
+WALL_MOMENTUM_PRESERVE = 0.15  # Percentage of upward velocity preserved when hitting wall
 WALL_MOMENTUM_FRAMES = 3 # amount of frames activated
 
 PLAYER_BUFFER = 5 # amount of frame buffer

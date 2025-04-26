@@ -993,16 +993,16 @@
             ]
         },
         "32;13": {
-            "type": "weather",
-            "variant": 3,
+            "type": "stone",
+            "variant": 1,
             "pos": [
                 32,
                 13
             ]
         },
         "33;13": {
-            "type": "weather",
-            "variant": 3,
+            "type": "stone",
+            "variant": 1,
             "pos": [
                 33,
                 13
@@ -2545,8 +2545,8 @@
             ]
         },
         "30;13": {
-            "type": "weather",
-            "variant": 3,
+            "type": "stone",
+            "variant": 1,
             "pos": [
                 30,
                 13
@@ -2569,8 +2569,8 @@
             ]
         },
         "31;13": {
-            "type": "weather",
-            "variant": 3,
+            "type": "stone",
+            "variant": 1,
             "pos": [
                 31,
                 13
@@ -2585,8 +2585,8 @@
             ]
         },
         "29;13": {
-            "type": "weather",
-            "variant": 3,
+            "type": "stone",
+            "variant": 1,
             "pos": [
                 29,
                 13
@@ -4829,6 +4829,110 @@
             "variant": 0,
             "pos": [
                 -7,
+                4
+            ]
+        },
+        "15;10": {
+            "type": "decor",
+            "variant": 0,
+            "pos": [
+                15,
+                10
+            ]
+        },
+        "15;9": {
+            "type": "decor",
+            "variant": 0,
+            "pos": [
+                15,
+                9
+            ]
+        },
+        "15;8": {
+            "type": "decor",
+            "variant": 0,
+            "pos": [
+                15,
+                8
+            ]
+        },
+        "15;7": {
+            "type": "decor",
+            "variant": 0,
+            "pos": [
+                15,
+                7
+            ]
+        },
+        "18;9": {
+            "type": "decor",
+            "variant": 0,
+            "pos": [
+                18,
+                9
+            ]
+        },
+        "18;8": {
+            "type": "decor",
+            "variant": 0,
+            "pos": [
+                18,
+                8
+            ]
+        },
+        "18;7": {
+            "type": "decor",
+            "variant": 0,
+            "pos": [
+                18,
+                7
+            ]
+        },
+        "18;6": {
+            "type": "decor",
+            "variant": 0,
+            "pos": [
+                18,
+                6
+            ]
+        },
+        "18;5": {
+            "type": "decor",
+            "variant": 0,
+            "pos": [
+                18,
+                5
+            ]
+        },
+        "21;7": {
+            "type": "decor",
+            "variant": 0,
+            "pos": [
+                21,
+                7
+            ]
+        },
+        "21;6": {
+            "type": "decor",
+            "variant": 0,
+            "pos": [
+                21,
+                6
+            ]
+        },
+        "21;5": {
+            "type": "decor",
+            "variant": 0,
+            "pos": [
+                21,
+                5
+            ]
+        },
+        "21;4": {
+            "type": "decor",
+            "variant": 0,
+            "pos": [
+                21,
                 4
             ]
         }

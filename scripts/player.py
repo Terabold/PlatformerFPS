@@ -38,24 +38,30 @@ class Player:
             self.action = action
             self.animation = self.game.assets['player/' + self.action].copy()
     
-    def update(self, tilemap, keys):
-        self.collisions = {'up': False, 'down': False, 'right': False, 'left': False}
+    def update(self, tilemap, keys, countdeathframes):
+        self.animation.update()
 
         if tilemap.is_below_map(self.pos):
             self.death = True
             self.velocity = [0, 0]
+            self.set_action('death')
+            return 
 
+        if countdeathframes > 40 or self.finishLevel:
+            return 
+        
+        self.collisions = {'up': False, 'down': False, 'right': False, 'left': False}
         if not self.death and not self.finishLevel:
             self.velocity[0] += (int(keys['right']) - int(keys['left'])) * PLAYER_SPEED
             x_acceleration = (1 - DECCELARATION) if int(keys['right']) - int(keys['left']) == 0 else (1 - ACCELERAION)
             self.velocity[0] = max(-MAX_X_SPEED, min(MAX_X_SPEED, self.velocity[0] * x_acceleration))
+
+            gravity = GRAVITY_DOWN if self.velocity[1] > 0 and not keys['jump'] else GRAVITY_UP
+            self.velocity[1] = max(-MAX_Y_SPEED, min(MAX_Y_SPEED, self.velocity[1] + gravity))
         else:
             self.velocity[0] = 0    
             self.velocity[1] = 0
             
-        gravity = GRAVITY_DOWN if self.velocity[1] > 0 and not keys['jump'] else GRAVITY_UP
-        self.velocity[1] = max(-MAX_Y_SPEED, min(MAX_Y_SPEED, self.velocity[1] + gravity))
-
         self.pos[0] += self.velocity[0]
         entity_rect = self.rect()
         for rect in tilemap.physics_rects_around(self.pos):
@@ -83,14 +89,14 @@ class Player:
         entity_rect = self.rect()
         for rect, tile_info in tilemap.interactive_rects_around(self.pos):
             if entity_rect.colliderect(rect):
-                tile_type, variant, *extra = tile_info
-                if tile_type == 'spikes':
+                tile_type = tile_info[0]
+                if tile_type in ['spikes', 'saws']:
                     self.death = True 
-                    self.velocity[0] = 0
+                    self.velocity = [0, 0]
+                    self.set_action('death')
+                    return
                 elif tile_type == 'finish':
                     self.finishLevel = True
-                elif tile_type == 'saws':
-                    self.death = True 
 
         if keys['right'] and not keys['left']:
             self.facing_right = True
@@ -127,8 +133,6 @@ class Player:
             self.set_action('fall')  
         else:
             self.set_action('idle')
-
-        self.animation.update()
         
         # Reset jump availability when key is released
         if not keys['jump']:

@@ -2,7 +2,7 @@ import pygame
 from scripts.constants import DISPLAY_SIZE, FPS
 from scripts.game import Game
 from scripts.menu import Menu
-from scripts.gameStateManager import game_state_manager
+from scripts.GameManager import game_state_manager
 
 class Engine:
 

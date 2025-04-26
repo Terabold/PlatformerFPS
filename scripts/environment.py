@@ -17,14 +17,7 @@ class Environment:
         self.display = display
         self.clock = clock
         self.menu = False
-        self.keys = {'left': False, 'right': False, 'jump': False}
-        self.buffer_times = {'jump': 0}
-        
-        if player_type == 0:
-            self.input_handler = InputHandler()
-        elif player_type == 1:
-            self.input_handler = InputHandler() # place holder for AI input handler
-        
+
         self.tilemap = Tilemap(self, tile_size=TILE_SIZE)
         self.tilemap.load('map.json')
         IMGscale = (self.tilemap.tile_size, self.tilemap.tile_size)
@@ -51,7 +44,6 @@ class Environment:
             'finish': load_images('tiles/Checkpoint', scale=IMGscale),
             'saws': load_images('tiles/saws', scale=IMGscale),
         }
-
         
         self.sfx = {
             'death': load_sounds('death', volume=0.25),
@@ -60,27 +52,44 @@ class Environment:
             'finish': load_sounds('level_complete'),
             'click': load_sounds('click'),
         }
-        self.death_sound_played = False
-        self.finish_sound_played = False
-
-        self.countdeathframes = 0
 
         self.pos = self.tilemap.extract([('spawners', 0), ('spawners', 1)])
         self.default_pos = self.pos[0]['pos'] if self.pos else [10, 10]
+        self.player = Player(self, self.default_pos, PLAYERS_SIZE, self.sfx)
 
-        self.buffer_time = 0
-        self.scroll = [0, 0]
+        self.keys = {'left': False, 'right': False, 'jump': False}
 
+        self.buffer_times = {'jump': 0}
+
+        self.reset()
         pygame.font.init()
         self.fps_font = pygame.font.Font(FONT, 36)
-        
-        self.player = Player(self, self.default_pos, PLAYERS_SIZE, self.sfx)
-        self.player_finished = False
+
+        if player_type == 0:
+            self.input_handler = InputHandler()
+        elif player_type == 1:
+            self.input_handler = InputHandler() 
+
+        self.scroll = [0, 0]
 
         self._setup_menus()
-
+    
+    def reset(self):
+        self.death_sound_played = False
+        self.finish_sound_played = False
+        self.countdeathframes = 0
+        self.player.reset()
+        self.keys = {'left': False, 'right': False, 'jump': False}
+        self.buffer_times = {'jump': 0}
+        self.menu = False
+        self.input_handler = InputHandler()
         self.debug_mode = False
-        
+        self.death_sound_played = False
+        self.finish_sound_played = False
+        self.countdeathframes = 0
+        self.buffer_time = 0
+        self.player_finished = False
+
     def _setup_menus(self):
         title_font = pygame.font.Font(FONT, UIsize(2))
         widget_font = pygame.font.Font(FONT, UIsize(2))
@@ -153,15 +162,6 @@ class Environment:
         self.reset()
         game_state_manager.returnToPrevState()
         
-    def reset(self):
-        self.death_sound_played = False
-        self.finish_sound_played = False
-        self.countdeathframes = 0
-        self.player.reset()
-        self.keys = {'left': False, 'right': False, 'jump': False}
-        self.buffer_times = {'jump': 0}
-        self.menu = False
-        self.input_handler = InputHandler()
 
     def get_state(self):
         if self.ai_train_mode:
@@ -234,10 +234,7 @@ class Environment:
         self.tilemap.render(self.display, offset=self.render_scroll)
 
         if self.debug_mode and not self.menu:
-            draw_debug_info(self, self.display, self.render_scroll)  
-            fps = self.clock.get_fps()
-            fps_text = self.fps_font.render(f"FPS: {int(fps)}", True, (255, 255, 0))
-            self.display.blit(fps_text, (10, 10))
+            self.debug_render()
 
         self.player.render(self.display, offset=self.render_scroll)
         
@@ -259,3 +256,10 @@ class Environment:
                 self.level_complete_menu.update(events)
             else:
                 self.pause_menu.update(events)
+
+
+    def debug_render(self):
+        draw_debug_info(self, self.display, self.render_scroll)  
+        fps = self.clock.get_fps()
+        fps_text = self.fps_font.render(f"FPS: {int(fps)}", True, (255, 255, 0))
+        self.display.blit(fps_text, (10, 10))

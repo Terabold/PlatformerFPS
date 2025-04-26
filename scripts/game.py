@@ -9,11 +9,6 @@ class Game:
         self.display = display
         self.clock = clock
         player_type = game_state_manager.player_type
-        if player_type == 0:
-            self.environment = Environment(display, clock, player_type=1)
-        elif player_type == 1:
-            self.environment = Environment(display, clock, player_type=0)
-
         self.environment = Environment(display, clock, player_type=player_type)
         
     def resume_game(self):
@@ -36,7 +31,7 @@ class Game:
                 if event.key == pygame.K_F3:  
                     self.environment.debug_mode = not self.environment.debug_mode  
                     print(f"Debug mode: {'ON' if self.environment.debug_mode else 'OFF'}")
-                if event.key == pygame.K_ESCAPE:
+                if event.key == pygame.K_ESCAPE and not self.environment.player.death:
                     self.environment.menu = not self.environment.menu
         
         if self.environment.menu:

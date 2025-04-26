@@ -119,9 +119,9 @@ def draw_debug_info(game, surface, offset):
                     )
     
     # Show debug status text
-    debug_font = pygame.font.Font(None, 20)
+    debug_font = pygame.font.Font(FONT, 20)
     debug_text = debug_font.render("Debug: Hitboxes Visible", True, (0, 255, 0))
-    surface.blit(debug_text, (10, 40))
+    surface.blit(debug_text, (10, 80))
 
 def update_camera_with_box(player, scroll, display_width, display_height):
     box_width = 200
@@ -149,7 +149,7 @@ def update_camera_with_box(player, scroll, display_width, display_height):
         target_y = scroll[1] + (player_y - box_bottom)
     
     scroll[0] += (target_x - scroll[0]) / 15
-    scroll[1] += (target_y - scroll[1]) / 15
+    scroll[1] += (target_y - scroll[1]) / 10
     
     return scroll
 class Animation:

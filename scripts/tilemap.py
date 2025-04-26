@@ -134,11 +134,9 @@ class Tilemap:
                     case 'finish':
                         tiles.append((pygame.Rect(tile['pos'][0] * self.tile_size, tile['pos'][1] * self.tile_size, self.tile_size, self.tile_size), (tile['type'], tile['variant'])))
                     case 'spikes':
-                        # For spikes at the bottom of the tile
                         spike_width = int(self.tile_size * SPIKE_SIZE[0])  # Use width from SPIKE_SIZE
                         spike_height = int(self.tile_size * SPIKE_SIZE[1])  # Use height from SPIKE_SIZE
                         
-                        # Create the spike rectangle
                         spike_rect = pygame.Rect(
                             0, 0,  # Placeholder - will position with centerx/bottom
                             spike_width,

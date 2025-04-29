@@ -159,7 +159,7 @@ class Tilemap:
         return False
 
     def render(self, surf, offset=(0, 0), zoom=10):
-        # For offgrid tiles - render all of them
+        # For offgrid tiles
         for tile in self.offgrid_tiles:
             if tile['type'] == 'spikes' and 'rotation' in tile:
                 img = self.game.get_rotated_image(tile['type'], tile['variant'], tile['rotation'])
@@ -170,8 +170,8 @@ class Tilemap:
                 surf.blit(self.game.assets[tile['type']][tile['variant']], 
                         (tile['pos'][0] * self.tile_size - offset[0], 
                         tile['pos'][1] * self.tile_size - offset[1]))
-                
-        # For grid tiles - simple approach: render all tiles
+                    
+        # For grid tiles
         for loc in self.tilemap:
             tile = self.tilemap[loc]
             if tile['type'] == 'spikes' and 'rotation' in tile:

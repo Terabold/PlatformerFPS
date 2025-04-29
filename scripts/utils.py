@@ -27,6 +27,12 @@ def load_images(path, scale = None, remove_color = (0, 0, 0)):
         images.append(load_image(path + '/' + img_name, scale, remove_color))
     return images
 
+def find_next_numeric_filename(directory, extension='.json'):
+    existing_files = os.listdir(directory)
+    numeric_names = [int(f.split('.')[0]) for f in existing_files if f.split('.')[0].isdigit() and f.endswith(extension)]
+    next_number = max(numeric_names, default=-1) + 1
+    return f"{next_number}{extension}"
+
 def draw_debug_info(game, surface, offset):
     # Draw player rect
     player_rect = game.player.rect()
@@ -162,8 +168,6 @@ class Animation:
     
     def img(self):
         return self.images[int(self.frame / self.img_duration)]
-
-
 
 from pygame import Rect
 class Button:

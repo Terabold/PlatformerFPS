@@ -1,6 +1,6 @@
-# Modified Environment class that uses custom menu instead of pygame_menu
 import pygame
 import random
+import os
 from scripts.GameManager import game_state_manager
 from scripts.constants import *
 from scripts.player import Player
@@ -149,20 +149,24 @@ class Environment:
         self.rotated_assets = {}
         self.show_rotation_values = False
         self.tilemap = Tilemap(self, tile_size=TILE_SIZE)
-        map_path = game_state_manager.selected_map if game_state_manager.selected_map else 'data/maps/map.json'
+        map_path = game_state_manager.selected_map 
         self.tilemap.load(map_path)
         IMGscale = (self.tilemap.tile_size, self.tilemap.tile_size)
 
-        self.assets = {
+        self.assets = {          
             'decor': load_images('tiles/decor', scale=IMGscale),
             'grass': load_images('tiles/grass', scale=IMGscale),
             'stone': load_images('tiles/stone', scale=IMGscale),
+            'spawners': load_images('tiles/spawners', scale=IMGscale),
+            'spikes': load_images('tiles/spikes', scale=IMGscale),
+            'finish': load_images('tiles/finish', scale=IMGscale),
             'ores': load_images('tiles/ores', scale=IMGscale),
-            'hardened_clay': load_images('tiles/hardened clay', scale=IMGscale),
             'weather': load_images('tiles/weather', scale=IMGscale),
+            # 'nether': load_images('tiles/nether', scale=IMGscale),
+            # 'wood': load_images('tiles/wood', scale=IMGscale),
+            # 'wool': load_images('tiles/wool', scale=IMGscale),       
             'player': load_image('player/player.png', scale=PLAYERS_IMAGE_SIZE),
             'background': load_image('background.png', scale=DISPLAY_SIZE),
-            'clouds': load_images('clouds'),
             'player/run': Animation(load_images('player/run', scale=PLAYERS_IMAGE_SIZE), img_dur=5),
             'player/idle': Animation(load_images('player/idle', scale=PLAYERS_IMAGE_SIZE), img_dur=25),
             'player/wallslide': Animation(load_images('player/wallslide', scale=PLAYERS_IMAGE_SIZE), loop=False),
@@ -170,9 +174,6 @@ class Environment:
             'player/jump': Animation(load_images('player/jump', scale=PLAYERS_IMAGE_SIZE), img_dur=4, loop=False),
             'player/fall': Animation(load_images('player/fall', scale=PLAYERS_IMAGE_SIZE), img_dur=4, loop=False),
             'player/death': Animation(load_images('player/death', scale=(PLAYERS_IMAGE_SIZE[0]*2, PLAYERS_IMAGE_SIZE[1])), img_dur=6, loop=False),
-            'spawners': load_images('tiles/spawners', scale=IMGscale),
-            'spikes': load_images('tiles/spikes', scale=IMGscale),
-            'finish': load_images('tiles/Checkpoint', scale=IMGscale),
             'saws': load_images('tiles/saws', scale=IMGscale),
         }
         
@@ -203,7 +204,6 @@ class Environment:
 
         self.scroll = self.default_pos.copy()
 
-        # Setup custom menus
         self.game_menu = GameMenu(self)
     
     def reset(self):
@@ -230,10 +230,8 @@ class Environment:
         game_state_manager.returnToPrevState()
 
     def get_rotated_image(self, tile_type, variant, rotation):
-        # Create a cache key
         key = f"{tile_type}_{variant}_{rotation}"
         
-        # If not in cache, create and store
         if key not in self.rotated_assets:
             original = self.assets[tile_type][variant]
             self.rotated_assets[key] = pygame.transform.rotate(original, rotation)
@@ -242,8 +240,6 @@ class Environment:
     
     def get_state(self):
         if self.ai_train_mode:
-            # Create a simple state representation for the AI
-            # This could include player position, velocity, surrounding tiles, etc.
             player_rect = self.player.rect()
             player_x = player_rect.centerx
             player_y = player_rect.centery

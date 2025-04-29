@@ -7,7 +7,11 @@ from scripts.utils import MenuScreen
 
 class Menu:
     def __init__(self, screen):
-        self.sfx = {'click': load_sounds('click')}
+        self.sfx = {
+            'click': load_sounds('click'),
+            'music': pygame.mixer.Sound('data\sfx\music\music.mp3')
+            }
+        self.played_music = False
         self.screen = screen
         self.background = pygame.image.load(MENUBG)
         self.background = pygame.transform.scale(self.background, DISPLAY_SIZE)
@@ -48,6 +52,7 @@ class Menu:
             self.main_menu.disable()
         self.options_menu.enable()
         self.active_menu = self.options_menu
+        
 
     def _return_to_main(self):
         self.map_menu.disable()
@@ -65,7 +70,7 @@ class Menu:
             self.options_menu.update_player_type_text()
         
     def _select_map(self, map_file):
-        self.selected_map = map_file
+        self.selected_map = os.path.join('data', 'maps', map_file)  
         self._show_options_menu()
 
     def play_game(self):
@@ -82,12 +87,26 @@ class Menu:
         pygame.quit()
         exit()
 
+    # def play_music(self):
+    #     if not self.played_music:
+    #         self.sfx['music'].set_volume(0.1)  
+    #         self.sfx['music'].play(-1)
+    #         self.played_music = True
+
+    # def stop_music(self):
+    #     if self.played_music:
+    #         self.sfx['music'].stop()
+    #         self.played_music = False
+
     def run(self):
         self.screen.blit(self.background, (0, 0))
-        
+
+        # self.play_music()
+
         events = pygame.event.get()
         for event in events:
             if event.type == pygame.QUIT:
+                # self.stop_music()
                 pygame.quit()
                 exit()
 

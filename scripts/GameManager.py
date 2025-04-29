@@ -8,7 +8,7 @@ class gameStateManager:
         self.previousStates = deque()
         self.previousStates.append(self.defualtState)
         self.player_type = 0 # 0 = human, 1 = ai
-        self.selected_map = None
+        self.selected_map = r'data\maps\0.json' # default map
         
     def getState(self):
         return self.currentState

@@ -17,7 +17,8 @@ class Environment:
         self.display = display
         self.clock = clock
         self.menu = False
-
+        self.rotated_assets = {}
+        self.show_rotation_values = False
         self.tilemap = Tilemap(self, tile_size=TILE_SIZE)
         self.tilemap.load('map.json')
         IMGscale = (self.tilemap.tile_size, self.tilemap.tile_size)
@@ -162,7 +163,17 @@ class Environment:
         self.reset()
         game_state_manager.returnToPrevState()
         
-
+    def get_rotated_image(self, tile_type, variant, rotation):
+        # Create a cache key
+        key = f"{tile_type}_{variant}_{rotation}"
+        
+        # If not in cache, create and store
+        if key not in self.rotated_assets:
+            original = self.assets[tile_type][variant]
+            self.rotated_assets[key] = pygame.transform.rotate(original, rotation)
+        
+        return self.rotated_assets[key]
+    
     def get_state(self):
         if self.ai_train_mode:
             # Create a simple state representation for the AI

@@ -27,98 +27,87 @@ def load_images(path, scale = None, remove_color = (0, 0, 0)):
         images.append(load_image(path + '/' + img_name, scale, remove_color))
     return images
 
-def draw_debug_info(game, surface, offset):    
-    
+def draw_debug_info(game, surface, offset):
+    # Draw player rect
     player_rect = game.player.rect()
     pygame.draw.rect(
         surface, 
-        (255, 0, 0),  # Red
-        (
-            player_rect.x - offset[0], 
-            player_rect.y - offset[1], 
-            player_rect.width, 
-            player_rect.height
-        ), 
-        2  # Line thickness
+        (255, 0, 0),  
+        (player_rect.x - offset[0], player_rect.y - offset[1], 
+         player_rect.width, player_rect.height), 
+        2
     )
     
-    # Get interactive tiles around the player
-    interactive_rects = game.tilemap.interactive_rects_around(game.player.pos)
+    # Get visible area only
+    visible_start_x = offset[0] // game.tilemap.tile_size
+    visible_end_x = (offset[0] + surface.get_width()) // game.tilemap.tile_size + 1
+    visible_start_y = offset[1] // game.tilemap.tile_size
+    visible_end_y = (offset[1] + surface.get_height()) // game.tilemap.tile_size + 1
     
-    # Draw all interactive rects (including spikes)
+    # Limit debug drawing to visible spikes only
+    for x in range(visible_start_x, visible_end_x):
+        for y in range(visible_start_y, visible_end_y):
+            loc = f"{x};{y}"
+            if loc in game.tilemap.tilemap:
+                tile = game.tilemap.tilemap[loc]
+                if tile['type'] == 'spikes':
+                    # Draw tile outline
+                    pygame.draw.rect(
+                        surface,
+                        (255, 192, 203),
+                        (tile['pos'][0] * game.tilemap.tile_size - offset[0],
+                         tile['pos'][1] * game.tilemap.tile_size - offset[1],
+                         game.tilemap.tile_size, game.tilemap.tile_size),
+                        1
+                    )
+                    
+                    # Get spike rect
+                    spike_rect = game.tilemap.get_spike_rect_with_rotation(tile)
+                    
+                    # Draw spike hitbox
+                    pygame.draw.rect(
+                        surface,
+                        (255, 255, 0),
+                        (spike_rect.x - offset[0], spike_rect.y - offset[1],
+                         spike_rect.width, spike_rect.height),
+                        2
+                    )
+                    
+                    # Show rotation value (only if really needed)
+                    if game.show_rotation_values:  # Add this flag to your game class
+                        rotation = tile.get('rotation', 0)
+                        debug_font = pygame.font.Font(FONT, 10)
+                        rotation_text = debug_font.render(f"{rotation}°", True, (255, 255, 255))
+                        surface.blit(rotation_text, (
+                            tile['pos'][0] * game.tilemap.tile_size - offset[0] + 2,
+                            tile['pos'][1] * game.tilemap.tile_size - offset[1] + 2
+                        ))
+    
+    # Draw interactive rects around player (limit to a smaller area)
+    player_pos = game.player.pos
+    interactive_rects = game.tilemap.interactive_rects_around(player_pos)
+    
     for rect_data in interactive_rects:
         rect, tile_info = rect_data
+        color = (255, 255, 0) if tile_info[0] == 'spikes' else (0, 255, 0) if tile_info[0] == 'finish' else (0, 0, 255)
         
-        # Choose color based on tile type
-        if tile_info[0] == 'spikes':
-            color = (255, 255, 0)  # Yellow for spikes
-        elif tile_info[0] == 'finish':
-            color = (0, 255, 0)  # Green for finish
-        else:
-            color = (0, 0, 255)  # Blue for other interactive tiles
-        
-        # Draw the hitbox
         pygame.draw.rect(
             surface,
             color,
-            (
-                rect.x - offset[0],
-                rect.y - offset[1],
-                rect.width,
-                rect.height
-            ),
-            2  # Line thickness
+            (rect.x - offset[0], rect.y - offset[1],
+             rect.width, rect.height),
+            2
         )
         
-        # Draw a dot at the center of each rect
+        # Draw center dot only if needed
         pygame.draw.circle(
             surface,
-            (255, 165, 0),  # Orange
+            (255, 165, 0),
             (rect.centerx - offset[0], rect.centery - offset[1]),
             3
         )
     
-    # Draw all spike tiles explicitly to verify spike locations
-    for y in range(offset[1] // game.tilemap.tile_size, (offset[1] + surface.get_height()) // game.tilemap.tile_size + 1):
-        for x in range(offset[0] // game.tilemap.tile_size, (offset[0] + surface.get_width()) // game.tilemap.tile_size + 1):
-            loc = str(x) + ';' + str(y)
-            if loc in game.tilemap.tilemap:
-                tile = game.tilemap.tilemap[loc]
-                if tile['type'] == 'spikes':
-                    # Draw tile outline in pink
-                    pygame.draw.rect(
-                        surface,
-                        (255, 192, 203),  # Pink
-                        (
-                            tile['pos'][0] * game.tilemap.tile_size - offset[0],
-                            tile['pos'][1] * game.tilemap.tile_size - offset[1],
-                            game.tilemap.tile_size,
-                            game.tilemap.tile_size
-                        ),
-                        1  # Very thin line
-                    )
-                    
-                    # Draw actual spike hitbox in yellow - same calculation as in tilemap.py
-                    spike_width = int(game.tilemap.tile_size * SPIKE_SIZE[0])
-                    spike_height = int(game.tilemap.tile_size * SPIKE_SIZE[1])
-                    
-                    spike_rect = pygame.Rect(0, 0, spike_width, spike_height)
-                    spike_rect.centerx = game.tilemap.tile_size * tile['pos'][0] + game.tilemap.tile_size // 2
-                    spike_rect.bottom = game.tilemap.tile_size * (tile['pos'][1] + 1)
-                    
-                    pygame.draw.rect(
-                        surface,
-                        (255, 255, 0),  # Yellow
-                        (
-                            spike_rect.x - offset[0],
-                            spike_rect.y - offset[1],
-                            spike_rect.width,
-                            spike_rect.height
-                        ),
-                        2  # Line thickness
-                    )
-    
-    # Show debug status text
+    # Show debug status
     debug_font = pygame.font.Font(FONT, 20)
     debug_text = debug_font.render("Debug: Hitboxes Visible", True, (0, 255, 0))
     surface.blit(debug_text, (10, 80))

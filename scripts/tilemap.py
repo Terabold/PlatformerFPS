@@ -1,19 +1,7 @@
 import json
 
 import pygame
-from scripts.constants import PHYSICS_TILES, AUTOTILE_TYPES, INTERACTIVE_TILES, SPIKE_SIZE
-
-AUTOTILE_MAP = {
-    tuple(sorted([(1, 0), (0, 1)])): 0,
-    tuple(sorted([(1, 0), (0, 1), (-1, 0)])): 1,
-    tuple(sorted([(-1, 0), (0, 1)])): 2, 
-    tuple(sorted([(-1, 0), (0, -1), (0, 1)])): 3,
-    tuple(sorted([(-1, 0), (0, -1)])): 4,
-    tuple(sorted([(-1, 0), (0, -1), (1, 0)])): 5,
-    tuple(sorted([(1, 0), (0, -1)])): 6,
-    tuple(sorted([(1, 0), (0, -1), (0, 1)])): 7,
-    tuple(sorted([(1, 0), (-1, 0), (0, 1), (0, -1)])): 8,
-}
+from scripts.constants import PHYSICS_TILES, INTERACTIVE_TILES, SPIKE_SIZE
 
 NEIGHBOR_OFFSETS = [(-1, 0), (-1, -1), (0, -1), (1, -1), (1, 0), (0, 0), (-1, 1), (0, 1), (1, 1)]
 
@@ -93,14 +81,12 @@ class Tilemap:
         f.close()
         
     def load(self, path):
-        f = open(path, 'r')
-        map_data = json.load(f)
-        f.close()
-        
+        with open(path, 'r') as f:
+            map_data = json.load(f)
         self.tilemap = map_data['tilemap']
         self.offgrid_tiles = map_data['offgrid']
         self.lowest_y = map_data.get('lowest_y', 0)
-        
+
         spawner_tiles = self.extract([('spawners', 0), ('spawners', 1)], keep=True)
         if len(spawner_tiles) > 1:
             self.extract([('spawners', 0), ('spawners', 1)], keep=False)
@@ -128,7 +114,6 @@ class Tilemap:
     # Updated to handle spike rotation
     
     def get_spike_rect_with_rotation(self, tile):
-        """Optimized spike rect calculation"""
         spike_width = int(self.tile_size * SPIKE_SIZE[0])
         spike_height = int(self.tile_size * SPIKE_SIZE[1])
         rotation = tile.get('rotation', 0)
@@ -165,8 +150,6 @@ class Tilemap:
                     case 'spikes':
                         spike_rect = self.get_spike_rect_with_rotation(tile)
                         tiles.append((spike_rect, (tile['type'], tile['variant'])))
-                    # case 'orb':
-                    #     tiles.append((pygame.Rect(tile['pos'][0] * self.tile_size, tile['pos'][1] * self.tile_size, self.tile_size, self.tile_size), (tile['type'], tile['variant'])))
         return tiles
     
     def is_below_map(self, entity_pos, tiles_threshold=2):
@@ -174,23 +157,9 @@ class Tilemap:
         if entity_pos[1] > lowest_tile_y + (tiles_threshold * self.tile_size):
             return True
         return False
-        
-    
-    def autotile(self):
-        for loc in self.tilemap:
-            tile = self.tilemap[loc]
-            neighbors = set()
-            for shift in [(1, 0), (-1, 0), (0, -1), (0, 1)]:
-                check_loc = str(tile['pos'][0] + shift[0]) + ';' + str(tile['pos'][1] + shift[1])
-                if check_loc in self.tilemap:
-                    if self.tilemap[check_loc]['type'] == tile['type']:
-                        neighbors.add(shift)
-            neighbors = tuple(sorted(neighbors))
-            if (tile['type'] in AUTOTILE_TYPES) and (neighbors in AUTOTILE_MAP):
-                tile['variant'] = AUTOTILE_MAP[neighbors]
 
     def render(self, surf, offset=(0, 0), zoom=10):
-        # For offgrid tiles
+        # For offgrid tiles - render all of them
         for tile in self.offgrid_tiles:
             if tile['type'] == 'spikes' and 'rotation' in tile:
                 img = self.game.get_rotated_image(tile['type'], tile['variant'], tile['rotation'])
@@ -202,19 +171,15 @@ class Tilemap:
                         (tile['pos'][0] * self.tile_size - offset[0], 
                         tile['pos'][1] * self.tile_size - offset[1]))
                 
-        # For grid tiles - optimize the same way
-        # Only render tiles that are visible
-        for x in range(offset[0] // self.tile_size, (offset[0] + surf.get_width()) // self.tile_size + 1):
-            for y in range(offset[1] // self.tile_size, (offset[1] + surf.get_height()) // self.tile_size + 1):
-                loc = str(x) + ';' + str(y)
-                if loc in self.tilemap:
-                    tile = self.tilemap[loc]
-                    if tile['type'] == 'spikes' and 'rotation' in tile:
-                        img = self.game.get_rotated_image(tile['type'], tile['variant'], tile['rotation'])
-                        x_pos = tile['pos'][0] * self.tile_size - offset[0] - (img.get_width() - self.tile_size) // 2
-                        y_pos = tile['pos'][1] * self.tile_size - offset[1] - (img.get_height() - self.tile_size) // 2
-                        surf.blit(img, (x_pos, y_pos))
-                    else:
-                        surf.blit(self.game.assets[tile['type']][tile['variant']], 
-                                (tile['pos'][0] * self.tile_size - offset[0], 
-                                tile['pos'][1] * self.tile_size - offset[1]))
+        # For grid tiles - simple approach: render all tiles
+        for loc in self.tilemap:
+            tile = self.tilemap[loc]
+            if tile['type'] == 'spikes' and 'rotation' in tile:
+                img = self.game.get_rotated_image(tile['type'], tile['variant'], tile['rotation'])
+                x_pos = tile['pos'][0] * self.tile_size - offset[0] - (img.get_width() - self.tile_size) // 2
+                y_pos = tile['pos'][1] * self.tile_size - offset[1] - (img.get_height() - self.tile_size) // 2
+                surf.blit(img, (x_pos, y_pos))
+            else:
+                surf.blit(self.game.assets[tile['type']][tile['variant']], 
+                        (tile['pos'][0] * self.tile_size - offset[0], 
+                        tile['pos'][1] * self.tile_size - offset[1]))

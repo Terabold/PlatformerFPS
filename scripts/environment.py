@@ -1,15 +1,144 @@
+# Modified Environment class that uses custom menu instead of pygame_menu
 import pygame
 import random
-import pygame_menu
 from scripts.GameManager import game_state_manager
 from scripts.constants import *
 from scripts.player import Player
 from scripts.humanagent import InputHandler
 from scripts.tilemap import Tilemap
-from scripts.utils import load_image, load_images, Animation, UIsize, load_sounds, draw_debug_info, update_camera_with_box
-import math
-import numpy as np
-import sys
+from scripts.utils import (
+    load_image, load_images, Animation, load_sounds, 
+    draw_debug_info, update_camera_with_box, MenuScreen
+)
+
+
+class PauseMenuScreen(MenuScreen):
+    def initialize(self):
+        self.title = "Game Paused"
+        
+        center_x = self.parent.display_size[0] // 2
+        
+        button_texts = ['Resume Game', 'Restart Level', 'Main Menu']
+        button_actions = [
+            self.parent.resume_game,
+            self.parent.reset,
+            self.parent.return_to_main
+        ]
+        
+        self.button_manager.create_centered_button_list(
+            button_texts, 
+            button_actions, 
+            center_x, 
+            400
+        )
+
+class LevelCompleteMenuScreen(MenuScreen):
+    def initialize(self):
+        self.title = "Level Complete!"
+        
+        center_x = self.parent.display_size[0] // 2
+        
+        button_texts = ['Play Again', 'Main Menu']
+        button_actions = [
+            self.parent.reset,
+            self.parent.return_to_main
+        ]
+        
+        self.button_manager.create_centered_button_list(
+            button_texts, 
+            button_actions, 
+            center_x, 
+            400
+        )
+
+class GameOverMenuScreen(MenuScreen):
+    def initialize(self):
+        self.title = "Game Over"
+        
+        center_x = self.parent.display_size[0] // 2
+        
+        button_texts = ['Restart Level', 'Main Menu']
+        button_actions = [
+            self.parent.reset,
+            self.parent.return_to_main
+        ]
+        
+        self.button_manager.create_centered_button_list(
+            button_texts, 
+            button_actions, 
+            center_x, 
+            400
+        )
+
+class GameMenu:
+    def __init__(self, environment):
+        self.environment = environment
+        self.screen = environment.display
+        self.background = None 
+        self.display_size = DISPLAY_SIZE
+        self.font_path = FONT
+        
+        self.button_props = {
+            'padding': 30,
+            'height': 80,
+            'min_width': 300,  
+            'text_padding': 40  
+        }
+        
+        self.pause_menu = PauseMenuScreen(self, "Game Paused")
+        self.level_complete_menu = LevelCompleteMenuScreen(self, "Level Complete!")
+        self.game_over_menu = GameOverMenuScreen(self, "Game Over")
+        
+        self.active_menu = None
+    
+    def _play_sound(self, sound_key):
+        if sound_key in self.environment.sfx:
+            random.choice(self.environment.sfx[sound_key]).play()
+    
+    def resume_game(self):
+        self.environment.menu = False
+        self.active_menu = None
+        self._play_sound('click')
+    
+    def reset(self):
+        self.environment.reset()
+        self._play_sound('click')
+    
+    def return_to_main(self):
+        self.environment.return_to_main()
+        self._play_sound('click')
+    
+    def show_pause_menu(self):
+        self.pause_menu.enable()
+        self.level_complete_menu.disable()
+        self.game_over_menu.disable()
+        self.active_menu = self.pause_menu
+    
+    def show_level_complete_menu(self):
+        self.pause_menu.disable()
+        self.level_complete_menu.enable()
+        self.game_over_menu.disable()
+        self.active_menu = self.level_complete_menu
+    
+    def show_game_over_menu(self):
+        self.pause_menu.disable()
+        self.level_complete_menu.disable()
+        self.game_over_menu.enable()
+        self.active_menu = self.game_over_menu
+    
+    def update(self, events):
+        if self.active_menu:
+            self.active_menu.update(events)
+    
+    def draw(self, surface):
+        if self.active_menu:
+            # Create semi-transparent overlay
+            overlay = pygame.Surface((self.display_size[0], self.display_size[1]), pygame.SRCALPHA)
+            overlay.fill((0, 0, 0, 175))  # Semi-transparent black
+            surface.blit(overlay, (0, 0))
+            
+            # Draw active menu
+            self.active_menu.draw(surface)
 
 class Environment:
     def __init__(self, display, clock, ai_train_mode=False, player_type=0):
@@ -20,7 +149,8 @@ class Environment:
         self.rotated_assets = {}
         self.show_rotation_values = False
         self.tilemap = Tilemap(self, tile_size=TILE_SIZE)
-        self.tilemap.load('map.json')
+        map_path = game_state_manager.selected_map if game_state_manager.selected_map else 'data/maps/map.json'
+        self.tilemap.load(map_path)
         IMGscale = (self.tilemap.tile_size, self.tilemap.tile_size)
 
         self.assets = {
@@ -71,9 +201,10 @@ class Environment:
         elif player_type == 1:
             self.input_handler = InputHandler() 
 
-        self.scroll = [0, 0]
+        self.scroll = self.default_pos.copy()
 
-        self._setup_menus()
+        # Setup custom menus
+        self.game_menu = GameMenu(self)
     
     def reset(self):
         self.death_sound_played = False
@@ -91,78 +222,13 @@ class Environment:
         self.buffer_time = 0
         self.player_finished = False
 
-    def _setup_menus(self):
-        title_font = pygame.font.Font(FONT, UIsize(2))
-        widget_font = pygame.font.Font(FONT, UIsize(2))
-        
-        self.menu_theme = pygame_menu.themes.Theme(
-            background_color=(0, 0, 0, 175),  
-            title_background_color=(0, 0, 0, 0),
-            title_font=title_font,  
-            title_font_size=UIsize(2),
-            title_font_color=(255, 170, 0),
-            title_offset=(20, 20),
-            widget_font=widget_font,  
-            widget_font_color=WHITE,
-            widget_margin=(0, 20),
-        )
-        
-        selection_effect = pygame_menu.widgets.LeftArrowSelection(arrow_size=(15, 20))
-        self.menu_theme.widget_selection_effect = selection_effect
-        
-        self.pause_menu = pygame_menu.Menu(
-            height=DISPLAY_SIZE[1] // 2.5,
-            width=DISPLAY_SIZE[0] // 2,
-            title='Game Paused',
-            theme=self.menu_theme,
-            center_content=True,
-            mouse_motion_selection=True,
-        )
-
-        self.pause_menu.add.label('', font_size=1)
-
-        def button_click_with_sound(action_func):
-            def wrapper():
-                random.choice(self.sfx['click']).play()
-                action_func()
-            return wrapper
-        self.pause_menu.add.button('Resume Game', button_click_with_sound(self.resume_game))
-        self.pause_menu.add.button('Restart Level', button_click_with_sound(self.reset))
-        self.pause_menu.add.button('Main Menu', button_click_with_sound(self.return_to_main))
-        
-        self.level_complete_menu = pygame_menu.Menu(
-            height=DISPLAY_SIZE[1] // 2.5,
-            width=DISPLAY_SIZE[0] // 2,
-            title='Level Complete!',
-            theme=self.menu_theme,
-            center_content=True,
-            mouse_motion_selection=True,
-        )
-
-        self.level_complete_menu.add.label('', font_size=1)
-        self.level_complete_menu.add.button('Play Again', button_click_with_sound(self.reset))
-        self.level_complete_menu.add.button('Main Menu', button_click_with_sound(self.return_to_main))
-
-        self.death_menu = pygame_menu.Menu(
-            height=DISPLAY_SIZE[1] // 2.5,
-            width=DISPLAY_SIZE[0] // 2,
-            title='Game Over',
-            theme=self.menu_theme,
-            center_content=True,
-            mouse_motion_selection=True,
-        )
-
-        self.death_menu.add.label('', font_size=1)
-        self.death_menu.add.button('Restart Level', button_click_with_sound(self.reset))
-        self.death_menu.add.button('Main Menu', button_click_with_sound(self.return_to_main))
-
     def resume_game(self):
         self.menu = False
         
     def return_to_main(self):
         self.reset()
         game_state_manager.returnToPrevState()
-        
+
     def get_rotated_image(self, tile_type, variant, rotation):
         # Create a cache key
         key = f"{tile_type}_{variant}_{rotation}"
@@ -228,12 +294,14 @@ class Environment:
                 self.death_sound_played = True
             if self.countdeathframes >= 40:
                 self.menu = True
+                self.game_menu.show_game_over_menu()
         
         elif self.player.finishLevel:
             if not self.finish_sound_played:
                 random.choice(self.sfx['finish']).play()
                 self.finish_sound_played = True
             self.menu = True
+            self.game_menu.show_level_complete_menu()
             
         if not self.menu:
             self.player.update(self.tilemap, self.keys, self.countdeathframes)
@@ -249,25 +317,13 @@ class Environment:
 
         self.player.render(self.display, offset=self.render_scroll)
         
-        # Don't handle menu events here - just draw the menus
+        # Draw the menu if active
         if self.menu:
-            if self.player.death and self.countdeathframes >= 40:
-                self.death_menu.draw(self.display)
-            elif self.player.finishLevel:
-                self.level_complete_menu.draw(self.display)
-            else:
-                self.pause_menu.draw(self.display)
-
+            self.game_menu.draw(self.display)
 
     def process_menu_events(self, events):
         if self.menu:
-            if self.player.death and self.countdeathframes >= 40:
-                self.death_menu.update(events)
-            elif self.player.finishLevel:
-                self.level_complete_menu.update(events)
-            else:
-                self.pause_menu.update(events)
-
+            self.game_menu.update(events)
 
     def debug_render(self):
         draw_debug_info(self, self.display, self.render_scroll)  

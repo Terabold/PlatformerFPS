@@ -162,6 +162,178 @@ class Animation:
     
     def img(self):
         return self.images[int(self.frame / self.img_duration)]
+
+
+
+from pygame import Rect
+class Button:
+    def __init__(self, rect, text, action, font, min_width=300, text_padding=40):
+        self.rect = rect
+        self.text = text
+        self.action = action
+        self.font = font
+        self.min_width = min_width
+        self.text_padding = text_padding
+        self.selected = False
+        
+    def is_hovered(self, mouse_pos):
+        return self.rect.collidepoint(mouse_pos)
     
-def UIsize(size):
-    return int(DISPLAY_SIZE[0] * size // 100)
+    def draw(self, surface, highlight_color=(255, 215, 0)):
+        button_color = (100, 100, 255, 155) if self.selected else (80, 80, 80, 155)
+        button_surface = pygame.Surface((self.rect.width, self.rect.height), pygame.SRCALPHA)
+        button_surface.fill(button_color)
+        surface.blit(button_surface, (self.rect.x, self.rect.y))
+        
+        text_surf = self.font.render(self.text, True, (255, 255, 255))
+        text_x = self.rect.x + (self.rect.width - text_surf.get_width()) // 2
+        text_y = self.rect.y + (self.rect.height - text_surf.get_height()) // 2
+        surface.blit(text_surf, (text_x, text_y))
+        
+        if self.selected:
+            pygame.draw.rect(surface, highlight_color, self.rect, 3)
+    
+    def handle_events(self, events, sound_callback=None):
+        if self.selected:
+            for event in events:
+                if event.type == pygame.MOUSEBUTTONDOWN and event.button == 1:
+                    if sound_callback:
+                        sound_callback('click')
+                    self.action()
+                    return True
+        return False
+
+class ButtonManager:
+    def __init__(self, font, button_height=80, min_width=300, text_padding=40, padding=30):
+        self.font = font
+        self.button_height = button_height
+        self.min_width = min_width
+        self.text_padding = text_padding
+        self.padding = padding
+        self.buttons = []
+        self.selected_index = None
+        
+    def calculate_button_size(self, text):
+        text_surf = self.font.render(text, True, (255, 255, 255))
+        width = text_surf.get_width() + self.text_padding
+        
+        if width < self.min_width:
+            width = self.min_width
+            
+        return width, self.button_height
+    
+    def create_button(self, text, action, x, y, width=None):
+        if width is None:
+            width, _ = self.calculate_button_size(text)
+            
+        button = Button(
+            Rect(x, y, width, self.button_height),
+            text,
+            action,
+            self.font,
+            self.min_width,
+            self.text_padding
+        )
+        
+        self.buttons.append(button)
+        return button
+    
+    def create_centered_button_list(self, button_texts, button_actions, start_x, start_y):
+        max_width = self.min_width
+        
+        for text in button_texts:
+            width, _ = self.calculate_button_size(text)
+            max_width = max(max_width, width)
+        
+        centered_x = start_x - (max_width // 2)
+        
+        for i, (text, action) in enumerate(zip(button_texts, button_actions)):
+            y_pos = start_y + i * (self.button_height + self.padding)
+            self.create_button(text, action, centered_x, y_pos, max_width)
+    
+    def create_grid_buttons(self, texts, actions, columns, start_x, start_y, fixed_width=None):
+        if fixed_width is None:
+            fixed_width = self.min_width
+            
+        for i, (text, action) in enumerate(zip(texts, actions)):
+            row = i // columns
+            col = i % columns
+            
+            button_x = start_x + col * (fixed_width + self.padding)
+            button_y = start_y + row * (self.button_height + self.padding)
+            
+            self.create_button(text, action, button_x, button_y, fixed_width)
+    
+    def update(self, mouse_pos):
+        self.selected_index = None
+        
+        for i, button in enumerate(self.buttons):
+            button.selected = button.is_hovered(mouse_pos)
+            if button.selected:
+                self.selected_index = i
+    
+    def handle_events(self, events, sound_callback=None):
+        for button in self.buttons:
+            if button.handle_events(events, sound_callback):
+                return True
+        return False
+    
+    def draw(self, surface):
+        for button in self.buttons:
+            button.draw(surface)
+    
+    def clear(self):
+        self.buttons = []
+        self.selected_index = None
+
+class MenuScreen:
+    def __init__(self, parent, title="Menu"):
+        self.parent = parent
+        self.screen = parent.screen
+        self.background = parent.background
+        self.font = pygame.font.Font(parent.font_path, 40)
+        self.title_font = pygame.font.Font(parent.font_path, 85)
+        self.enabled = False
+        self.title = title
+        
+        self.button_manager = ButtonManager(
+            self.font,
+            parent.button_props['height'],
+            parent.button_props['min_width'],
+            parent.button_props['text_padding'],
+            parent.button_props['padding']
+        )
+        
+        self.initialize()
+    
+    def initialize(self):
+        pass
+    
+    def enable(self):
+        self.enabled = True
+    
+    def disable(self):
+        self.enabled = False
+    
+    def update(self, events):
+        if not self.enabled:
+            return
+            
+        mouse_pos = pygame.mouse.get_pos()
+        self.button_manager.update(mouse_pos)
+        
+        self.button_manager.handle_events(events, self.parent._play_sound)
+    
+    def draw(self, surface):
+        if not self.enabled:
+            return
+            
+        title_text = self.title_font.render(self.title, True, (255, 255, 255))
+        
+        title_x = (self.parent.display_size[0] - title_text.get_width()) // 2
+        
+        title_y = (self.parent.display_size[1] - title_text.get_height()) // 7
+        
+        surface.blit(title_text, (title_x, title_y))
+        
+        self.button_manager.draw(surface)

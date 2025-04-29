@@ -3,7 +3,7 @@ root = tk.Tk()
 screen_width = root.winfo_screenwidth()
 screen_height = root.winfo_screenheight()
 root.destroy()
-DISPLAY_SIZE = (screen_width, screen_height-60)
+DISPLAY_SIZE = (screen_width, screen_height-55)
 
 FPS = 60
 
@@ -29,8 +29,8 @@ PLAYER_BUFFER = 5 # amount of frame buffer
 PLAYERS_SIZE = (TILE_SIZE*0.8, TILE_SIZE*0.8) # size of actual player hitbox
 PLAYERS_IMAGE_SIZE = (PLAYERS_SIZE[0], PLAYERS_SIZE[1]) # size of the player image
 
-PHYSICS_TILES = {'grass', 'stone', 'hardened_clay', 'ores'}
-AUTOTILE_TYPES = {'grass', 'stone', 'hardened_clay', 'ores'}
+PHYSICS_TILES = {'grass', 'stone', 'hardened_clay', 'ores', 'weather'}
+AUTOTILE_TYPES = {'grass', 'stone', 'hardened_clay', 'ores', 'weather'}
 INTERACTIVE_TILES = {'spikes', 'finish', 'saws'}
 SPIKE_SIZE = (0.6, 0.25)
 SAW_SIZE = 0.8

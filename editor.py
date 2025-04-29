@@ -1,47 +1,59 @@
 import sys
-
 import pygame
 
 from scripts.utils import load_images, load_image
 from scripts.tilemap import Tilemap
-from scripts.constants import TILE_SIZE, DISPLAY_SIZE, FPS, PHYSICS_TILES
+from scripts.constants import TILE_SIZE, DISPLAY_SIZE, FPS, PHYSICS_TILES, FONT
 
 class Editor:
     def __init__(self):
         pygame.init()
-
         pygame.display.set_caption('editor')
         self.display = pygame.display.set_mode(DISPLAY_SIZE)
-        self.zoom = 10
         self.clock = pygame.time.Clock()
         
+        # Core settings
+        self.zoom = 10
         self.tilemap = Tilemap(self, tile_size=TILE_SIZE)
-
+        self.scroll = [0, 0]
+        
+        # Asset handling
         self.assets = self.reload_assets()
         self.background_image = load_image('background.png', scale=DISPLAY_SIZE)
         self.rotated_assets = {}
-        self.movement = [False, False, False, False]
-            
-        try:
-            self.tilemap.load('map.json')
-        except FileNotFoundError:
-            pass
         
-        self.scroll = [0, 0]
-        
+        # Tile selection
         self.tile_list = list(self.assets)
         self.tile_group = 0
         self.tile_variant = 0
-        self.current_rotation = 0  # New: Current rotation for placeable tile
+        self.current_rotation = 0
+        self.ongrid = True
         
+        # Input states
+        self.movement = [False, False, False, False]  # Left, Right, Up, Down
         self.clicking = False
         self.right_clicking = False
         self.shift = False
-        self.ctrl = False  # New: Track control key for rotation
-        self.ongrid = True
+        self.ctrl = False
+        
+        # UI
+        self.font = pygame.font.SysFont(FONT, 16)
+        
+        # Load existing map if available
+        try:
+            self.tilemap.load('data\maps\map.json')
+        except FileNotFoundError:
+            pass
 
-        self.font = pygame.font.SysFont('Arial', 16)
-
+    def get_rotated_image(self, tile_type, variant, rotation):
+        key = f"{tile_type}_{variant}_{rotation}"
+        
+        if key not in self.rotated_assets:
+            original = self.assets[tile_type][variant]
+            self.rotated_assets[key] = pygame.transform.rotate(original, rotation)
+        
+        return self.rotated_assets[key]
+    
     def reload_assets(self):
         IMGscale = (self.tilemap.tile_size, self.tilemap.tile_size)
         return {
@@ -60,204 +72,275 @@ class Editor:
         return len(self.tilemap.extract([('spawners', 0), ('spawners', 1)], keep=True))
     
     def rotate_spike_at_position(self, pos):
-        """Rotate a spike at the given tile position"""
-        tile_loc = str(pos[0]) + ';' + str(pos[1])
+        tile_loc = f"{pos[0]};{pos[1]}"
         if tile_loc in self.tilemap.tilemap:
             tile = self.tilemap.tilemap[tile_loc]
             if tile['type'] == 'spikes':
-                # Get current rotation or default to 0
                 current_rot = tile.get('rotation', 0)
-                # Rotate 90 degrees clockwise (0 -> 90 -> 180 -> 270 -> 0)
-                new_rot = (current_rot + 90) % 360
-                # Update rotation in tile data
+                new_rot = (current_rot - 90) % 360
                 self.tilemap.tilemap[tile_loc]['rotation'] = new_rot
+    
+    def handle_tile_placement(self, tile_pos, mpos):
+        current_tile_type = self.tile_list[self.tile_group]
+        
+        # Handle grid-based placement
+        if self.ongrid and self.clicking:
+            # Special handling for spawners - only allow one
+            if current_tile_type == 'spawners' and self.count_spawners() > 0:
+                self.tilemap.extract([('spawners', 0), ('spawners', 1)], keep=False)
+            
+            # Create tile data with rotation if needed
+            tile_data = {
+                'type': current_tile_type,
+                'variant': self.tile_variant,
+                'pos': tile_pos
+            }
+            
+            # Add rotation for spikes
+            if current_tile_type == 'spikes':
+                tile_data['rotation'] = self.current_rotation
+                
+            # Add to tilemap
+            self.tilemap.tilemap[f"{tile_pos[0]};{tile_pos[1]}"] = tile_data
+        
+        # Handle off-grid placement
+        elif not self.ongrid and self.clicking:
+            if current_tile_type == 'spawners' and self.count_spawners() > 0:
+                return
+                
+            if current_tile_type not in PHYSICS_TILES:
+                tile_pos = ((mpos[0] + self.scroll[0]) / self.tilemap.tile_size, 
+                           (mpos[1] + self.scroll[1]) / self.tilemap.tile_size)
+                
+                tile_data = {
+                    'type': current_tile_type,
+                    'variant': self.tile_variant,
+                    'pos': tile_pos
+                }
+                
+                # Add rotation for spikes
+                if current_tile_type == 'spikes':
+                    tile_data['rotation'] = self.current_rotation
+                    
+                self.tilemap.offgrid_tiles.append(tile_data)
+    
+    def handle_tile_removal(self, tile_pos, mpos):
+        if self.right_clicking:
+            # Remove grid tiles
+            tile_loc = f"{tile_pos[0]};{tile_pos[1]}"
+            if tile_loc in self.tilemap.tilemap:
+                del self.tilemap.tilemap[tile_loc]
+            
+            # Remove offgrid tiles
+            for tile in self.tilemap.offgrid_tiles.copy():
+                tile_img = self.assets[tile['type']][tile['variant']]
+                tile_r = pygame.Rect(
+                    tile['pos'][0] * self.tilemap.tile_size - self.scroll[0], 
+                    tile['pos'][1] * self.tilemap.tile_size - self.scroll[1], 
+                    tile_img.get_width(), tile_img.get_height()
+                )
+                if tile_r.collidepoint(mpos):
+                    self.tilemap.offgrid_tiles.remove(tile)
+    
+    def draw_grid(self):
+        for x in range(0, DISPLAY_SIZE[0], self.tilemap.tile_size):
+            offset_x = x - self.scroll[0] % self.tilemap.tile_size
+            pygame.draw.line(
+                self.display, (50, 50, 50), 
+                (offset_x, 0), (offset_x, DISPLAY_SIZE[1])
+            )
+            
+        for y in range(0, DISPLAY_SIZE[1], self.tilemap.tile_size):
+            offset_y = y - self.scroll[1] % self.tilemap.tile_size
+            pygame.draw.line(
+                self.display, (50, 50, 50), 
+                (0, offset_y), (DISPLAY_SIZE[0], offset_y)
+            )
+    
+    def draw_ui(self, current_tile_img):
+        # Show current tile preview
+        self.display.blit(current_tile_img, (5, 5))
+        
+        # Show spawner count
+        spawner_count = self.count_spawners()
+        spawner_text = self.font.render(f"Spawners: {spawner_count}/1", True, (255, 255, 255))
+        self.display.blit(spawner_text, (5, 40))
+        
+        # Show current tile info
+        current_type = self.tile_list[self.tile_group]
+        tile_info = self.font.render(f"Type: {current_type} ({self.tile_variant})", True, (255, 255, 255))
+        self.display.blit(tile_info, (5, 60))
+        
+        # Show spike rotation info if applicable
+        if current_type == 'spikes':
+            rotation_info = self.font.render(f"Rotation: {self.current_rotation}°", True, (255, 255, 255))
+            self.display.blit(rotation_info, (5, 80))
+            
+            controls_info = self.font.render("R: Rotate spike | Ctrl+Click: Rotate placed spike", True, (255, 255, 255))
+            self.display.blit(controls_info, (5, 100))
+    
+    def handle_mouse_events(self, event, tile_pos, mpos):
+        if event.type == pygame.MOUSEBUTTONDOWN:
+            if event.button == 1:  # Left click
+                if self.ctrl:
+                    self.rotate_spike_at_position(tile_pos)
+                else:
+                    self.clicking = True
+            
+            elif event.button == 3:  # Right click
+                self.right_clicking = True
+                
+            # Mouse wheel for tile selection
+            elif event.button == 4:  # Scroll up
+                if self.shift:
+                    # Change variant
+                    current_type = self.tile_list[self.tile_group]
+                    self.tile_variant = (self.tile_variant - 1) % len(self.assets[current_type])
+                else:
+                    # Change tile type
+                    self.tile_group = (self.tile_group - 1) % len(self.tile_list)
+                    self.tile_variant = 0
+                    self.current_rotation = 0
+                    
+            elif event.button == 5:  # Scroll down
+                if self.shift:
+                    # Change variant
+                    current_type = self.tile_list[self.tile_group]
+                    self.tile_variant = (self.tile_variant + 1) % len(self.assets[current_type]) 
+                else:
+                    # Change tile type
+                    self.tile_group = (self.tile_group + 1) % len(self.tile_list)
+                    self.tile_variant = 0
+                    self.current_rotation = 0
+        
+        elif event.type == pygame.MOUSEBUTTONUP:
+            if event.button == 1:
+                self.clicking = False
+            elif event.button == 3:
+                self.right_clicking = False
+    
+    def handle_keyboard_events(self, event):
+        if event.type == pygame.KEYDOWN:
+            # Movement keys
+            if event.key == pygame.K_a:
+                self.movement[0] = True
+            elif event.key == pygame.K_d:
+                self.movement[1] = True
+            elif event.key == pygame.K_w:
+                self.movement[2] = True
+            elif event.key == pygame.K_s:
+                self.movement[3] = True
+            
+            # Feature keys
+            elif event.key == pygame.K_g:
+                self.ongrid = not self.ongrid
+            elif event.key == pygame.K_o:
+                self.tilemap.save('map.json')
+            elif event.key in {pygame.K_LSHIFT, pygame.K_RSHIFT}:
+                self.shift = True
+            elif event.key in {pygame.K_LCTRL, pygame.K_RCTRL}:
+                self.ctrl = True
+            
+            # Spike rotation
+            elif event.key == pygame.K_r and self.tile_list[self.tile_group] == 'spikes':
+                self.current_rotation = (self.current_rotation + 90) % 360
+            
+            # Zoom controls
+            elif event.key == pygame.K_UP:
+                if self.zoom < 20:
+                    self.zoom += 1
+                    self.zoom = int(self.zoom)
+                    self.tilemap.tile_size = int(TILE_SIZE * self.zoom // 10)
+                    self.assets = self.reload_assets()
+                    
+            elif event.key == pygame.K_DOWN:
+                if self.zoom > 1:
+                    self.zoom -= 1
+                    self.zoom = int(self.zoom)
+                    self.tilemap.tile_size = int(TILE_SIZE * self.zoom // 10)
+                    self.assets = self.reload_assets()
+        
+        elif event.type == pygame.KEYUP:
+            # Movement keys
+            if event.key == pygame.K_a:
+                self.movement[0] = False
+            elif event.key == pygame.K_d:
+                self.movement[1] = False
+            elif event.key == pygame.K_w:
+                self.movement[2] = False
+            elif event.key == pygame.K_s:
+                self.movement[3] = False
+            
+            # Modifier keys
+            elif event.key in {pygame.K_LSHIFT, pygame.K_RSHIFT}:
+                self.shift = False
+            elif event.key in {pygame.K_LCTRL, pygame.K_RCTRL}:
+                self.ctrl = False
+    
+    def update_scroll(self):
+        self.scroll[0] += (self.movement[1] - self.movement[0]) * 8  # Horizontal
+        self.scroll[1] += (self.movement[3] - self.movement[2]) * 8  # Vertical
+        return (int(self.scroll[0]), int(self.scroll[1]))
         
     def run(self):
         while True:
+            # Clear screen
             self.display.fill((20, 20, 20))
-            for x in range(0, DISPLAY_SIZE[0], self.tilemap.tile_size):
-                pygame.draw.line(self.display, (50, 50, 50), (x - self.scroll[0] % self.tilemap.tile_size, 0), (x - self.scroll[0] % self.tilemap.tile_size, DISPLAY_SIZE[1]))
-            for y in range(0, DISPLAY_SIZE[1], self.tilemap.tile_size):
-                pygame.draw.line(self.display, (50, 50, 50), (0, y - self.scroll[1] % self.tilemap.tile_size), (DISPLAY_SIZE[0], y - self.scroll[1] % self.tilemap.tile_size))
             
-            self.scroll[0] += (self.movement[1] - self.movement[0]) * 8
-            self.scroll[1] += (self.movement[3] - self.movement[2]) * 8
-            render_scroll = (int(self.scroll[0]), int(self.scroll[1]))
+            # Draw grid
+            self.draw_grid()
             
+            # Update scroll position
+            render_scroll = self.update_scroll()
+            
+            # Render tilemap
             self.tilemap.render(self.display, offset=render_scroll, zoom=self.zoom)
             
+            # Get current tile image
             current_tile_img = self.assets[self.tile_list[self.tile_group]][self.tile_variant].copy()
             
             # Rotate preview image if it's a spike
             if self.tile_list[self.tile_group] == 'spikes':
                 current_tile_img = pygame.transform.rotate(current_tile_img, self.current_rotation)
             
+            # Set transparency for preview
             current_tile_img.set_alpha(100)
             
+            # Get mouse position and corresponding tile position
             mpos = pygame.mouse.get_pos()
-            tile_pos = (int((mpos[0] + self.scroll[0]) // self.tilemap.tile_size), int((mpos[1] + self.scroll[1]) // self.tilemap.tile_size))
+            tile_pos = (
+                int((mpos[0] + self.scroll[0]) // self.tilemap.tile_size), 
+                int((mpos[1] + self.scroll[1]) // self.tilemap.tile_size)
+            )
             
+            # Draw tile preview at cursor
             if self.ongrid:
-                self.display.blit(current_tile_img, (tile_pos[0] * self.tilemap.tile_size - self.scroll[0], tile_pos[1] * self.tilemap.tile_size - self.scroll[1]))
+                self.display.blit(
+                    current_tile_img, 
+                    (tile_pos[0] * self.tilemap.tile_size - self.scroll[0], 
+                     tile_pos[1] * self.tilemap.tile_size - self.scroll[1])
+                )
             else:
                 self.display.blit(current_tile_img, mpos)
             
-            # Handle spawner placement logic - only allow one spawner
-            if self.clicking and self.ongrid:
-                if self.tile_list[self.tile_group] == 'spawners':
-                    # If placing a spawner, remove any existing spawners first
-                    existing_spawners = self.count_spawners()
-                    if existing_spawners > 0:
-                        self.tilemap.extract([('spawners', 0), ('spawners', 1)], keep=False)
-                
-                # Now add the new tile with rotation if it's a spike
-                if self.tile_list[self.tile_group] == 'spikes':
-                    self.tilemap.tilemap[str(tile_pos[0]) + ';' + str(tile_pos[1])] = {
-                        'type': self.tile_list[self.tile_group], 
-                        'variant': self.tile_variant, 
-                        'pos': tile_pos,
-                        'rotation': self.current_rotation
-                    }
-                else:
-                    # Normal placement for other tiles
-                    self.tilemap.tilemap[str(tile_pos[0]) + ';' + str(tile_pos[1])] = {
-                        'type': self.tile_list[self.tile_group], 
-                        'variant': self.tile_variant, 
-                        'pos': tile_pos
-                    }
-        
-
-            if self.right_clicking:
-                tile_loc = str(tile_pos[0]) + ';' + str(tile_pos[1])
-                if tile_loc in self.tilemap.tilemap:
-                    del self.tilemap.tilemap[tile_loc]
-                for tile in self.tilemap.offgrid_tiles.copy():
-                    tile_img = self.assets[tile['type']][tile['variant']]
-                    tile_r = pygame.Rect(tile['pos'][0] * self.tilemap.tile_size - self.scroll[0], tile['pos'][1] * self.tilemap.tile_size - self.scroll[1], tile_img.get_width(), tile_img.get_height())
-                    if tile_r.collidepoint(mpos):
-                        self.tilemap.offgrid_tiles.remove(tile)
+            # Handle tile placement and removal
+            self.handle_tile_placement(tile_pos, mpos)
+            self.handle_tile_removal(tile_pos, mpos)
             
-            # Display current tile and spawner count info
-            self.display.blit(current_tile_img, (5, 5))
+            # Draw UI elements
+            self.draw_ui(current_tile_img)
             
-            # Show spawner count
-            spawner_count = self.count_spawners()
-            spawner_text = self.font.render(f"Spawners: {spawner_count}/1", True, (255, 255, 255))
-            self.display.blit(spawner_text, (5, 40))
-            
-            # Display current tile group/variant
-            tile_info = self.font.render(f"Type: {self.tile_list[self.tile_group]} ({self.tile_variant})", True, (255, 255, 255))
-            self.display.blit(tile_info, (5, 60))
-            
-            # Display rotation info for spikes
-            if self.tile_list[self.tile_group] == 'spikes':
-                rotation_info = self.font.render(f"Rotation: {self.current_rotation}°", True, (255, 255, 255))
-                self.display.blit(rotation_info, (5, 80))
-                controls_info = self.font.render("R: Rotate spike | Ctrl+Click: Rotate placed spike", True, (255, 255, 255))
-                self.display.blit(controls_info, (5, 100))
-            
+            # Event handling
             for event in pygame.event.get():
                 if event.type == pygame.QUIT:
                     pygame.quit()
                     sys.exit()
-                    
-                if event.type == pygame.MOUSEBUTTONDOWN:
-                    if event.button == 1:
-                        if self.ctrl:
-                            # Rotate spike at position when Ctrl+clicking
-                            self.rotate_spike_at_position(tile_pos)
-                        else:
-                            self.clicking = True
-                            if not self.ongrid:
-                                tile_type = self.tile_list[self.tile_group]
-                                if tile_type == 'spawners' and self.count_spawners() > 0:
-                                    pass
-                                elif (tile_type not in PHYSICS_TILES):
-                                    tile_pos = ((mpos[0] + self.scroll[0]) / self.tilemap.tile_size, (mpos[1] + self.scroll[1]) / self.tilemap.tile_size)
-                                    if tile_type == 'spikes':
-                                        self.tilemap.offgrid_tiles.append({
-                                            'type': self.tile_list[self.tile_group],
-                                            'variant': self.tile_variant,
-                                            'pos': tile_pos,
-                                            'rotation': self.current_rotation
-                                        })
-                                    else:
-                                        self.tilemap.offgrid_tiles.append({
-                                            'type': self.tile_list[self.tile_group],
-                                            'variant': self.tile_variant,
-                                            'pos': tile_pos
-                                        })
-                    if event.button == 3:
-                        self.right_clicking = True
-                    if self.shift:
-                        if event.button == 4:
-                            self.tile_variant = (self.tile_variant - 1) % len(self.assets[self.tile_list[self.tile_group]])
-                        if event.button == 5:
-                            self.tile_variant = (self.tile_variant + 1) % len(self.assets[self.tile_list[self.tile_group]])
-                    else:
-                        if event.button == 4:
-                            self.tile_group = (self.tile_group - 1) % len(self.tile_list)
-                            self.tile_variant = 0
-                            self.current_rotation = 0  # Reset rotation when changing tile type
-                        if event.button == 5:
-                            self.tile_group = (self.tile_group + 1) % len(self.tile_list)
-                            self.tile_variant = 0
-                            self.current_rotation = 0  # Reset rotation when changing tile type
-                if event.type == pygame.MOUSEBUTTONUP:
-                    if event.button == 1:
-                        self.clicking = False
-                    if event.button == 3:
-                        self.right_clicking = False
-                        
-                if event.type == pygame.KEYDOWN:
-                    if event.key == pygame.K_a:
-                        self.movement[0] = True
-                    if event.key == pygame.K_d:
-                        self.movement[1] = True
-                    if event.key == pygame.K_w:
-                        self.movement[2] = True
-                    if event.key == pygame.K_s:
-                        self.movement[3] = True
-                    if event.key == pygame.K_g:
-                        self.ongrid = not self.ongrid
-                    if event.key == pygame.K_t:
-                        self.tilemap.autotile()
-                    if event.key == pygame.K_o:
-                        self.tilemap.save('map.json')
-                    if event.key in {pygame.K_LSHIFT, pygame.K_RSHIFT}:
-                        self.shift = True
-                    if event.key in {pygame.K_LCTRL, pygame.K_RCTRL}:
-                        self.ctrl = True
-                    if event.key == pygame.K_r and self.tile_list[self.tile_group] == 'spikes':
-                        # Rotate current spike by 90 degrees when R is pressed
-                        self.current_rotation = (self.current_rotation + 90) % 360
-                    if event.key == pygame.K_UP:
-                        if self.zoom < 20:
-                            self.zoom += 1
-                            self.zoom = int(self.zoom)
-                            self.tilemap.tile_size = int(TILE_SIZE * self.zoom // 10)
-                            self.assets = self.reload_assets()
-                    if event.key == pygame.K_DOWN:
-                        if self.zoom > 1:
-                            self.zoom -= 1
-                            self.zoom = int(self.zoom)
-                            self.tilemap.tile_size = int(TILE_SIZE * self.zoom // 10)
-                            self.assets = self.reload_assets()
-                if event.type == pygame.KEYUP:
-                    if event.key == pygame.K_a:
-                        self.movement[0] = False
-                    if event.key == pygame.K_d:
-                        self.movement[1] = False
-                    if event.key == pygame.K_w:
-                        self.movement[2] = False
-                    if event.key == pygame.K_s:
-                        self.movement[3] = False
-                    if event.key in {pygame.K_LSHIFT, pygame.K_RSHIFT}:
-                        self.shift = False
-                    if event.key in {pygame.K_LCTRL, pygame.K_RCTRL}:
-                        self.ctrl = False
+                
+                self.handle_mouse_events(event, tile_pos, mpos)
+                self.handle_keyboard_events(event)
             
             pygame.display.update()
             self.clock.tick(FPS)
 
-Editor().run()
+if __name__ == "__main__":
+    Editor().run()

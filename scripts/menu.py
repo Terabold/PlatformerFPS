@@ -1,9 +1,9 @@
 import pygame
 import random
-import pygame_menu
-from scripts.constants import DISPLAY_SIZE, FONT, MENUBG, MENUTXTCOLOR, WHITE
+import os
+from scripts.constants import DISPLAY_SIZE, FONT, MENUBG
 from scripts.utils import load_sounds
-
+from scripts.utils import MenuScreen
 
 class Menu:
     def __init__(self, screen):
@@ -11,101 +11,70 @@ class Menu:
         self.screen = screen
         self.background = pygame.image.load(MENUBG)
         self.background = pygame.transform.scale(self.background, DISPLAY_SIZE)
-        self.player_type = 0  # Default player type
+        self.player_type = 0  
+        self.selected_map = None  
+        self.display_size = DISPLAY_SIZE
+        self.font_path = FONT
 
         pygame.font.init()
 
-        # Create themes and base menus
-        self._setup_theme()
-        self.main_menu = self._create_main_menu()
-        self.options_menu = self._create_options_menu()
+        self.button_props = {
+            'padding': 30,
+            'height': 80,
+            'min_width': 300,  
+            'text_padding': 40  
+        }
 
+        self.main_menu = MainMenuScreen(self)
+        self.options_menu = OptionsMenuScreen(self)
+        self.map_menu = MapSelectionScreen(self)
         self.active_menu = self.main_menu
-
-    def _setup_theme(self):
-        title_font = pygame.font.Font(FONT, 85)
-        widget_font = pygame.font.Font(FONT, 50)
-
-        selection_effect = pygame_menu.widgets.LeftArrowSelection(arrow_size=(20, 30))
-        selection_effect.color = (255, 215, 0) 
-
-        self.menu_theme = pygame_menu.themes.Theme(
-            background_color=(0, 0, 0, 0), 
-            title_background_color=(0, 0, 0, 0),
-            title_font=title_font,
-            title_font_color=WHITE,
-            title_offset=(DISPLAY_SIZE[0] / 4, 20),
-            widget_font=widget_font,
-            widget_font_color=(255, 255, 255),  
-            widget_margin=(0, 30),
-            widget_selection_effect=selection_effect,
-            selection_color=(160, 111, 78), 
-        )
+        
+        self.main_menu.enable()
 
     def _play_sound(self, sound_key):
         if sound_key in self.sfx:
             random.choice(self.sfx[sound_key]).play()
 
-    def _create_main_menu(self):
-        menu = pygame_menu.Menu(
-            height=DISPLAY_SIZE[1],
-            width=DISPLAY_SIZE[0],
-            title='',
-            theme=self.menu_theme,
-            center_content=True,
-            mouse_motion_selection=True,
-        )
-
-        menu.add.button('PLAY', self._menu_action(self._show_options_menu))
-        menu.add.button('TRAIN AI', self._menu_action(self._show_options_menu))
-        menu.add.button('QUIT', self._menu_action(self.quit_game))
-
-        return menu
-
-    def _create_options_menu(self):
-        menu = pygame_menu.Menu(
-            height=DISPLAY_SIZE[1],
-            width=DISPLAY_SIZE[0],
-            title='',
-            theme=self.menu_theme,
-            center_content=True,
-            mouse_motion_selection=True,
-        )
-
-        menu.add.selector(
-            'Player Type: ',
-            [('Human', 0), (' AI  ', 1)],
-            onchange=self._menu_action(self._set_player_type)
-        )
-        menu.add.button('START GAME', self._menu_action(self.play_game))
-        menu.add.button('BACK', self._menu_action(self._return_to_main))
-
-        return menu
-
-    def _menu_action(self, action_func):
-        def wrapper(*args):
-            self._play_sound('click')
-            if callable(action_func):
-                return action_func(*args)
-            return action_func
-        return wrapper
+    def _show_map_selection(self):
+        self.main_menu.disable()
+        self.map_menu.enable()
+        self.active_menu = self.map_menu
 
     def _show_options_menu(self):
-        self.main_menu.disable()
+        if self.map_menu.enabled:
+            self.map_menu.disable()
+        else:
+            self.main_menu.disable()
         self.options_menu.enable()
         self.active_menu = self.options_menu
 
     def _return_to_main(self):
-        self.options_menu.disable()
+        self.map_menu.disable()
         self.main_menu.enable()
         self.active_menu = self.main_menu
 
-    def _set_player_type(self, _, value):
+    def _return_to_map_selection(self):
+        self.options_menu.disable()
+        self.map_menu.enable()
+        self.active_menu = self.map_menu
+
+    def _set_player_type(self, value):
         self.player_type = value
+        if self.options_menu.enabled:
+            self.options_menu.update_player_type_text()
+        
+    def _select_map(self, map_file):
+        self.selected_map = map_file
+        self._show_options_menu()
 
     def play_game(self):
         from scripts.GameManager import game_state_manager
         game_state_manager.player_type = self.player_type
+        
+        if self.selected_map:
+            game_state_manager.selected_map = self.selected_map
+            
         game_state_manager.setState('game')
 
     def quit_game(self):
@@ -114,20 +83,7 @@ class Menu:
         exit()
 
     def run(self):
-        # Only draw background once when entering the menu, not every frame
         self.screen.blit(self.background, (0, 0))
-        
-        # Pre-render the title and shadow only once
-        shadow_offset = (4, 4)
-        title_font = pygame.font.Font(FONT, 85)
-        title_text = 'Super Terboy'
-
-        shadow_surf = title_font.render(title_text, True, (0, 0, 0))
-        title_surf = title_font.render(title_text, True, MENUTXTCOLOR)
-
-        title_pos = (DISPLAY_SIZE[0] // 4, DISPLAY_SIZE[1] // 6)
-        self.screen.blit(shadow_surf, (title_pos[0] + shadow_offset[0], title_pos[1] + shadow_offset[1]))
-        self.screen.blit(title_surf, title_pos)
         
         events = pygame.event.get()
         for event in events:
@@ -139,3 +95,93 @@ class Menu:
 
         self.active_menu.update(events)
         self.active_menu.draw(self.screen)
+
+
+class MainMenuScreen(MenuScreen):
+    def initialize(self):
+        self.title = "Super Terboy"
+        self.enabled = True
+        
+        center_x = self.parent.display_size[0] // 2
+        
+        button_texts = ['PLAY', 'TRAIN AI', 'QUIT']
+        button_actions = [
+            self.parent._show_map_selection,
+            self.parent._show_options_menu,
+            self.parent.quit_game
+        ]
+        
+        self.button_manager.create_centered_button_list(
+            button_texts, 
+            button_actions, 
+            center_x, 
+            300
+        )
+
+
+class MapSelectionScreen(MenuScreen):
+    def initialize(self):
+        self.title = "Select a Map"
+        
+        maps_dir = 'data/maps'   
+        self.map_files = [f for f in os.listdir(maps_dir) if f.endswith('.json')]
+        self.map_numbers = [str(i+1) for i in range(len(self.map_files))]
+        
+        columns = 5
+        button_width = 200
+        padding = self.button_manager.padding
+        
+        grid_width = columns * (button_width + padding) - padding
+        start_x = (self.parent.display_size[0] - grid_width) // 2
+        
+        actions = [lambda i=i: self.parent._select_map(self.map_files[i]) for i in range(len(self.map_files))]
+        
+        self.button_manager.create_grid_buttons(
+            self.map_numbers,
+            actions,
+            columns,
+            start_x,
+            300,
+            button_width
+        )
+        
+        center_x = self.parent.display_size[0] // 2
+        rows = (len(self.map_files) + columns - 1) // columns
+        back_y = 200 + (rows + 1) * (self.button_manager.button_height + padding)
+        
+        self.button_manager.create_centered_button_list(
+            ["BACK"], 
+            [self.parent._return_to_main], 
+            center_x, 
+            back_y
+        )
+
+
+class OptionsMenuScreen(MenuScreen):
+    def initialize(self):
+        self.title = "Options"
+        
+        self.player_types = ['PL', 'AI']
+        
+        center_x = self.parent.display_size[0] // 2
+        
+        def toggle_player_type():
+            new_type = 1 - self.parent.player_type
+            self.parent._set_player_type(new_type)
+        
+        self.button_manager.create_centered_button_list(
+            [f"Player Type: {self.player_types[self.parent.player_type]}", "START GAME", "BACK"],
+            [toggle_player_type, self.parent.play_game, self.parent._return_to_map_selection],
+            center_x,
+            300
+        )
+    
+    def update_player_type_text(self):
+        if self.button_manager.buttons:
+            self.button_manager.buttons[0].text = f"Player Type: {self.player_types[self.parent.player_type]}"
+
+    def enable(self):
+        super().enable()
+        
+        if self.button_manager.buttons:
+            self.button_manager.buttons[0].text = f"Player Type: {self.player_types[self.parent.player_type]}"

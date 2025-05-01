@@ -73,6 +73,9 @@ class Menu:
         game_state_manager.player_type = value
         if self.options_menu.enabled:
             self.options_menu.update_player_type_text()
+
+    def edit_maps(self):
+        game_state_manager.setState('editor')
         
     def _select_map(self, map_file):
         self.selected_map = os.path.join('data', 'maps', map_file)
@@ -117,6 +120,10 @@ class Menu:
                 # self.stop_music()
                 pygame.quit()
                 exit()
+            if event.type == pygame.KEYDOWN:
+                if event.key == pygame.K_ESCAPE:
+                    
+                    self._return_to_main()
 
         pygame.time.Clock().tick(30)  
 
@@ -128,15 +135,16 @@ class MainMenuScreen(MenuScreen):
     def initialize(self):
         self.title = "Super Terboy"
         self.enabled = True
-        self.train_ai_button_index = 1  # Track index of TRAIN AI button
+        self.train_ai_button_index = 2  # Track index of TRAIN AI button
         self.flash_timer = 0
         self.is_flashing = False
         
         center_x = self.parent.display_size[0] // 2
         
-        button_texts = ['PLAY', 'TRAIN AI', 'QUIT']
+        button_texts = ['PLAY', 'EDIT', 'TRAIN AI', 'QUIT']
         button_actions = [
             self.parent._show_options_menu,  # Play now goes to options first
+            self.parent.edit_maps,
             self.parent.train_ai_unavailable,  # Training AI is not available
             self.parent.quit_game
         ]

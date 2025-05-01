@@ -5,13 +5,11 @@ import random
 from scripts.utils import load_images, load_image, find_next_numeric_filename, MenuScreen, load_sounds
 from scripts.tilemap import Tilemap
 from scripts.constants import TILE_SIZE, DISPLAY_SIZE, FPS, PHYSICS_TILES, FONT, MENUBG
+from scripts.GameManager import game_state_manager
 
-class Menu:
-    def __init__(self):
-        pygame.init()
-        pygame.mixer.init()
-        self.screen = pygame.display.set_mode(DISPLAY_SIZE)
-        pygame.display.set_caption('Level Editor')
+class EditorMenu:
+    def __init__(self, display):
+        self.screen = display
         self.sfx = {'click': load_sounds('click')}
         self.background = pygame.image.load(MENUBG).convert()
         self.background = pygame.transform.scale(self.background, DISPLAY_SIZE)
@@ -21,8 +19,6 @@ class Menu:
         self.font_path = FONT
         self.editor_active = False
         self.editor = None
-
-        pygame.font.init()
 
         self.button_props = {
             'padding': 30,
@@ -49,10 +45,11 @@ class Menu:
         self.editor = Editor(self, map_file)
         self.editor_active = True
 
-    def quit_game(self):
-        pygame.time.delay(300)
-        pygame.quit()
-        exit()
+    def quit_editor(self):
+        # pygame.time.delay(300)
+        # pygame.quit()
+        # exit()
+        game_state_manager.setState('menu')
 
     def return_to_menu(self):
         self.editor_active = False
@@ -62,26 +59,23 @@ class Menu:
         self.map_menu.enable()
 
     def run(self):
-        clock = pygame.time.Clock()
-        
-        while True:
-            if self.editor_active:
-                self.editor.run()
-                continue
+        if self.editor_active:
+            self.editor.run()
+            return
 
-            self.screen.blit(self.background, (0, 0))
+        self.screen.blit(self.background, (0, 0))
             
-            events = pygame.event.get()
-            for event in events:
-                if event.type == pygame.QUIT:
-                    pygame.quit()
-                    exit()
+        events = pygame.event.get()
+        for event in events:
+            if event.type == pygame.QUIT:
+                pygame.quit()
+                exit()
+            if event.type == pygame.KEYDOWN:
+                if event.key == pygame.K_ESCAPE:
+                    self.quit_editor()
 
-            self.map_menu.update(events)
-            self.map_menu.draw(self.screen)
-            
-            pygame.display.flip()
-            clock.tick(FPS)
+        self.map_menu.update(events)
+        self.map_menu.draw(self.screen)
 
 class MapSelectionScreen(MenuScreen):
     def initialize(self):
@@ -132,8 +126,8 @@ class MapSelectionScreen(MenuScreen):
         back_y = 200 + (rows + 1) * (self.button_manager.button_height + padding)
         
         self.button_manager.create_centered_button_list(
-            ["QUIT"], 
-            [self.parent.quit_game], 
+            ["RETURN"], 
+            [self.parent.quit_editor], 
             center_x, 
             back_y
         )
@@ -209,6 +203,14 @@ class Editor:
         }
         self.rotated_assets = {}
         return assets
+    
+    def setZoom(self, zoom):
+        self.zoom = int(zoom)
+        new_tile_size = int(TILE_SIZE * self.zoom // 10)
+        self.scroll[0] = (self.scroll[0] + DISPLAY_SIZE[0]//2) // self.tilemap.tile_size * new_tile_size - DISPLAY_SIZE[0]//2
+        self.scroll[1] = (self.scroll[1] + DISPLAY_SIZE[1]//2) // self.tilemap.tile_size * new_tile_size - DISPLAY_SIZE[1]//2
+        self.tilemap.tile_size = new_tile_size
+        self.assets = self.reload_assets()
     
     def count_spawners(self):
         return len(self.tilemap.extract([('spawners', 0), ('spawners', 1)], keep=True))
@@ -421,17 +423,11 @@ class Editor:
             # Zoom controls
             elif event.key == pygame.K_UP:
                 if self.zoom < 20:
-                    self.zoom += 1
-                    self.zoom = int(self.zoom)
-                    self.tilemap.tile_size = int(TILE_SIZE * self.zoom // 10)
-                    self.assets = self.reload_assets()  # This will rescale all assets
+                    self.setZoom(self.zoom+1)
                             
             elif event.key == pygame.K_DOWN:
                 if self.zoom > 1:
-                    self.zoom -= 1
-                    self.zoom = int(self.zoom)
-                    self.tilemap.tile_size = int(TILE_SIZE * self.zoom // 10)
-                    self.assets = self.reload_assets() # This will rescale all assets 
+                    self.setZoom(self.zoom-1)
         
         elif event.type == pygame.KEYUP:
             # Movement keys
@@ -508,7 +504,3 @@ class Editor:
             
             pygame.display.update()
             clock.tick(FPS)
-
-if __name__ == "__main__":
-    menu = Menu()
-    menu.run()

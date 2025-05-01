@@ -3,6 +3,7 @@ from scripts.constants import DISPLAY_SIZE, FPS
 from scripts.game import Game
 from scripts.menu import Menu
 from scripts.GameManager import game_state_manager
+from scripts.editor import EditorMenu
 
 class Engine:
 
@@ -13,9 +14,10 @@ class Engine:
         self.display = pygame.display.set_mode(DISPLAY_SIZE)
         self.clock = pygame.time.Clock()
         self.game = Game(self.display, self.clock)
+        self.editor = EditorMenu(self.display)
         self.menu = Menu(self.display)
 
-        self.state = {'game': self.game, 'menu': self.menu}
+        self.state = {'game': self.game, 'editor': self.editor, 'menu': self.menu}
 
 
     def run(self):

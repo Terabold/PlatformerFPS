@@ -2089,16 +2089,16 @@
             ]
         },
         "30;17": {
-            "type": "stone",
-            "variant": 5,
+            "type": "ores",
+            "variant": 0,
             "pos": [
                 30,
                 17
             ]
         },
         "30;16": {
-            "type": "stone",
-            "variant": 5,
+            "type": "ores",
+            "variant": 0,
             "pos": [
                 30,
                 16

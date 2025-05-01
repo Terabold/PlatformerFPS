@@ -120,7 +120,7 @@ def draw_debug_info(game, surface, offset):
 
 def update_camera_with_box(player, scroll, display_width, display_height):
     box_width = 200
-    box_height = 250
+    box_height = 55
     
     box_left = scroll[0] + (display_width / 2) - (box_width / 2)
     box_right = box_left + box_width

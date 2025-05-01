@@ -4,12 +4,13 @@ import os
 from scripts.constants import DISPLAY_SIZE, FONT, MENUBG
 from scripts.utils import load_sounds
 from scripts.utils import MenuScreen
+from scripts.GameManager import game_state_manager
 
 class Menu:
     def __init__(self, screen):
         self.sfx = {
             'click': load_sounds('click'),
-            'music': pygame.mixer.Sound('data\sfx\music\music.mp3')
+            'music': pygame.mixer.Sound('data/sfx/music/music.mp3')
             }
         self.played_music = False
         self.screen = screen
@@ -19,6 +20,9 @@ class Menu:
         self.selected_map = None  
         self.display_size = DISPLAY_SIZE
         self.font_path = FONT
+
+        self.player_type = game_state_manager.player_type
+        self.selected_map = game_state_manager.selected_map
 
         pygame.font.init()
 
@@ -40,52 +44,56 @@ class Menu:
         if sound_key in self.sfx:
             random.choice(self.sfx[sound_key]).play()
 
-    def _show_map_selection(self):
-        self.main_menu.disable()
-        self.map_menu.enable()
-        self.active_menu = self.map_menu
-
     def _show_options_menu(self):
-        if self.map_menu.enabled:
-            self.map_menu.disable()
-        else:
-            self.main_menu.disable()
+        self.main_menu.disable()
         self.options_menu.enable()
         self.active_menu = self.options_menu
-        
 
-    def _return_to_main(self):
-        self.map_menu.disable()
-        self.main_menu.enable()
-        self.active_menu = self.main_menu
-
-    def _return_to_map_selection(self):
+    def _show_map_selection(self):
         self.options_menu.disable()
         self.map_menu.enable()
         self.active_menu = self.map_menu
 
+    def _return_to_main(self):
+        if self.options_menu.enabled:
+            self.options_menu.disable()
+        elif self.map_menu.enabled:
+            self.map_menu.disable()
+        self.main_menu.enable()
+        self.active_menu = self.main_menu
+
+    def _return_to_options(self):
+        self.map_menu.disable()
+        self.options_menu.enable()
+        self.active_menu = self.options_menu
+
     def _set_player_type(self, value):
         self.player_type = value
+        # Immediately update global state
+        game_state_manager.player_type = value
         if self.options_menu.enabled:
             self.options_menu.update_player_type_text()
         
     def _select_map(self, map_file):
-        self.selected_map = os.path.join('data', 'maps', map_file)  
-        self._show_options_menu()
+        self.selected_map = os.path.join('data', 'maps', map_file)
+        # Immediately update global state  
+        game_state_manager.selected_map = self.selected_map
+        
+        # After selecting a map, proceed to game directly since options are already set
+        self.play_game()
 
     def play_game(self):
-        from scripts.GameManager import game_state_manager
-        game_state_manager.player_type = self.player_type
-        
-        if self.selected_map:
-            game_state_manager.selected_map = self.selected_map
-            
         game_state_manager.setState('game')
 
     def quit_game(self):
         pygame.time.delay(300)
         pygame.quit()
         exit()
+        
+    def train_ai_unavailable(self):
+        self.main_menu.flash_train_ai_button()
+        # Just play the click sound for feedback
+        self._play_sound('click')
 
     # def play_music(self):
     #     if not self.played_music:
@@ -120,13 +128,16 @@ class MainMenuScreen(MenuScreen):
     def initialize(self):
         self.title = "Super Terboy"
         self.enabled = True
+        self.train_ai_button_index = 1  # Track index of TRAIN AI button
+        self.flash_timer = 0
+        self.is_flashing = False
         
         center_x = self.parent.display_size[0] // 2
         
         button_texts = ['PLAY', 'TRAIN AI', 'QUIT']
         button_actions = [
-            self.parent._show_map_selection,
-            self.parent._show_options_menu,
+            self.parent._show_options_menu,  # Play now goes to options first
+            self.parent.train_ai_unavailable,  # Training AI is not available
             self.parent.quit_game
         ]
         
@@ -136,6 +147,81 @@ class MainMenuScreen(MenuScreen):
             center_x, 
             300
         )
+    
+    def flash_train_ai_button(self):
+        self.is_flashing = True
+        self.flash_timer = 0
+    
+    def update(self, events):
+        super().update(events)
+        
+        if self.is_flashing:
+            self.flash_timer += 1
+            if self.flash_timer > 5: 
+                self.is_flashing = False
+    
+    def draw(self, surface):
+        super().draw(surface)
+        
+        if self.is_flashing and self.train_ai_button_index < len(self.button_manager.buttons):
+            button = self.button_manager.buttons[self.train_ai_button_index]
+            flash_surface = pygame.Surface((button.rect.width, button.rect.height), pygame.SRCALPHA)
+            flash_surface.fill((255, 0, 0, 150))  # Semi-transparent red
+            surface.blit(flash_surface, (button.rect.x, button.rect.y))
+
+
+class OptionsMenuScreen(MenuScreen):
+    def initialize(self):
+        self.title = "Options"
+        
+        self.player_types = ['PL', 'AI']
+        self.player_type_button_index = 1
+        self.flash_timer = 0
+        self.is_flashing = False
+
+        center_x = self.parent.display_size[0] // 2
+
+        def toggle_player_type():
+            # new_type = 1 - self.parent.player_type
+            self.parent._set_player_type(0) # set new_type when ai available (reminder)
+            self.flash_player_type_button()
+
+        self.button_manager.create_centered_button_list(
+            ["CONTINUE", f"Player Type: {self.player_types[self.parent.player_type]}", "BACK"],
+            [self.parent._show_map_selection, toggle_player_type, self.parent._return_to_main],
+            center_x,
+            300
+        )
+
+    def flash_player_type_button(self):
+        self.is_flashing = True
+        self.flash_timer = 0
+
+    def update(self, events):
+        super().update(events)
+        if self.is_flashing:
+            self.flash_timer += 1
+            if self.flash_timer > 5:
+                self.is_flashing = False
+
+    def draw(self, surface):
+        super().draw(surface)
+        if self.is_flashing and self.player_type_button_index < len(self.button_manager.buttons):
+            button = self.button_manager.buttons[self.player_type_button_index]
+            flash_surface = pygame.Surface((button.rect.width, button.rect.height), pygame.SRCALPHA)
+            flash_surface.fill((255, 0, 0, 150))  # Semi-transparent red
+            surface.blit(flash_surface, (button.rect.x, button.rect.y))
+
+    def update_player_type_text(self):
+        # Future logic for live label update
+        # if self.button_manager.buttons:
+        #     self.button_manager.buttons[1].text = f"Player Type: {self.player_types[self.parent.player_type]}"
+        pass
+
+    def enable(self):
+        super().enable()
+        # self.update_player_type_text()
+
 
 
 class MapSelectionScreen(MenuScreen):
@@ -153,7 +239,11 @@ class MapSelectionScreen(MenuScreen):
         grid_width = columns * (button_width + padding) - padding
         start_x = (self.parent.display_size[0] - grid_width) // 2
         
-        actions = [lambda i=i: self.parent._select_map(self.map_files[i]) for i in range(len(self.map_files))]
+        def select_map(index):
+            map_file = self.map_files[index]
+            self.parent._select_map(map_file)
+        
+        actions = [lambda i=i: select_map(i) for i in range(len(self.map_files))]
         
         self.button_manager.create_grid_buttons(
             self.map_numbers,
@@ -168,39 +258,10 @@ class MapSelectionScreen(MenuScreen):
         rows = (len(self.map_files) + columns - 1) // columns
         back_y = 200 + (rows + 1) * (self.button_manager.button_height + padding)
         
+        # Changed BACK to go to options instead of main menu
         self.button_manager.create_centered_button_list(
             ["BACK"], 
-            [self.parent._return_to_main], 
+            [self.parent._return_to_options], 
             center_x, 
             back_y
         )
-
-
-class OptionsMenuScreen(MenuScreen):
-    def initialize(self):
-        self.title = "Options"
-        
-        self.player_types = ['PL', 'AI']
-        
-        center_x = self.parent.display_size[0] // 2
-        
-        def toggle_player_type():
-            new_type = 1 - self.parent.player_type
-            self.parent._set_player_type(new_type)
-        
-        self.button_manager.create_centered_button_list(
-            [f"Player Type: {self.player_types[self.parent.player_type]}", "START GAME", "BACK"],
-            [toggle_player_type, self.parent.play_game, self.parent._return_to_map_selection],
-            center_x,
-            300
-        )
-    
-    def update_player_type_text(self):
-        if self.button_manager.buttons:
-            self.button_manager.buttons[0].text = f"Player Type: {self.player_types[self.parent.player_type]}"
-
-    def enable(self):
-        super().enable()
-        
-        if self.button_manager.buttons:
-            self.button_manager.buttons[0].text = f"Player Type: {self.player_types[self.parent.player_type]}"

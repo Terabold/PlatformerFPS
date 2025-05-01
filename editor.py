@@ -57,6 +57,9 @@ class Menu:
     def return_to_menu(self):
         self.editor_active = False
         self.editor = None
+        # Refresh the map menu to show any newly saved maps
+        self.map_menu = MapSelectionScreen(self)
+        self.map_menu.enable()
 
     def run(self):
         clock = pygame.time.Clock()
@@ -89,7 +92,18 @@ class MapSelectionScreen(MenuScreen):
             os.makedirs(maps_dir)
             
         self.map_files = [f for f in os.listdir(maps_dir) if f.endswith('.json')]
-        self.map_numbers = [str(i+1) for i in range(len(self.map_files))]
+        
+        # Sort map files numerically
+        def get_map_number(filename):
+            try:
+                return int(filename.split('.')[0])
+            except ValueError:
+                return float('inf')  # Non-numeric names go to the end
+                
+        self.map_files.sort(key=get_map_number)
+        
+        # Use the actual filename as the display text for better identification
+        self.map_numbers = [f.split('.')[0] for f in self.map_files]
         
         columns = 5
         button_width = 200
@@ -98,12 +112,14 @@ class MapSelectionScreen(MenuScreen):
         grid_width = columns * (button_width + padding) - padding
         start_x = (self.parent.display_size[0] - grid_width) // 2
         
-        # Modified this part to add "New" at the end instead of beginning
+        # Create actions for selecting maps
         actions = [lambda i=i: self.parent._select_map(self.map_files[i]) for i in range(len(self.map_files))] + [self.parent.create_new_map]
-        self.map_numbers = self.map_numbers + ["New"]
+        
+        # Add "New" button at the end
+        display_labels = self.map_numbers + ["New"]
         
         self.button_manager.create_grid_buttons(
-            self.map_numbers,
+            display_labels,
             actions,
             columns,
             start_x,
@@ -112,7 +128,7 @@ class MapSelectionScreen(MenuScreen):
         )
         
         center_x = self.parent.display_size[0] // 2
-        rows = (len(self.map_numbers) + columns - 1) // columns
+        rows = (len(display_labels) + columns - 1) // columns
         back_y = 200 + (rows + 1) * (self.button_manager.button_height + padding)
         
         self.button_manager.create_centered_button_list(
@@ -134,6 +150,9 @@ class Editor:
         self.zoom = 10
         self.tilemap = Tilemap(self, tile_size=TILE_SIZE)
         self.scroll = [0, 0]
+        
+        # Store the current map file path
+        self.current_map_file = map_file
         
         # Asset handling
         self.assets = self.reload_assets()
@@ -251,8 +270,16 @@ class Editor:
         directory = 'data/maps'
         if not os.path.exists(directory):
             os.makedirs(directory)  # Ensure the directory exists
-        next_filename = find_next_numeric_filename(directory, extension='.json')
-        self.tilemap.save(os.path.join(directory, next_filename))
+            
+        # If editing an existing map, update it directly
+        if self.current_map_file:
+            self.tilemap.save(os.path.join(directory, self.current_map_file))
+        else:
+            # For new maps, create a new file
+            next_filename = find_next_numeric_filename(directory, extension='.json')
+            self.current_map_file = next_filename  # Update the current map file
+            self.tilemap.save(os.path.join(directory, next_filename))
+            
         self.menu.return_to_menu()
 
     def handle_tile_removal(self, tile_pos, mpos):
@@ -309,6 +336,14 @@ class Editor:
             
             controls_info = self.font.render("R: Rotate spike | Ctrl+Click: Rotate placed spike", True, (255, 255, 255))
             self.display.blit(controls_info, (5, 100))
+        
+        # Show file info
+        if self.current_map_file:
+            file_info = self.font.render(f"Editing: {self.current_map_file}", True, (255, 255, 255))
+            self.display.blit(file_info, (5, DISPLAY_SIZE[1] - 50))
+        else:
+            new_map_info = self.font.render("Creating new map", True, (255, 255, 255))
+            self.display.blit(new_map_info, (5, DISPLAY_SIZE[1] - 50))
         
         # Show menu return info
         menu_info = self.font.render("ESC: Return to Menu | O: Save Map", True, (255, 255, 255))

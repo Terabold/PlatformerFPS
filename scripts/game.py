@@ -2,25 +2,32 @@ import sys
 import pygame
 from scripts.environment import Environment
 from scripts.constants import *
-from scripts.GameManager import game_state_manager
 
 class Game:
     def __init__(self, display, clock):
         self.display = display
         self.clock = clock
-        player_type = game_state_manager.player_type
-        self.environment = Environment(display, clock, player_type=player_type)
+        self.environment = None
+        
+    def initialize_environment(self):
+        self.environment = Environment(self.display, self.clock)
         
     def resume_game(self):
-        self.environment.resume_game()
+        if self.environment:
+            self.environment.resume_game()
         
     def return_to_main(self):
-        self.environment.return_to_main()
+        if self.environment:
+            self.environment.return_to_main()
         
     def reset(self):
-        self.environment.reset()
+        if self.environment:
+            self.environment.reset()
 
     def run(self):
+        if not self.environment:
+            self.initialize_environment()
+            
         events = pygame.event.get()
         for event in events:
             if event.type == pygame.QUIT:

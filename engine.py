@@ -17,9 +17,20 @@ class Engine:
 
         self.state = {'game': self.game, 'menu': self.menu}
 
+
     def run(self):
+        previous_state = None
+        
         while True:
-            self.state[game_state_manager.getState()].run()
+            current_state = game_state_manager.getState()
+            
+            if previous_state == 'menu' and current_state == 'game':
+                self.game.initialize_environment()
+            
+            self.state[current_state].run()
+            
+            previous_state = current_state
+            
             pygame.display.update()
             self.clock.tick(FPS)
 

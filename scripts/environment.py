@@ -141,18 +141,26 @@ class GameMenu:
             self.active_menu.draw(surface)
 
 class Environment:
-    def __init__(self, display, clock, ai_train_mode=False, player_type=0):
-        self.ai_train_mode = ai_train_mode
+    def __init__(self, display, clock, ai_train_mode=False):
+        self.player_type = game_state_manager.player_type
+        self.ai_train_mode = ai_train_mode 
+        
+        if self.player_type == 1:  
+            self.ai_train_mode = True
+        
         self.display = display
         self.clock = clock
         self.menu = False
         self.rotated_assets = {}
         self.show_rotation_values = False
         self.tilemap = Tilemap(self, tile_size=TILE_SIZE)
-        map_path = game_state_manager.selected_map 
+        
+        # Get the latest map selection
+        map_path = game_state_manager.selected_map
         self.tilemap.load(map_path)
         IMGscale = (self.tilemap.tile_size, self.tilemap.tile_size)
 
+        # Rest of initialization continues as before
         self.assets = {          
             'decor': load_images('tiles/decor', scale=IMGscale),
             'grass': load_images('tiles/grass', scale=IMGscale),
@@ -197,11 +205,12 @@ class Environment:
         pygame.font.init()
         self.fps_font = pygame.font.Font(FONT, 36)
 
-        if player_type == 0:
+        if self.player_type == 0:
             self.input_handler = InputHandler()
-        elif player_type == 1:
+        elif self.player_type == 1:
             self.input_handler = InputHandler() 
 
+        print (f"Player type: {self.player_type}")
         self.scroll = self.default_pos.copy()
 
         self.game_menu = GameMenu(self)
@@ -313,7 +322,6 @@ class Environment:
 
         self.player.render(self.display, offset=self.render_scroll)
         
-        # Draw the menu if active
         if self.menu:
             self.game_menu.draw(self.display)
 

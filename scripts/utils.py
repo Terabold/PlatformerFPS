@@ -124,7 +124,7 @@ def update_camera_with_box(player, scroll, display_width, display_height):
     
     box_left = scroll[0] + (display_width / 2) - (box_width / 2)
     box_right = box_left + box_width
-    box_top = scroll[1] + (display_height * 0.8) - (box_height / 2) - 100
+    box_top = scroll[1] + (display_height / 1.8) - (box_height / 2) 
     box_bottom = box_top + box_height
     
     player_x = player.rect().centerx

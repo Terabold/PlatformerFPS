@@ -3,7 +3,7 @@ root = tk.Tk()
 screen_width = root.winfo_screenwidth()
 screen_height = root.winfo_screenheight()
 root.destroy()
-DISPLAY_SIZE = (screen_width, screen_height-55)
+DISPLAY_SIZE = (screen_width, screen_height)
 
 FPS = 60
 

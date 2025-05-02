@@ -10,7 +10,7 @@
         },
         "3;11": {
             "type": "grass",
-            "variant": 2,
+            "variant": 1,
             "pos": [
                 3,
                 11
@@ -18,7 +18,7 @@
         },
         "4;11": {
             "type": "grass",
-            "variant": 2,
+            "variant": 1,
             "pos": [
                 4,
                 11
@@ -26,7 +26,7 @@
         },
         "5;11": {
             "type": "grass",
-            "variant": 2,
+            "variant": 1,
             "pos": [
                 5,
                 11
@@ -34,7 +34,7 @@
         },
         "6;11": {
             "type": "grass",
-            "variant": 2,
+            "variant": 1,
             "pos": [
                 6,
                 11
@@ -42,7 +42,7 @@
         },
         "7;11": {
             "type": "grass",
-            "variant": 2,
+            "variant": 1,
             "pos": [
                 7,
                 11
@@ -50,7 +50,7 @@
         },
         "8;11": {
             "type": "grass",
-            "variant": 2,
+            "variant": 1,
             "pos": [
                 8,
                 11
@@ -58,7 +58,7 @@
         },
         "9;11": {
             "type": "grass",
-            "variant": 2,
+            "variant": 1,
             "pos": [
                 9,
                 11
@@ -66,7 +66,7 @@
         },
         "10;11": {
             "type": "grass",
-            "variant": 2,
+            "variant": 1,
             "pos": [
                 10,
                 11
@@ -74,7 +74,7 @@
         },
         "11;11": {
             "type": "grass",
-            "variant": 2,
+            "variant": 1,
             "pos": [
                 11,
                 11
@@ -82,7 +82,7 @@
         },
         "12;11": {
             "type": "grass",
-            "variant": 2,
+            "variant": 1,
             "pos": [
                 12,
                 11
@@ -90,7 +90,7 @@
         },
         "13;11": {
             "type": "grass",
-            "variant": 2,
+            "variant": 1,
             "pos": [
                 13,
                 11
@@ -98,7 +98,7 @@
         },
         "14;11": {
             "type": "grass",
-            "variant": 2,
+            "variant": 1,
             "pos": [
                 14,
                 11
@@ -106,7 +106,7 @@
         },
         "15;11": {
             "type": "grass",
-            "variant": 2,
+            "variant": 1,
             "pos": [
                 15,
                 11
@@ -114,7 +114,7 @@
         },
         "16;11": {
             "type": "grass",
-            "variant": 2,
+            "variant": 1,
             "pos": [
                 16,
                 11
@@ -122,7 +122,7 @@
         },
         "17;11": {
             "type": "grass",
-            "variant": 2,
+            "variant": 1,
             "pos": [
                 17,
                 11
@@ -130,7 +130,7 @@
         },
         "18;11": {
             "type": "grass",
-            "variant": 2,
+            "variant": 1,
             "pos": [
                 18,
                 11
@@ -522,7 +522,7 @@
         },
         "30;11": {
             "type": "grass",
-            "variant": 2,
+            "variant": 1,
             "pos": [
                 30,
                 11
@@ -530,7 +530,7 @@
         },
         "31;11": {
             "type": "grass",
-            "variant": 2,
+            "variant": 1,
             "pos": [
                 31,
                 11
@@ -538,7 +538,7 @@
         },
         "32;11": {
             "type": "grass",
-            "variant": 2,
+            "variant": 1,
             "pos": [
                 32,
                 11
@@ -546,7 +546,7 @@
         },
         "33;11": {
             "type": "grass",
-            "variant": 2,
+            "variant": 1,
             "pos": [
                 33,
                 11
@@ -554,7 +554,7 @@
         },
         "34;11": {
             "type": "grass",
-            "variant": 2,
+            "variant": 1,
             "pos": [
                 34,
                 11
@@ -562,7 +562,7 @@
         },
         "35;11": {
             "type": "grass",
-            "variant": 2,
+            "variant": 1,
             "pos": [
                 35,
                 11
@@ -570,7 +570,7 @@
         },
         "36;11": {
             "type": "grass",
-            "variant": 2,
+            "variant": 1,
             "pos": [
                 36,
                 11
@@ -578,7 +578,7 @@
         },
         "37;11": {
             "type": "grass",
-            "variant": 2,
+            "variant": 1,
             "pos": [
                 37,
                 11
@@ -586,7 +586,7 @@
         },
         "38;11": {
             "type": "grass",
-            "variant": 2,
+            "variant": 1,
             "pos": [
                 38,
                 11
@@ -1019,7 +1019,7 @@
         },
         "39;11": {
             "type": "grass",
-            "variant": 2,
+            "variant": 1,
             "pos": [
                 39,
                 11
@@ -1027,7 +1027,7 @@
         },
         "40;11": {
             "type": "grass",
-            "variant": 2,
+            "variant": 1,
             "pos": [
                 40,
                 11
@@ -1035,7 +1035,7 @@
         },
         "41;11": {
             "type": "grass",
-            "variant": 2,
+            "variant": 1,
             "pos": [
                 41,
                 11
@@ -1043,7 +1043,7 @@
         },
         "42;11": {
             "type": "grass",
-            "variant": 2,
+            "variant": 1,
             "pos": [
                 42,
                 11
@@ -1051,7 +1051,7 @@
         },
         "43;11": {
             "type": "grass",
-            "variant": 2,
+            "variant": 1,
             "pos": [
                 43,
                 11
@@ -1219,11 +1219,29 @@
         },
         "43;10": {
             "type": "finish",
-            "variant": 11,
+            "variant": 10,
             "pos": [
                 43,
                 10
             ]
+        },
+        "12;10": {
+            "type": "spikes",
+            "variant": 0,
+            "pos": [
+                12,
+                10
+            ],
+            "rotation": 0
+        },
+        "15;10": {
+            "type": "spikes",
+            "variant": 0,
+            "pos": [
+                15,
+                10
+            ],
+            "rotation": 0
         }
     },
     "offgrid": [],

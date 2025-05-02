@@ -38,8 +38,9 @@ class LevelCompleteMenuScreen(MenuScreen):
         
         center_x = self.parent.display_size[0] // 2
         
-        button_texts = ['Play Again', 'Main Menu']
+        button_texts = ['Next Map', 'Play Again', 'Main Menu']
         button_actions = [
+            self.parent.load_next_map,
             self.parent.reset,
             self.parent.return_to_main
         ]
@@ -51,6 +52,24 @@ class LevelCompleteMenuScreen(MenuScreen):
             400
         )
 
+class CongratulationsScreen(MenuScreen):
+    def initialize(self):
+        self.title = "Congratulations!"
+        
+        center_x = self.parent.display_size[0] // 2
+        
+        button_texts = ['Restart Game', 'Main Menu']
+        button_actions = [
+            self.parent.restart_game,
+            self.parent.return_to_main
+        ]
+        
+        self.button_manager.create_centered_button_list(
+            button_texts, 
+            button_actions, 
+            center_x, 
+            400
+        )
 class GameOverMenuScreen(MenuScreen):
     def initialize(self):
         self.title = "Game Over"
@@ -126,6 +145,9 @@ class GameMenu:
         self.game_over_menu.enable()
         self.active_menu = self.game_over_menu
     
+    def load_next_map(self):
+        pass
+    
     def update(self, events):
         if self.active_menu:
             self.active_menu.update(events)
@@ -170,6 +192,7 @@ class Environment:
             'finish': load_images('tiles/finish', scale=IMGscale),
             'ores': load_images('tiles/ores', scale=IMGscale),
             'weather': load_images('tiles/weather', scale=IMGscale),
+            'kill': load_images('tiles/kill', scale=IMGscale),
             # 'nether': load_images('tiles/nether', scale=IMGscale),
             # 'wood': load_images('tiles/wood', scale=IMGscale),
             # 'wool': load_images('tiles/wool', scale=IMGscale),       
@@ -210,7 +233,6 @@ class Environment:
         elif self.player_type == 1:
             self.input_handler = InputHandler() 
 
-        print (f"Player type: {self.player_type}")
         self.scroll = self.default_pos.copy()
 
         self.game_menu = GameMenu(self)

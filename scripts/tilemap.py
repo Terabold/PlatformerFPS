@@ -150,6 +150,9 @@ class Tilemap:
                     case 'spikes':
                         spike_rect = self.get_spike_rect_with_rotation(tile)
                         tiles.append((spike_rect, (tile['type'], tile['variant'])))
+                    case 'kill':
+                        kill_rect = pygame.Rect(tile['pos'][0] * self.tile_size, tile['pos'][1] * self.tile_size, self.tile_size, self.tile_size)
+                        tiles.append((kill_rect, (tile['type'], tile['variant'])))
         return tiles
     
     def is_below_map(self, entity_pos, tiles_threshold=2):

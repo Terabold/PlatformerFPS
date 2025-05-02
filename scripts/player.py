@@ -90,7 +90,7 @@ class Player:
         for rect, tile_info in tilemap.interactive_rects_around(self.pos):
             if entity_rect.colliderect(rect):
                 tile_type = tile_info[0]
-                if tile_type in ['spikes', 'saws']:
+                if tile_type in ['spikes', 'saws', 'kill']:
                     self.death = True 
                     self.velocity = [0, 0]
                     self.set_action('death')

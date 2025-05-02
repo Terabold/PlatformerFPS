@@ -10,7 +10,7 @@
         },
         "1;10": {
             "type": "grass",
-            "variant": 1,
+            "variant": 0,
             "pos": [
                 1,
                 10
@@ -18,7 +18,7 @@
         },
         "2;10": {
             "type": "grass",
-            "variant": 1,
+            "variant": 0,
             "pos": [
                 2,
                 10
@@ -26,7 +26,7 @@
         },
         "3;10": {
             "type": "grass",
-            "variant": 1,
+            "variant": 0,
             "pos": [
                 3,
                 10
@@ -34,7 +34,7 @@
         },
         "4;10": {
             "type": "grass",
-            "variant": 1,
+            "variant": 0,
             "pos": [
                 4,
                 10
@@ -42,7 +42,7 @@
         },
         "5;10": {
             "type": "grass",
-            "variant": 1,
+            "variant": 0,
             "pos": [
                 5,
                 10
@@ -50,7 +50,7 @@
         },
         "6;10": {
             "type": "grass",
-            "variant": 1,
+            "variant": 0,
             "pos": [
                 6,
                 10
@@ -58,7 +58,7 @@
         },
         "7;10": {
             "type": "grass",
-            "variant": 1,
+            "variant": 0,
             "pos": [
                 7,
                 10
@@ -66,7 +66,7 @@
         },
         "8;10": {
             "type": "grass",
-            "variant": 1,
+            "variant": 0,
             "pos": [
                 8,
                 10
@@ -74,7 +74,7 @@
         },
         "9;10": {
             "type": "grass",
-            "variant": 1,
+            "variant": 0,
             "pos": [
                 9,
                 10
@@ -82,7 +82,7 @@
         },
         "10;10": {
             "type": "grass",
-            "variant": 1,
+            "variant": 0,
             "pos": [
                 10,
                 10
@@ -90,7 +90,7 @@
         },
         "11;10": {
             "type": "grass",
-            "variant": 1,
+            "variant": 0,
             "pos": [
                 11,
                 10
@@ -98,7 +98,7 @@
         },
         "18;6": {
             "type": "grass",
-            "variant": 1,
+            "variant": 0,
             "pos": [
                 18,
                 6
@@ -106,7 +106,7 @@
         },
         "19;6": {
             "type": "grass",
-            "variant": 1,
+            "variant": 0,
             "pos": [
                 19,
                 6
@@ -114,7 +114,7 @@
         },
         "28;10": {
             "type": "grass",
-            "variant": 1,
+            "variant": 0,
             "pos": [
                 28,
                 10
@@ -122,7 +122,7 @@
         },
         "29;10": {
             "type": "grass",
-            "variant": 1,
+            "variant": 0,
             "pos": [
                 29,
                 10
@@ -130,7 +130,7 @@
         },
         "30;10": {
             "type": "grass",
-            "variant": 1,
+            "variant": 0,
             "pos": [
                 30,
                 10
@@ -138,7 +138,7 @@
         },
         "31;10": {
             "type": "grass",
-            "variant": 1,
+            "variant": 0,
             "pos": [
                 31,
                 10
@@ -146,7 +146,7 @@
         },
         "32;10": {
             "type": "grass",
-            "variant": 1,
+            "variant": 0,
             "pos": [
                 32,
                 10
@@ -154,7 +154,7 @@
         },
         "33;10": {
             "type": "grass",
-            "variant": 1,
+            "variant": 0,
             "pos": [
                 33,
                 10
@@ -162,7 +162,7 @@
         },
         "34;10": {
             "type": "grass",
-            "variant": 1,
+            "variant": 0,
             "pos": [
                 34,
                 10
@@ -170,7 +170,7 @@
         },
         "35;10": {
             "type": "grass",
-            "variant": 1,
+            "variant": 0,
             "pos": [
                 35,
                 10
@@ -178,7 +178,7 @@
         },
         "36;10": {
             "type": "grass",
-            "variant": 1,
+            "variant": 0,
             "pos": [
                 36,
                 10
@@ -186,7 +186,7 @@
         },
         "37;10": {
             "type": "grass",
-            "variant": 1,
+            "variant": 0,
             "pos": [
                 37,
                 10
@@ -898,7 +898,7 @@
         },
         "41;10": {
             "type": "grass",
-            "variant": 1,
+            "variant": 0,
             "pos": [
                 41,
                 10
@@ -906,7 +906,7 @@
         },
         "42;10": {
             "type": "grass",
-            "variant": 1,
+            "variant": 0,
             "pos": [
                 42,
                 10
@@ -914,7 +914,7 @@
         },
         "43;10": {
             "type": "grass",
-            "variant": 1,
+            "variant": 0,
             "pos": [
                 43,
                 10
@@ -922,7 +922,7 @@
         },
         "44;10": {
             "type": "grass",
-            "variant": 1,
+            "variant": 0,
             "pos": [
                 44,
                 10
@@ -930,7 +930,7 @@
         },
         "45;10": {
             "type": "grass",
-            "variant": 1,
+            "variant": 0,
             "pos": [
                 45,
                 10
@@ -938,7 +938,7 @@
         },
         "46;10": {
             "type": "grass",
-            "variant": 1,
+            "variant": 0,
             "pos": [
                 46,
                 10
@@ -946,7 +946,7 @@
         },
         "47;10": {
             "type": "grass",
-            "variant": 1,
+            "variant": 0,
             "pos": [
                 47,
                 10
@@ -954,7 +954,7 @@
         },
         "48;10": {
             "type": "grass",
-            "variant": 1,
+            "variant": 0,
             "pos": [
                 48,
                 10
@@ -962,7 +962,7 @@
         },
         "49;10": {
             "type": "grass",
-            "variant": 1,
+            "variant": 0,
             "pos": [
                 49,
                 10
@@ -970,7 +970,7 @@
         },
         "50;10": {
             "type": "grass",
-            "variant": 1,
+            "variant": 0,
             "pos": [
                 50,
                 10
@@ -978,7 +978,7 @@
         },
         "51;10": {
             "type": "grass",
-            "variant": 1,
+            "variant": 0,
             "pos": [
                 51,
                 10
@@ -1201,16 +1201,16 @@
             ]
         },
         "46;13": {
-            "type": "stone",
-            "variant": 5,
+            "type": "ores",
+            "variant": 3,
             "pos": [
                 46,
                 13
             ]
         },
         "45;13": {
-            "type": "stone",
-            "variant": 5,
+            "type": "ores",
+            "variant": 3,
             "pos": [
                 45,
                 13
@@ -1298,7 +1298,7 @@
         },
         "52;10": {
             "type": "grass",
-            "variant": 1,
+            "variant": 0,
             "pos": [
                 52,
                 10
@@ -1322,7 +1322,7 @@
         },
         "43;20": {
             "type": "ores",
-            "variant": 0,
+            "variant": 6,
             "pos": [
                 43,
                 20
@@ -1330,7 +1330,7 @@
         },
         "43;21": {
             "type": "ores",
-            "variant": 0,
+            "variant": 6,
             "pos": [
                 43,
                 21
@@ -1338,7 +1338,7 @@
         },
         "44;20": {
             "type": "ores",
-            "variant": 0,
+            "variant": 6,
             "pos": [
                 44,
                 20
@@ -1386,7 +1386,7 @@
         },
         "32;20": {
             "type": "ores",
-            "variant": 4,
+            "variant": 1,
             "pos": [
                 32,
                 20
@@ -1394,7 +1394,7 @@
         },
         "32;21": {
             "type": "ores",
-            "variant": 4,
+            "variant": 1,
             "pos": [
                 32,
                 21
@@ -1402,7 +1402,7 @@
         },
         "33;21": {
             "type": "ores",
-            "variant": 4,
+            "variant": 1,
             "pos": [
                 33,
                 21
@@ -1410,7 +1410,7 @@
         },
         "34;21": {
             "type": "ores",
-            "variant": 4,
+            "variant": 1,
             "pos": [
                 34,
                 21
@@ -1426,7 +1426,7 @@
         },
         "33;20": {
             "type": "ores",
-            "variant": 4,
+            "variant": 1,
             "pos": [
                 33,
                 20
@@ -1585,40 +1585,40 @@
             ]
         },
         "35;15": {
-            "type": "stone",
-            "variant": 5,
+            "type": "ores",
+            "variant": 3,
             "pos": [
                 35,
                 15
             ]
         },
         "35;14": {
-            "type": "stone",
-            "variant": 5,
+            "type": "ores",
+            "variant": 3,
             "pos": [
                 35,
                 14
             ]
         },
         "34;14": {
-            "type": "stone",
-            "variant": 5,
+            "type": "ores",
+            "variant": 3,
             "pos": [
                 34,
                 14
             ]
         },
         "33;14": {
-            "type": "stone",
-            "variant": 5,
+            "type": "ores",
+            "variant": 3,
             "pos": [
                 33,
                 14
             ]
         },
         "33;15": {
-            "type": "stone",
-            "variant": 5,
+            "type": "ores",
+            "variant": 3,
             "pos": [
                 33,
                 15
@@ -1649,8 +1649,8 @@
             ]
         },
         "34;15": {
-            "type": "stone",
-            "variant": 5,
+            "type": "ores",
+            "variant": 3,
             "pos": [
                 34,
                 15
@@ -2090,7 +2090,7 @@
         },
         "30;17": {
             "type": "ores",
-            "variant": 0,
+            "variant": 6,
             "pos": [
                 30,
                 17
@@ -2098,7 +2098,7 @@
         },
         "30;16": {
             "type": "ores",
-            "variant": 0,
+            "variant": 6,
             "pos": [
                 30,
                 16
@@ -2522,23 +2522,15 @@
         },
         "50;17": {
             "type": "finish",
-            "variant": 4,
+            "variant": 3,
             "pos": [
                 50,
                 17
             ]
         },
-        "51;17": {
-            "type": "finish",
-            "variant": 5,
-            "pos": [
-                51,
-                17
-            ]
-        },
         "51;16": {
             "type": "finish",
-            "variant": 6,
+            "variant": 3,
             "pos": [
                 51,
                 16
@@ -2546,11 +2538,132 @@
         },
         "50;16": {
             "type": "finish",
-            "variant": 3,
+            "variant": 7,
             "pos": [
                 50,
                 16
             ]
+        },
+        "51;17": {
+            "type": "finish",
+            "variant": 7,
+            "pos": [
+                51,
+                17
+            ]
+        },
+        "49;17": {
+            "type": "finish",
+            "variant": 7,
+            "pos": [
+                49,
+                17
+            ]
+        },
+        "48;16": {
+            "type": "finish",
+            "variant": 7,
+            "pos": [
+                48,
+                16
+            ]
+        },
+        "49;16": {
+            "type": "finish",
+            "variant": 3,
+            "pos": [
+                49,
+                16
+            ]
+        },
+        "48;17": {
+            "type": "finish",
+            "variant": 3,
+            "pos": [
+                48,
+                17
+            ]
+        },
+        "42;17": {
+            "type": "spikes",
+            "variant": 0,
+            "pos": [
+                42,
+                17
+            ],
+            "rotation": 0
+        },
+        "43;17": {
+            "type": "spikes",
+            "variant": 0,
+            "pos": [
+                43,
+                17
+            ],
+            "rotation": 0
+        },
+        "40;16": {
+            "type": "spikes",
+            "variant": 0,
+            "pos": [
+                40,
+                16
+            ],
+            "rotation": 270
+        },
+        "39;15": {
+            "type": "spikes",
+            "variant": 0,
+            "pos": [
+                39,
+                15
+            ],
+            "rotation": 270
+        },
+        "38;14": {
+            "type": "spikes",
+            "variant": 0,
+            "pos": [
+                38,
+                14
+            ],
+            "rotation": 270
+        },
+        "42;14": {
+            "type": "spikes",
+            "variant": 0,
+            "pos": [
+                42,
+                14
+            ],
+            "rotation": 180
+        },
+        "41;14": {
+            "type": "spikes",
+            "variant": 0,
+            "pos": [
+                41,
+                14
+            ],
+            "rotation": 180
+        },
+        "43;14": {
+            "type": "spikes",
+            "variant": 0,
+            "pos": [
+                43,
+                14
+            ],
+            "rotation": 180
+        },
+        "44;14": {
+            "type": "spikes",
+            "variant": 0,
+            "pos": [
+                44,
+                14
+            ],
+            "rotation": 180
         }
     },
     "offgrid": [],

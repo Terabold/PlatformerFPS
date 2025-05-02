@@ -1,7 +1,7 @@
 {
     "tilemap": {
         "11;8": {
-            "type": "decor",
+            "type": "grass",
             "variant": 0,
             "pos": [
                 11,
@@ -9,7 +9,7 @@
             ]
         },
         "12;8": {
-            "type": "decor",
+            "type": "grass",
             "variant": 0,
             "pos": [
                 12,
@@ -17,7 +17,7 @@
             ]
         },
         "13;8": {
-            "type": "decor",
+            "type": "grass",
             "variant": 0,
             "pos": [
                 13,
@@ -25,7 +25,7 @@
             ]
         },
         "14;8": {
-            "type": "decor",
+            "type": "grass",
             "variant": 0,
             "pos": [
                 14,
@@ -33,7 +33,7 @@
             ]
         },
         "15;8": {
-            "type": "decor",
+            "type": "grass",
             "variant": 0,
             "pos": [
                 15,
@@ -41,7 +41,7 @@
             ]
         },
         "16;8": {
-            "type": "decor",
+            "type": "grass",
             "variant": 0,
             "pos": [
                 16,
@@ -49,7 +49,7 @@
             ]
         },
         "17;8": {
-            "type": "decor",
+            "type": "grass",
             "variant": 0,
             "pos": [
                 17,
@@ -57,7 +57,7 @@
             ]
         },
         "18;8": {
-            "type": "decor",
+            "type": "grass",
             "variant": 0,
             "pos": [
                 18,
@@ -65,7 +65,7 @@
             ]
         },
         "19;8": {
-            "type": "decor",
+            "type": "grass",
             "variant": 0,
             "pos": [
                 19,
@@ -73,7 +73,7 @@
             ]
         },
         "20;8": {
-            "type": "decor",
+            "type": "grass",
             "variant": 0,
             "pos": [
                 20,
@@ -81,7 +81,7 @@
             ]
         },
         "21;8": {
-            "type": "decor",
+            "type": "grass",
             "variant": 0,
             "pos": [
                 21,
@@ -89,7 +89,7 @@
             ]
         },
         "22;8": {
-            "type": "decor",
+            "type": "grass",
             "variant": 0,
             "pos": [
                 22,
@@ -97,7 +97,7 @@
             ]
         },
         "23;8": {
-            "type": "decor",
+            "type": "grass",
             "variant": 0,
             "pos": [
                 23,
@@ -105,7 +105,7 @@
             ]
         },
         "24;8": {
-            "type": "decor",
+            "type": "grass",
             "variant": 0,
             "pos": [
                 24,
@@ -113,7 +113,7 @@
             ]
         },
         "25;8": {
-            "type": "decor",
+            "type": "grass",
             "variant": 0,
             "pos": [
                 25,
@@ -177,6 +177,30 @@
                 7
             ],
             "rotation": 0
+        },
+        "15;7": {
+            "type": "grass",
+            "variant": 0,
+            "pos": [
+                15,
+                7
+            ]
+        },
+        "14;7": {
+            "type": "grass",
+            "variant": 0,
+            "pos": [
+                14,
+                7
+            ]
+        },
+        "13;7": {
+            "type": "grass",
+            "variant": 0,
+            "pos": [
+                13,
+                7
+            ]
         }
     },
     "offgrid": [],

@@ -288,6 +288,19 @@ class Environment:
 
     def process_human_input(self, events):
         if not self.ai_train_mode:
+            # Handle escape key to toggle pause menu
+            for event in events:
+                if event.type == pygame.KEYDOWN and event.key == pygame.K_ESCAPE:
+                    if not self.menu and not self.player.death and not self.player.finishLevel:
+                        # Open pause menu
+                        self.menu = True
+                        self.game_menu.show_pause_menu()
+                    elif self.menu and not self.player.death and not self.player.finishLevel:
+                        # Close pause menu
+                        self.menu = False
+                        self.game_menu.active_menu = None
+                    
+            # Continue with normal input processing
             self.keys, self.buffer_times = self.input_handler.process_events(events, self.menu)
             self.buffer_time = self.buffer_times['jump']
     
@@ -327,6 +340,20 @@ class Environment:
 
     def process_menu_events(self, events):
         if self.menu:
+            for event in events:
+                if event.type == pygame.KEYDOWN and event.key == pygame.K_ESCAPE:
+                    # Handle escape in different menus
+                    if self.player.finishLevel:
+                        # From level complete menu -> return to main
+                        self.return_to_main()
+                    elif self.player.death:
+                        # From game over menu -> return to main
+                        self.return_to_main()
+                    else:
+                        # From pause menu -> resume game
+                        self.menu = False
+                        self.game_menu.active_menu = None
+            
             self.game_menu.update(events)
 
     def debug_render(self):

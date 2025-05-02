@@ -1,0 +1,184 @@
+{
+    "tilemap": {
+        "11;8": {
+            "type": "decor",
+            "variant": 0,
+            "pos": [
+                11,
+                8
+            ]
+        },
+        "12;8": {
+            "type": "decor",
+            "variant": 0,
+            "pos": [
+                12,
+                8
+            ]
+        },
+        "13;8": {
+            "type": "decor",
+            "variant": 0,
+            "pos": [
+                13,
+                8
+            ]
+        },
+        "14;8": {
+            "type": "decor",
+            "variant": 0,
+            "pos": [
+                14,
+                8
+            ]
+        },
+        "15;8": {
+            "type": "decor",
+            "variant": 0,
+            "pos": [
+                15,
+                8
+            ]
+        },
+        "16;8": {
+            "type": "decor",
+            "variant": 0,
+            "pos": [
+                16,
+                8
+            ]
+        },
+        "17;8": {
+            "type": "decor",
+            "variant": 0,
+            "pos": [
+                17,
+                8
+            ]
+        },
+        "18;8": {
+            "type": "decor",
+            "variant": 0,
+            "pos": [
+                18,
+                8
+            ]
+        },
+        "19;8": {
+            "type": "decor",
+            "variant": 0,
+            "pos": [
+                19,
+                8
+            ]
+        },
+        "20;8": {
+            "type": "decor",
+            "variant": 0,
+            "pos": [
+                20,
+                8
+            ]
+        },
+        "21;8": {
+            "type": "decor",
+            "variant": 0,
+            "pos": [
+                21,
+                8
+            ]
+        },
+        "22;8": {
+            "type": "decor",
+            "variant": 0,
+            "pos": [
+                22,
+                8
+            ]
+        },
+        "23;8": {
+            "type": "decor",
+            "variant": 0,
+            "pos": [
+                23,
+                8
+            ]
+        },
+        "24;8": {
+            "type": "decor",
+            "variant": 0,
+            "pos": [
+                24,
+                8
+            ]
+        },
+        "25;8": {
+            "type": "decor",
+            "variant": 0,
+            "pos": [
+                25,
+                8
+            ]
+        },
+        "11;7": {
+            "type": "spawners",
+            "variant": 0,
+            "pos": [
+                11,
+                7
+            ]
+        },
+        "23;7": {
+            "type": "finish",
+            "variant": 12,
+            "pos": [
+                23,
+                7
+            ]
+        },
+        "24;7": {
+            "type": "finish",
+            "variant": 12,
+            "pos": [
+                24,
+                7
+            ]
+        },
+        "25;7": {
+            "type": "finish",
+            "variant": 12,
+            "pos": [
+                25,
+                7
+            ]
+        },
+        "22;7": {
+            "type": "finish",
+            "variant": 12,
+            "pos": [
+                22,
+                7
+            ]
+        },
+        "21;7": {
+            "type": "spikes",
+            "variant": 0,
+            "pos": [
+                21,
+                7
+            ],
+            "rotation": 0
+        },
+        "20;7": {
+            "type": "spikes",
+            "variant": 0,
+            "pos": [
+                20,
+                7
+            ],
+            "rotation": 0
+        }
+    },
+    "offgrid": [],
+    "lowest_y": 8
+}

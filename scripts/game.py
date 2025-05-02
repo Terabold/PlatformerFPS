@@ -38,10 +38,6 @@ class Game:
                 if event.key == pygame.K_F3:  
                     self.environment.debug_mode = not self.environment.debug_mode  
                     print(f"Debug mode: {'ON' if self.environment.debug_mode else 'OFF'}")
-                if event.key == pygame.K_ESCAPE and not self.environment.player.death:
-                    self.environment.menu = not self.environment.menu
-                    if self.environment.menu:
-                        self.environment.game_menu.show_pause_menu()
         
         if self.environment.menu:
             self.environment.process_menu_events(events)

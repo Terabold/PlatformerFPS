@@ -66,6 +66,14 @@ class Menu:
         self.map_menu.disable()
         self.options_menu.enable()
         self.active_menu = self.options_menu
+        
+    def _handle_escape(self):
+        if self.active_menu == self.options_menu:
+            # If on options menu, go back to main menu
+            self._return_to_main()
+        elif self.active_menu == self.map_menu:
+            # If on map selection, go back to options
+            self._return_to_options()
 
     def _set_player_type(self, value):
         self.player_type = value
@@ -122,10 +130,10 @@ class Menu:
                 exit()
             if event.type == pygame.KEYDOWN:
                 if event.key == pygame.K_ESCAPE:
-                    
-                    self._return_to_main()
+                    # Changed to use the new escape handler
+                    self._handle_escape()
 
-        pygame.time.Clock().tick(30)  
+        pygame.time.Clock().tick(20)  
 
         self.active_menu.update(events)
         self.active_menu.draw(self.screen)
@@ -173,9 +181,25 @@ class MainMenuScreen(MenuScreen):
         
         if self.is_flashing and self.train_ai_button_index < len(self.button_manager.buttons):
             button = self.button_manager.buttons[self.train_ai_button_index]
-            flash_surface = pygame.Surface((button.rect.width, button.rect.height), pygame.SRCALPHA)
-            flash_surface.fill((255, 0, 0, 150))  # Semi-transparent red
-            surface.blit(flash_surface, (button.rect.x, button.rect.y))
+            glow_color = (255, 60, 60)  # soft red
+            glow_size = 3
+
+            for i in range(glow_size, 0, -1):
+                alpha = 120 - i * 15
+                glow_rect = button.rect.inflate(i * 4, i * 4)
+                glow_surface = pygame.Surface(glow_rect.size, pygame.SRCALPHA)
+                
+                pygame.draw.rect(
+                    glow_surface,
+                    (*glow_color, alpha),
+                    glow_surface.get_rect(),
+                    border_radius=6
+                )
+                surface.blit(glow_surface, (
+                    button.rect.x - i * 2,
+                    button.rect.y - i * 2
+                ))
+
 
 
 class OptionsMenuScreen(MenuScreen):
@@ -233,9 +257,14 @@ class OptionsMenuScreen(MenuScreen):
 
 
 class MapSelectionScreen(MenuScreen):
+    def load_maps(self):
+        maps_dir = 'data/maps'
+        self.map_files = [f for f in os.listdir(maps_dir) if f.endswith('.json')]
+        self.map_numbers = [str(i+1) for i in range(len(self.map_files))]
+
     def initialize(self):
         self.title = "Select a Map"
-        
+        self.load_maps()
         maps_dir = 'data/maps'   
         self.map_files = [f for f in os.listdir(maps_dir) if f.endswith('.json')]
         self.map_numbers = [str(i+1) for i in range(len(self.map_files))]
@@ -273,3 +302,16 @@ class MapSelectionScreen(MenuScreen):
             center_x, 
             back_y
         )
+
+        # Add "RELOAD MAPS" button
+        self.button_manager.create_button(
+            "RELOAD",
+            self.reload_maps,  # Use the class method directly
+            DISPLAY_SIZE[0] - 350,  # Center the button
+            50,
+            300
+        )
+
+    def reload_maps(self):
+        self.button_manager.clear()  # Clear all existing buttons
+        self.initialize()           # Re-initialize the screen to reload the maps

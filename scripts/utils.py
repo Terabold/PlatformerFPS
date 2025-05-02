@@ -170,42 +170,6 @@ class Animation:
         return self.images[int(self.frame / self.img_duration)]
 
 from pygame import Rect
-class Button:
-    def __init__(self, rect, text, action, font, min_width=300, text_padding=40):
-        self.rect = rect
-        self.text = text
-        self.action = action
-        self.font = font
-        self.min_width = min_width
-        self.text_padding = text_padding
-        self.selected = False
-        
-    def is_hovered(self, mouse_pos):
-        return self.rect.collidepoint(mouse_pos)
-    
-    def draw(self, surface, highlight_color=(255, 215, 0)):
-        button_color = (100, 100, 255, 155) if self.selected else (80, 80, 80, 155)
-        button_surface = pygame.Surface((self.rect.width, self.rect.height), pygame.SRCALPHA)
-        button_surface.fill(button_color)
-        surface.blit(button_surface, (self.rect.x, self.rect.y))
-        
-        text_surf = self.font.render(self.text, True, (255, 255, 255))
-        text_x = self.rect.x + (self.rect.width - text_surf.get_width()) // 2
-        text_y = self.rect.y + (self.rect.height - text_surf.get_height()) // 2
-        surface.blit(text_surf, (text_x, text_y))
-        
-        if self.selected:
-            pygame.draw.rect(surface, highlight_color, self.rect, 3)
-    
-    def handle_events(self, events, sound_callback=None):
-        if self.selected:
-            for event in events:
-                if event.type == pygame.MOUSEBUTTONDOWN and event.button == 1:
-                    if sound_callback:
-                        sound_callback('click')
-                    self.action()
-                    return True
-        return False
 
 class ButtonManager:
     def __init__(self, font, button_height=80, min_width=300, text_padding=40, padding=30):
@@ -290,13 +254,90 @@ class ButtonManager:
         self.buttons = []
         self.selected_index = None
 
+class Button:
+    def __init__(self, rect, text, action, font, min_width=300, text_padding=40):
+        self.rect = rect
+        self.text = text
+        self.action = action
+        self.font = font
+        self.min_width = min_width
+        self.text_padding = text_padding
+        self.selected = False
+        
+    def is_hovered(self, mouse_pos):
+        return self.rect.collidepoint(mouse_pos)
+    
+    def draw(self, surface, highlight_color=(255, 215, 0)):
+        # Add shadow behind the button
+        shadow_offset = 4
+        shadow_surface = pygame.Surface((self.rect.width, self.rect.height), pygame.SRCALPHA)
+
+        # Change shadow color based on hover state
+        shadow_color = (255, 255, 255, 90) if self.selected else (0, 0, 0, 90)
+        shadow_surface.fill(shadow_color)
+
+        surface.blit(shadow_surface, (self.rect.x + shadow_offset, self.rect.y + shadow_offset))
+        
+        # Button background with improved colors
+        button_color = (100, 120, 255, 200) if self.selected else (80, 80, 120, 180)
+        button_surface = pygame.Surface((self.rect.width, self.rect.height), pygame.SRCALPHA)
+        button_surface.fill(button_color)
+        surface.blit(button_surface, (self.rect.x, self.rect.y))
+        
+        # Text with shadow effect
+        text_shadow = self.font.render(self.text, True, (0, 0, 0, 180))
+        text_surf = self.font.render(self.text, True, (255, 255, 255))
+        
+        # Position text with shadow offset
+        text_x = self.rect.x + (self.rect.width - text_surf.get_width()) // 2
+        text_y = self.rect.y + (self.rect.height - text_surf.get_height()) // 2
+        
+        # Draw text shadow slightly offset
+        surface.blit(text_shadow, (text_x + 2, text_y + 2))
+        surface.blit(text_surf, (text_x, text_y))
+        
+        # Draw highlight border if selected
+        if self.selected:
+            glow_color = (200, 230, 255)  # clean white glow
+            glow_size = 3 # number of glow layers
+
+            for i in range(glow_size, 0, -1):
+                alpha = 60 - i * 10  # fade out each outer layer
+                glow_rect = self.rect.inflate(i * 4, i * 4)
+                glow_surface = pygame.Surface(glow_rect.size, pygame.SRCALPHA)
+
+                pygame.draw.rect(
+                    glow_surface,
+                    (*glow_color, alpha),
+                    glow_surface.get_rect(),
+                    border_radius=6  # nice soft corners
+                )
+
+                surface.blit(glow_surface, (
+                    self.rect.x - i * 2,
+                    self.rect.y - i * 2
+                ))
+
+
+    
+    def handle_events(self, events, sound_callback=None):
+        if self.selected:
+            for event in events:
+                if event.type == pygame.MOUSEBUTTONDOWN and event.button == 1:
+                    if sound_callback:
+                        sound_callback('click')
+                    self.action()
+                    return True
+        return False
+
+
 class MenuScreen:
     def __init__(self, parent, title="Menu"):
         self.parent = parent
         self.screen = parent.screen
         self.background = parent.background
         self.font = pygame.font.Font(parent.font_path, 40)
-        self.title_font = pygame.font.Font(parent.font_path, 85)
+        self.title_font = pygame.font.Font(parent.font_path, 70)
         self.enabled = False
         self.title = title
         
@@ -332,12 +373,16 @@ class MenuScreen:
         if not self.enabled:
             return
             
+        # Create title text with shadow effect
+        title_shadow = self.title_font.render(self.title, True, (0, 0, 0))
         title_text = self.title_font.render(self.title, True, (255, 255, 255))
         
         title_x = (self.parent.display_size[0] - title_text.get_width()) // 2
-        
         title_y = (self.parent.display_size[1] - title_text.get_height()) // 7
         
+        # Draw shadow with offset
+        surface.blit(title_shadow, (title_x + 4, title_y + 4))
+        # Draw main text
         surface.blit(title_text, (title_x, title_y))
         
         self.button_manager.draw(surface)

@@ -46,12 +46,11 @@ class EditorMenu:
         self.editor_active = True
 
     def quit_editor(self):
-        # pygame.time.delay(300)
-        # pygame.quit()
-        # exit()
+        # Return to the main menu
         game_state_manager.setState('menu')
 
     def return_to_menu(self):
+        # Return to the map selection screen within the editor
         self.editor_active = False
         self.editor = None
         # Refresh the map menu to show any newly saved maps
@@ -72,6 +71,8 @@ class EditorMenu:
                 exit()
             if event.type == pygame.KEYDOWN:
                 if event.key == pygame.K_ESCAPE:
+                    # When pressing escape in the map selection screen of editor,
+                    # return to the main menu
                     self.quit_editor()
 
         self.map_menu.update(events)
@@ -97,7 +98,7 @@ class MapSelectionScreen(MenuScreen):
         self.map_files.sort(key=get_map_number)
         
         # Use the actual filename as the display text for better identification
-        self.map_numbers = [f.split('.')[0] for f in self.map_files]
+        self.map_numbers = [str(index + 1) for index in range(len(self.map_files))]
         
         columns = 5
         button_width = 200
@@ -167,8 +168,14 @@ class Editor:
         self.shift = False
         self.ctrl = False
         
+        # Save notification
+        self.show_save_message = False
+        self.save_message_timer = 0
+        self.save_message_duration = 80  
+
         # UI
         self.font = pygame.font.SysFont(FONT, 16)
+        self.save_font = pygame.font.SysFont(FONT, 32)
         
         # Load existing map if available
         if map_file:
@@ -276,13 +283,22 @@ class Editor:
         # If editing an existing map, update it directly
         if self.current_map_file:
             self.tilemap.save(os.path.join(directory, self.current_map_file))
+            saved_map_name = self.current_map_file
         else:
             # For new maps, create a new file
             next_filename = find_next_numeric_filename(directory, extension='.json')
             self.current_map_file = next_filename  # Update the current map file
             self.tilemap.save(os.path.join(directory, next_filename))
-            
-        self.menu.return_to_menu()
+            saved_map_name = next_filename
+        
+        # Set the save notification
+        self.show_save_message = True
+        self.save_message_timer = 0
+        self.saved_map_name = saved_map_name
+        
+        # Return to menu immediately if called from elsewhere
+        if not pygame.key.get_pressed()[pygame.K_o]:
+            self.menu.return_to_menu()
 
     def handle_tile_removal(self, tile_pos, mpos):
         if self.right_clicking:
@@ -316,40 +332,6 @@ class Editor:
                 self.display, (50, 50, 50), 
                 (0, offset_y), (DISPLAY_SIZE[0], offset_y)
             )
-    
-    def draw_ui(self, current_tile_img):
-        # Show current tile preview
-        self.display.blit(current_tile_img, (5, 5))
-        
-        # Show spawner count
-        spawner_count = self.count_spawners()
-        spawner_text = self.font.render(f"Spawners: {spawner_count}/1", True, (255, 255, 255))
-        self.display.blit(spawner_text, (5, 40))
-        
-        # Show current tile info
-        current_type = self.tile_list[self.tile_group]
-        tile_info = self.font.render(f"Type: {current_type} ({self.tile_variant})", True, (255, 255, 255))
-        self.display.blit(tile_info, (5, 60))
-        
-        # Show spike rotation info if applicable
-        if current_type == 'spikes':
-            rotation_info = self.font.render(f"Rotation: {self.current_rotation}°", True, (255, 255, 255))
-            self.display.blit(rotation_info, (5, 80))
-            
-            controls_info = self.font.render("R: Rotate spike | Ctrl+Click: Rotate placed spike", True, (255, 255, 255))
-            self.display.blit(controls_info, (5, 100))
-        
-        # Show file info
-        if self.current_map_file:
-            file_info = self.font.render(f"Editing: {self.current_map_file}", True, (255, 255, 255))
-            self.display.blit(file_info, (5, DISPLAY_SIZE[1] - 50))
-        else:
-            new_map_info = self.font.render("Creating new map", True, (255, 255, 255))
-            self.display.blit(new_map_info, (5, DISPLAY_SIZE[1] - 50))
-        
-        # Show menu return info
-        menu_info = self.font.render("ESC: Return to Menu | O: Save Map", True, (255, 255, 255))
-        self.display.blit(menu_info, (5, DISPLAY_SIZE[1] - 30))
     
     def handle_mouse_events(self, event, tile_pos, mpos):
         if event.type == pygame.MOUSEBUTTONDOWN:
@@ -453,6 +435,61 @@ class Editor:
         self.scroll[1] += (self.movement[3] - self.movement[2]) * 8  # Vertical
         return (int(self.scroll[0]), int(self.scroll[1]))
         
+    def draw_save_notification(self):
+        if self.show_save_message:
+            # Create a semi-transparent background
+            overlay = pygame.Surface((DISPLAY_SIZE[0], 80), pygame.SRCALPHA)
+            overlay.fill((0, 0, 0, 180))
+            
+            # Position the overlay in the middle of the screen
+            overlay_y = (DISPLAY_SIZE[1] - overlay.get_height()) // 2
+            self.display.blit(overlay, (0, overlay_y))
+            
+            # Render and position the text
+            save_text = self.save_font.render(f"Map saved: {self.saved_map_name}", True, (255, 255, 255))
+            text_x = (DISPLAY_SIZE[0] - save_text.get_width()) // 2
+            text_y = overlay_y + (overlay.get_height() - save_text.get_height()) // 2
+            self.display.blit(save_text, (text_x, text_y))
+            
+            # Update timer and check if we should hide the message
+            self.save_message_timer += 1
+            if self.save_message_timer >= self.save_message_duration:
+                self.show_save_message = False
+    
+    def draw_ui(self, current_tile_img):
+        # Show current tile preview
+        self.display.blit(current_tile_img, (5, 5))
+        
+        # Show spawner count
+        spawner_count = self.count_spawners()
+        spawner_text = self.font.render(f"Spawners: {spawner_count}/1", True, (255, 255, 255))
+        self.display.blit(spawner_text, (5, 40))
+        
+        # Show current tile info
+        current_type = self.tile_list[self.tile_group]
+        tile_info = self.font.render(f"Type: {current_type} ({self.tile_variant})", True, (255, 255, 255))
+        self.display.blit(tile_info, (5, 60))
+        
+        # Show spike rotation info if applicable
+        if current_type == 'spikes':
+            rotation_info = self.font.render(f"Rotation: {self.current_rotation}°", True, (255, 255, 255))
+            self.display.blit(rotation_info, (5, 80))
+            
+            controls_info = self.font.render("R: Rotate spike | Ctrl+Click: Rotate placed spike", True, (255, 255, 255))
+            self.display.blit(controls_info, (5, 100))
+        
+        # Show file info
+        if self.current_map_file:
+            file_info = self.font.render(f"Editing: {self.current_map_file}", True, (255, 255, 255))
+            self.display.blit(file_info, (5, DISPLAY_SIZE[1] - 50))
+        else:
+            new_map_info = self.font.render("Creating new map", True, (255, 255, 255))
+            self.display.blit(new_map_info, (5, DISPLAY_SIZE[1] - 50))
+        
+        # Show menu return info
+        menu_info = self.font.render("ESC: Return to Menu | O: Save Map", True, (255, 255, 255))
+        self.display.blit(menu_info, (5, DISPLAY_SIZE[1] - 30))
+        
     def run(self):
         clock = pygame.time.Clock()
         
@@ -491,6 +528,9 @@ class Editor:
             self.handle_tile_removal(tile_pos, mpos)
             
             self.draw_ui(current_tile_img)
+            
+            # Draw save notification over everything else
+            self.draw_save_notification()
             
             for event in pygame.event.get():
                 if event.type == pygame.QUIT:

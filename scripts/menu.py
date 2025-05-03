@@ -200,8 +200,6 @@ class MainMenuScreen(MenuScreen):
                     button.rect.y - i * 2
                 ))
 
-
-
 class OptionsMenuScreen(MenuScreen):
     def initialize(self):
         self.title = "Options"
@@ -219,10 +217,19 @@ class OptionsMenuScreen(MenuScreen):
             self.flash_player_type_button()
 
         self.button_manager.create_centered_button_list(
-            ["CONTINUE", f"Player Type: {self.player_types[self.parent.player_type]}", "BACK"],
-            [self.parent._show_map_selection, toggle_player_type, self.parent._return_to_main],
+            ["CONTINUE", f"Player Type: {self.player_types[self.parent.player_type]}"],
+            [self.parent._show_map_selection, toggle_player_type],
             center_x,
             300
+        )
+
+        return_button_width = 100
+        self.button_manager.create_button(
+            "←", 
+            self.parent._return_to_main, 
+            20,  # Left edge with some margin
+            20,   # Top edge with some margin
+            return_button_width
         )
 
     def flash_player_type_button(self):
@@ -240,9 +247,24 @@ class OptionsMenuScreen(MenuScreen):
         super().draw(surface)
         if self.is_flashing and self.player_type_button_index < len(self.button_manager.buttons):
             button = self.button_manager.buttons[self.player_type_button_index]
-            flash_surface = pygame.Surface((button.rect.width, button.rect.height), pygame.SRCALPHA)
-            flash_surface.fill((255, 0, 0, 150))  # Semi-transparent red
-            surface.blit(flash_surface, (button.rect.x, button.rect.y))
+            glow_color = (255, 60, 60)  # soft red
+            glow_size = 3
+
+            for i in range(glow_size, 0, -1):
+                alpha = 120 - i * 15
+                glow_rect = button.rect.inflate(i * 4, i * 4)
+                glow_surface = pygame.Surface(glow_rect.size, pygame.SRCALPHA)
+                
+                pygame.draw.rect(
+                    glow_surface,
+                    (*glow_color, alpha),
+                    glow_surface.get_rect(),
+                    border_radius=6
+                )
+                surface.blit(glow_surface, (
+                    button.rect.x - i * 2,
+                    button.rect.y - i * 2
+                ))
 
     def update_player_type_text(self):
         # Future logic for live label update
@@ -254,20 +276,53 @@ class OptionsMenuScreen(MenuScreen):
         super().enable()
         # self.update_player_type_text()
 
-
-
 class MapSelectionScreen(MenuScreen):
+    def __init__(self, parent, title="Select a Map"):
+        self.maps_per_page = 20  # Number of maps per page
+        self.current_page = 0  # Start with page 0 (first page)
+        super().__init__(parent, title)
+
     def load_maps(self):
         maps_dir = 'data/maps'
         self.map_files = [f for f in os.listdir(maps_dir) if f.endswith('.json')]
+        
+        # Sort map files numerically
+        def get_map_number(filename):
+            try:
+                return int(filename.split('.')[0])
+            except ValueError:
+                return float('inf')  # Non-numeric names go to the end
+                
+        self.map_files.sort(key=get_map_number)
+        
+        self.total_pages = (len(self.map_files) + self.maps_per_page - 1) // self.maps_per_page
+        
+        # Ensure current page is valid after reload
+        if self.current_page >= self.total_pages:
+            self.current_page = max(0, self.total_pages - 1)
+            
+        # Create map numbers for display
         self.map_numbers = [str(i+1) for i in range(len(self.map_files))]
 
     def initialize(self):
         self.title = "Select a Map"
         self.load_maps()
-        maps_dir = 'data/maps'   
-        self.map_files = [f for f in os.listdir(maps_dir) if f.endswith('.json')]
-        self.map_numbers = [str(i+1) for i in range(len(self.map_files))]
+        
+        self.recreate_buttons()
+
+    def recreate_buttons(self):
+        # Clear existing buttons
+        self.button_manager.clear()
+        
+        maps_dir = 'data/maps'
+        
+        # Calculate pagination
+        start_index = self.current_page * self.maps_per_page
+        end_index = min(start_index + self.maps_per_page, len(self.map_files))
+        
+        # Get maps for current page
+        current_page_files = self.map_files[start_index:end_index]
+        current_page_numbers = self.map_numbers[start_index:end_index]
         
         columns = 5
         button_width = 200
@@ -277,41 +332,91 @@ class MapSelectionScreen(MenuScreen):
         start_x = (self.parent.display_size[0] - grid_width) // 2
         
         def select_map(index):
-            map_file = self.map_files[index]
+            map_file = current_page_files[index]
             self.parent._select_map(map_file)
         
-        actions = [lambda i=i: select_map(i) for i in range(len(self.map_files))]
+        actions = [lambda i=i: select_map(i) for i in range(len(current_page_files))]
         
         self.button_manager.create_grid_buttons(
-            self.map_numbers,
+            current_page_numbers,
             actions,
             columns,
             start_x,
-            300,
+            275,
             button_width
         )
         
-        center_x = self.parent.display_size[0] // 2
-        rows = (len(self.map_files) + columns - 1) // columns
-        back_y = 200 + (rows + 1) * (self.button_manager.button_height + padding)
+        # Calculate maximum rows that could be filled with maps
+        max_rows = (self.maps_per_page + columns - 1) // columns
         
-        # Changed BACK to go to options instead of main menu
-        self.button_manager.create_centered_button_list(
-            ["BACK"], 
-            [self.parent._return_to_options], 
-            center_x, 
-            back_y
+        # Calculate the fixed position for control buttons based on maximum rows
+        # This ensures buttons don't overlap with maps even when at maximum capacity
+        center_x = self.parent.display_size[0] // 2
+        fixed_y_position = DISPLAY_SIZE[1] * 0.7
+        # Fixed y position in the exact middle of the screen for navigation buttons
+        middle_y = DISPLAY_SIZE[1] / 2 - 100
+        
+        # Create Previous button at the left side with fixed Y position in the middle
+        if self.current_page > 0:
+            self.button_manager.create_button(
+                "◀",
+                self.previous_page,
+                250,  # Left side
+                middle_y,  # Exact middle of the screen
+                100
+            )
+        
+        # Next page button (if not on last page) - also at fixed middle position
+        if self.current_page < self.total_pages - 1:
+            self.button_manager.create_button(
+                "▶",
+                self.next_page,
+                self.parent.display_size[0] - 350,  # Right side
+                middle_y,  # Exact middle of the screen
+                100
+            )
+            
+        # Create back button at fixed position
+        return_button_width = 100
+        self.button_manager.create_button(
+            "←", 
+            self.parent._return_to_options, 
+            20,  # Left edge with some margin
+            20,   # Top edge with some margin
+            return_button_width
         )
 
-        # Add "RELOAD MAPS" button
+        # Create reload button with fixed position 
         self.button_manager.create_button(
-            "RELOAD",
-            self.reload_maps,  # Use the class method directly
-            DISPLAY_SIZE[0] - 350,  # Center the button
+            "Sync",
+            self.reload_maps,
+            self.parent.display_size[0] - 350,
             50,
             300
         )
+        
+        pagebutton_width = 400
+        # Add page info display at fixed position
+        if self.total_pages > 1:
+            page_info = f"Page {self.current_page + 1}/{self.total_pages}"
+            self.button_manager.create_button(
+                page_info,
+                lambda: None,  # No action for info display
+                center_x - pagebutton_width/2,  # Centered
+                fixed_y_position,
+                pagebutton_width
+            )
+
+    def next_page(self):
+        if self.current_page < self.total_pages - 1:
+            self.current_page += 1
+            self.recreate_buttons()
+
+    def previous_page(self):
+        if self.current_page > 0:
+            self.current_page -= 1
+            self.recreate_buttons()
 
     def reload_maps(self):
-        self.button_manager.clear()  # Clear all existing buttons
-        self.initialize()           # Re-initialize the screen to reload the maps
+        self.load_maps()
+        self.recreate_buttons()

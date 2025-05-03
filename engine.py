@@ -6,7 +6,6 @@ from scripts.GameManager import game_state_manager
 from scripts.editor import EditorMenu
 
 class Engine:
-
     def __init__(self):
         pygame.init()
 

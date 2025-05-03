@@ -79,9 +79,18 @@ class EditorMenu:
         self.map_menu.draw(self.screen)
 
 class MapSelectionScreen(MenuScreen):
+    def __init__(self, parent, title="Edit a Map"):
+        self.maps_per_page = 20  
+        self.current_page = 0  # Start with page 0 (first page)
+        super().__init__(parent, title)
+
     def initialize(self):
         self.title = "Edit a Map"
         
+        self.load_maps()
+        self.create_map_buttons()
+        
+    def load_maps(self):
         maps_dir = 'data/maps'
         if not os.path.exists(maps_dir):
             os.makedirs(maps_dir)
@@ -97,8 +106,27 @@ class MapSelectionScreen(MenuScreen):
                 
         self.map_files.sort(key=get_map_number)
         
+        # Calculate total pages
+        self.total_pages = (len(self.map_files) + self.maps_per_page - 1) // self.maps_per_page
+        
+        # Ensure current page is valid
+        if self.current_page >= self.total_pages:
+            self.current_page = max(0, self.total_pages - 1)
+        
         # Use the actual filename as the display text for better identification
         self.map_numbers = [str(index + 1) for index in range(len(self.map_files))]
+    
+    def create_map_buttons(self):
+        # Clear existing buttons
+        self.button_manager.clear()
+        
+        # Calculate pagination
+        start_index = self.current_page * self.maps_per_page
+        end_index = min(start_index + self.maps_per_page, len(self.map_files))
+        
+        # Get maps for current page
+        current_page_files = self.map_files[start_index:end_index]
+        current_page_numbers = self.map_numbers[start_index:end_index]
         
         columns = 5
         button_width = 200
@@ -108,30 +136,99 @@ class MapSelectionScreen(MenuScreen):
         start_x = (self.parent.display_size[0] - grid_width) // 2
         
         # Create actions for selecting maps
-        actions = [lambda i=i: self.parent._select_map(self.map_files[i]) for i in range(len(self.map_files))] + [self.parent.create_new_map]
+        actions = [lambda i=i: self.parent._select_map(self.map_files[start_index + i]) 
+                  for i in range(len(current_page_files))]
         
-        # Add "New" button at the end
-        display_labels = self.map_numbers + ["New"]
+        # Add display labels for current page
+        display_labels = current_page_numbers
         
+        # Position for the map grid - ensure it's below the title
+        grid_start_y = 275  # Adjusted to avoid overlapping with the title
+        
+        # Create map buttons
         self.button_manager.create_grid_buttons(
             display_labels,
             actions,
             columns,
             start_x,
-            300,
+            grid_start_y,
             button_width
         )
         
-        center_x = self.parent.display_size[0] // 2
-        rows = (len(display_labels) + columns - 1) // columns
-        back_y = 200 + (rows + 1) * (self.button_manager.button_height + padding)
+        # Calculate the fixed position for navigation arrows
+        middle_y = DISPLAY_SIZE[1] / 2 - 100
         
-        self.button_manager.create_centered_button_list(
-            ["RETURN"], 
-            [self.parent.quit_editor], 
-            center_x, 
-            back_y
+        # Add "Return" button at top left
+        return_button_width = 100
+        self.button_manager.create_button(
+            "←", 
+            self.parent.quit_editor, 
+            20,  # Left edge with some margin
+            20,   # Top edge with some margin
+            return_button_width
         )
+        
+        # Add "New Map" button at top right
+        new_button_width = 175
+        self.button_manager.create_button(
+            "Add", 
+            self.parent.create_new_map, 
+            start_x,
+            grid_start_y - 100,  # Top edge with some margin
+            new_button_width
+        )
+        
+        # Previous page button (if not on first page)
+        if self.current_page > 0:
+            self.button_manager.create_button(
+                "◀",
+                self.previous_page,
+                250,  # Left side
+                middle_y,  # Middle of the map grid height
+                100
+            )
+        
+        # Next page button (if not on last page)
+        if self.current_page < self.total_pages - 1:
+            self.button_manager.create_button(
+                "▶",
+                self.next_page,
+                DISPLAY_SIZE[0] - 350,  # Right side
+                middle_y,  # Middle of the map grid height
+                100
+            )
+        
+        pagebutton_width = 400
+        # Add pagination info at bottom center
+        if self.total_pages > 1:
+            # Page info display
+            page_info = f"Page {self.current_page + 1}/{self.total_pages}"
+            center_x = DISPLAY_SIZE[0] // 2
+            bottom_y = DISPLAY_SIZE[1] * 0.7  # Bottom with margin
+            
+            self.button_manager.create_button(
+                page_info,
+                lambda: None,  # No action for info display
+                center_x - pagebutton_width/2,  # Centered
+                bottom_y,
+                pagebutton_width
+            )
+    
+    def next_page(self):
+        if self.current_page < self.total_pages - 1:
+            self.current_page += 1
+            self.create_map_buttons()
+
+    def previous_page(self):
+        if self.current_page > 0:
+            self.current_page -= 1
+            self.create_map_buttons()
+            
+    def enable(self):
+        self.enabled = True
+        # Refresh maps when enabling the screen
+        self.load_maps()
+        self.create_map_buttons()
 
 class Editor:
     def __init__(self, menu, map_file=None):

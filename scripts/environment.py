@@ -8,105 +8,111 @@ from scripts.humanagent import InputHandler
 from scripts.tilemap import Tilemap
 from scripts.utils import (
     load_image, load_images, Animation, load_sounds, 
-    draw_debug_info, update_camera_with_box, MenuScreen
+    draw_debug_info, update_camera_with_box, MenuScreen,
+    calculate_ui_constants, scale_font
 )
-
 
 class PauseMenuScreen(MenuScreen):
     def initialize(self):
         self.title = "Game Paused"
+        self.clear_buttons()
         
-        center_x = self.parent.display_size[0] // 2
+        center_x = self.menu.display_size[0] // 2
+        start_y = int(self.menu.display_size[1] * 0.4)  # 40% from top
         
         button_texts = ['Resume Game', 'Restart Level', 'Main Menu']
         button_actions = [
-            self.parent.resume_game,
-            self.parent.reset,
-            self.parent.return_to_main
+            self.menu.resume_game,
+            self.menu.reset,
+            self.menu.return_to_main
         ]
         
-        self.button_manager.create_centered_button_list(
+        self.create_centered_button_list(
             button_texts, 
             button_actions, 
             center_x, 
-            400
+            start_y
         )
 
 class LevelCompleteMenuScreen(MenuScreen):
     def initialize(self):
         self.title = "Level Complete!"
+        self.clear_buttons()
         
-        center_x = self.parent.display_size[0] // 2
+        center_x = self.menu.display_size[0] // 2
+        start_y = int(self.menu.display_size[1] * 0.4)  # 40% from top
         
         button_texts = ['Next Map', 'Play Again', 'Main Menu']
         button_actions = [
-            self.parent.load_next_map,
-            self.parent.reset,
-            self.parent.return_to_main
+            self.menu.load_next_map,
+            self.menu.reset,
+            self.menu.return_to_main
         ]
         
-        self.button_manager.create_centered_button_list(
+        self.create_centered_button_list(
             button_texts, 
             button_actions, 
             center_x, 
-            400
+            start_y
         )
 
 class CongratulationsScreen(MenuScreen):
     def initialize(self):
         self.title = "Congratulations!"
+        self.clear_buttons()
         
-        center_x = self.parent.display_size[0] // 2
+        center_x = self.menu.display_size[0] // 2
+        start_y = int(self.menu.display_size[1] * 0.4)  # 40% from top
         
         button_texts = ['Restart Game', 'Main Menu']
         button_actions = [
-            self.parent.restart_game,
-            self.parent.return_to_main
+            self.menu.restart_game,
+            self.menu.return_to_main
         ]
         
-        self.button_manager.create_centered_button_list(
+        self.create_centered_button_list(
             button_texts, 
             button_actions, 
             center_x, 
-            400
+            start_y
         )
+
 class GameOverMenuScreen(MenuScreen):
     def initialize(self):
         self.title = "Game Over"
+        self.clear_buttons()
         
-        center_x = self.parent.display_size[0] // 2
+        center_x = self.menu.display_size[0] // 2
+        start_y = int(self.menu.display_size[1] * 0.4)  # 40% from top
         
         button_texts = ['Restart Level', 'Main Menu']
         button_actions = [
-            self.parent.reset,
-            self.parent.return_to_main
+            self.menu.reset,
+            self.menu.return_to_main
         ]
         
-        self.button_manager.create_centered_button_list(
+        self.create_centered_button_list(
             button_texts, 
             button_actions, 
             center_x, 
-            400
+            start_y
         )
 
 class GameMenu:
     def __init__(self, environment):
         self.environment = environment
         self.screen = environment.display
-        self.background = None 
         self.display_size = DISPLAY_SIZE
         self.font_path = FONT
         
-        self.button_props = {
-            'padding': 30,
-            'height': 80,
-            'min_width': 300,  
-            'text_padding': 40  
-        }
+        # Get UI constants based on display size
+        self.UI_CONSTANTS = calculate_ui_constants(self.display_size)
         
+        # Initialize menu screens
         self.pause_menu = PauseMenuScreen(self, "Game Paused")
         self.level_complete_menu = LevelCompleteMenuScreen(self, "Level Complete!")
         self.game_over_menu = GameOverMenuScreen(self, "Game Over")
+        self.congratulations_menu = CongratulationsScreen(self, "Congratulations!")
         
         self.active_menu = None
     
@@ -127,26 +133,41 @@ class GameMenu:
         self.environment.return_to_main()
         self._play_sound('click')
     
+    def restart_game(self):
+        self.environment.restart_game()
+        self._play_sound('click')
+    
     def show_pause_menu(self):
         self.pause_menu.enable()
         self.level_complete_menu.disable()
         self.game_over_menu.disable()
+        self.congratulations_menu.disable()
         self.active_menu = self.pause_menu
     
     def show_level_complete_menu(self):
         self.pause_menu.disable()
         self.level_complete_menu.enable()
         self.game_over_menu.disable()
+        self.congratulations_menu.disable()
         self.active_menu = self.level_complete_menu
     
     def show_game_over_menu(self):
         self.pause_menu.disable()
         self.level_complete_menu.disable()
         self.game_over_menu.enable()
+        self.congratulations_menu.disable()
         self.active_menu = self.game_over_menu
     
+    def show_congratulations_menu(self):
+        self.pause_menu.disable()
+        self.level_complete_menu.disable()
+        self.game_over_menu.disable()
+        self.congratulations_menu.enable()
+        self.active_menu = self.congratulations_menu
+    
     def load_next_map(self):
-        pass
+        self.environment.load_next_map()
+        self._play_sound('click')
     
     def update(self, events):
         if self.active_menu:
@@ -225,8 +246,11 @@ class Environment:
         self.buffer_times = {'jump': 0}
 
         self.reset()
+        
+        # Initialize font with scaled size based on display
+        font_size = scale_font(36, DISPLAY_SIZE)
         pygame.font.init()
-        self.fps_font = pygame.font.Font(FONT, 36)
+        self.fps_font = pygame.font.Font(FONT, font_size)
 
         if self.player_type == 0:
             self.input_handler = InputHandler()
@@ -235,6 +259,7 @@ class Environment:
 
         self.scroll = self.default_pos.copy()
 
+        # Initialize game menu with scaled UI
         self.game_menu = GameMenu(self)
     
     def reset(self):
@@ -253,12 +278,52 @@ class Environment:
         self.buffer_time = 0
         self.player_finished = False
 
+    def restart_game(self):
+        """Restart the entire game (for use with congratulations screen)"""
+        self.reset()
+        game_state_manager.returnToPrevState()
+        # Optionally reset any level progress or settings here
+
     def resume_game(self):
         self.menu = False
         
     def return_to_main(self):
         self.reset()
         game_state_manager.returnToPrevState()
+
+    def load_next_map(self):
+        """Load the next map after completing a level"""
+        # Get current map and find next map
+        current_map = game_state_manager.selected_map
+        if current_map:
+            try:
+                # Check if we're on the last map
+                maps_folder = os.path.join('data', 'maps')
+                map_files = sorted([f for f in os.listdir(maps_folder) if f.endswith('.json')])
+                
+                if current_map in map_files:
+                    current_index = map_files.index(current_map)
+                    if current_index < len(map_files) - 1:
+                        # Load next map
+                        next_map = map_files[current_index + 1]
+                        game_state_manager.selected_map = next_map
+                        self.reset()
+                        self.tilemap.load(next_map)
+                        self.pos = self.tilemap.extract([('spawners', 0), ('spawners', 1)])
+                        self.default_pos = self.pos[0]['pos'] if self.pos else [10, 10]
+                        self.player.pos = self.default_pos.copy()
+                        self.menu = False
+                    else:
+                        # Show congratulations screen (all maps completed)
+                        self.game_menu.show_congratulations_menu()
+                else:
+                    # Can't find current map, just reset
+                    self.reset()
+            except Exception as e:
+                print(f"Error loading next map: {e}")
+                self.reset()
+        else:
+            self.reset()
 
     def get_rotated_image(self, tile_type, variant, rotation):
         key = f"{tile_type}_{variant}_{rotation}"
@@ -345,7 +410,7 @@ class Environment:
             
         if not self.menu:
             self.player.update(self.tilemap, self.keys, self.countdeathframes)
-            update_camera_with_box(self.player, self.scroll, DISPLAY_SIZE[0], DISPLAY_SIZE[1])
+            update_camera_with_box(self.player, self.scroll, self.display.get_width(), self.display.get_height())
             self.render_scroll = (int(self.scroll[0]), int(self.scroll[1]))
 
     def render(self):
@@ -358,6 +423,13 @@ class Environment:
         self.player.render(self.display, offset=self.render_scroll)
         
         if self.menu:
+            # Get the current mouse position every frame to update button hover states
+            # This ensures hover effects work in every menu screen
+            mouse_pos = pygame.mouse.get_pos()
+            if self.game_menu.active_menu:
+                for button in self.game_menu.active_menu.buttons:
+                    button.selected = button.is_hovered(mouse_pos)
+                    
             self.game_menu.draw(self.display)
 
     def process_menu_events(self, events):

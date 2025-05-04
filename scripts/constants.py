@@ -43,3 +43,22 @@ MENUBG = r'data\images\menugbg.png'
 
 MENUTXTCOLOR = (120, 83, 58)
 WHITE = (255, 255, 255)
+
+def calculate_ui_constants(display_size):
+    ref_width, ref_height = 1920, 1080
+    
+    width_scale = display_size[0] / ref_width
+    height_scale = display_size[1] / ref_height
+    general_scale = min(width_scale, height_scale)  
+    
+    return {
+        'BUTTON_HEIGHT': int(80 * height_scale),
+        'BUTTON_MIN_WIDTH': int(200 * width_scale),
+        'BUTTON_TEXT_PADDING': int(40 * general_scale),
+        'BUTTON_SPACING': int(20 * general_scale),
+        'BUTTON_COLOR': (40, 40, 70, 220),
+        'BUTTON_HOVER_COLOR': (60, 60, 100, 240),
+        'BUTTON_GLOW_COLOR': (100, 150, 255),
+        'GRID_COLUMNS': 5,  
+        'MAPS_PER_PAGE': 20  
+    }

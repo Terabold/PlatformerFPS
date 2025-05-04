@@ -4,30 +4,26 @@ import os
 import random
 from scripts.utils import load_images, load_image, find_next_numeric_filename, MenuScreen, load_sounds
 from scripts.tilemap import Tilemap
-from scripts.constants import TILE_SIZE, DISPLAY_SIZE, FPS, PHYSICS_TILES, FONT, MENUBG
+from scripts.constants import TILE_SIZE, DISPLAY_SIZE, FPS, PHYSICS_TILES, FONT, MENUBG, calculate_ui_constants
 from scripts.GameManager import game_state_manager
 
 class EditorMenu:
     def __init__(self, display):
         self.screen = display
         self.sfx = {'click': load_sounds('click')}
+        
+        # Load and scale background
         self.background = pygame.image.load(MENUBG).convert()
         self.background = pygame.transform.scale(self.background, DISPLAY_SIZE)
+        
+        # Calculate UI constants based on screen size
+        self.UI_CONSTANTS = calculate_ui_constants(DISPLAY_SIZE)
      
         self.selected_map = None
-        self.display_size = DISPLAY_SIZE
-        self.font_path = FONT
         self.editor_active = False
         self.editor = None
 
-        self.button_props = {
-            'padding': 30,
-            'height': 80,
-            'min_width': 300,
-            'text_padding': 40
-        }
-
-        self.map_menu = MapSelectionScreen(self)
+        self.map_menu = EditorMapSelectionScreen(self)
         self.map_menu.enable()
 
     def _play_sound(self, sound_key):
@@ -42,19 +38,16 @@ class EditorMenu:
         self.start_editor(None)
 
     def start_editor(self, map_file):
-        self.editor = Editor(self, map_file)
+        self.editor = Editor(self, map_file)  # Assuming Editor class exists
         self.editor_active = True
 
     def quit_editor(self):
-        # Return to the main menu
         game_state_manager.setState('menu')
 
     def return_to_menu(self):
-        # Return to the map selection screen within the editor
         self.editor_active = False
         self.editor = None
-        # Refresh the map menu to show any newly saved maps
-        self.map_menu = MapSelectionScreen(self)
+        self.map_menu = EditorMapSelectionScreen(self)
         self.map_menu.enable()
 
     def run(self):
@@ -71,22 +64,21 @@ class EditorMenu:
                 exit()
             if event.type == pygame.KEYDOWN:
                 if event.key == pygame.K_ESCAPE:
-                    # When pressing escape in the map selection screen of editor,
-                    # return to the main menu
                     self.quit_editor()
 
         self.map_menu.update(events)
         self.map_menu.draw(self.screen)
 
-class MapSelectionScreen(MenuScreen):
-    def __init__(self, parent, title="Edit a Map"):
-        self.maps_per_page = 20  
-        self.current_page = 0  # Start with page 0 (first page)
-        super().__init__(parent, title)
+class EditorMapSelectionScreen(MenuScreen):
+    def __init__(self, menu, title="Edit a Map"):
+        super().__init__(menu, title)
+        self.current_page = 0
+        self.total_pages = 0
+        self.map_files = []
+        self.map_numbers = []
 
     def initialize(self):
         self.title = "Edit a Map"
-        
         self.load_maps()
         self.create_map_buttons()
         
@@ -102,117 +94,88 @@ class MapSelectionScreen(MenuScreen):
             try:
                 return int(filename.split('.')[0])
             except ValueError:
-                return float('inf')  # Non-numeric names go to the end
+                return float('inf')
                 
         self.map_files.sort(key=get_map_number)
         
-        # Calculate total pages
-        self.total_pages = (len(self.map_files) + self.maps_per_page - 1) // self.maps_per_page
+        # Fixed at 20 maps per page
+        maps_per_page = 20
+        self.total_pages = (len(self.map_files) + maps_per_page - 1) // maps_per_page
         
-        # Ensure current page is valid
         if self.current_page >= self.total_pages:
             self.current_page = max(0, self.total_pages - 1)
         
-        # Use the actual filename as the display text for better identification
-        self.map_numbers = [str(index + 1) for index in range(len(self.map_files))]
+        self.map_numbers = [str(index) for index in range(len(self.map_files))]
     
     def create_map_buttons(self):
-        # Clear existing buttons
-        self.button_manager.clear()
+        self.clear_buttons()
         
+        # Fixed at 20 maps per page
+        maps_per_page = 20
         # Calculate pagination
-        start_index = self.current_page * self.maps_per_page
-        end_index = min(start_index + self.maps_per_page, len(self.map_files))
+        start_index = self.current_page * maps_per_page
+        end_index = min(start_index + maps_per_page, len(self.map_files))
         
         # Get maps for current page
         current_page_files = self.map_files[start_index:end_index]
         current_page_numbers = self.map_numbers[start_index:end_index]
         
-        columns = 5
-        button_width = 200
-        padding = self.button_manager.padding
+        # Scale button width with screen size - increased for better text padding
+        button_width = int(DISPLAY_SIZE[0] * 0.1)  # 18% of screen width
+        padding = self.UI_CONSTANTS['BUTTON_SPACING']
+        columns = self.UI_CONSTANTS['GRID_COLUMNS']
         
         grid_width = columns * (button_width + padding) - padding
-        start_x = (self.parent.display_size[0] - grid_width) // 2
+        start_x = (DISPLAY_SIZE[0] - grid_width) // 2
         
         # Create actions for selecting maps
-        actions = [lambda i=i: self.parent._select_map(self.map_files[start_index + i]) 
+        actions = [lambda i=i: self.menu._select_map(self.map_files[start_index + i]) 
                   for i in range(len(current_page_files))]
         
-        # Add display labels for current page
-        display_labels = current_page_numbers
-        
-        # Position for the map grid - ensure it's below the title
-        grid_start_y = 275  # Adjusted to avoid overlapping with the title
-        
-        # Create map buttons
-        self.button_manager.create_grid_buttons(
-            display_labels,
+        # Create map buttons - use relative positioning with larger size
+        self.create_grid_buttons(
+            current_page_numbers,
             actions,
-            columns,
             start_x,
-            grid_start_y,
+            int(DISPLAY_SIZE[1] * 0.25),  # 25% from top
             button_width
         )
         
-        # Calculate the fixed position for navigation arrows
-        middle_y = DISPLAY_SIZE[1] / 2 - 100
+        # Calculate the position for navigation buttons - use relative positioning
+        middle_y = DISPLAY_SIZE[1] * 0.37  # 40% down the screen
         
-        # Add "Return" button at top left
-        return_button_width = 100
-        self.button_manager.create_button(
-            "←", 
-            self.parent.quit_editor, 
-            20,  # Left edge with some margin
-            20,   # Top edge with some margin
-            return_button_width
-        )
+        # Add "Return" button - position relative to screen size
+        back_x = int(DISPLAY_SIZE[0] * 0.02)  # 2% from left
+        back_y = int(DISPLAY_SIZE[1] * 0.02)  # 2% from top
+        back_width = int(DISPLAY_SIZE[0] * 0.08)  # 10% of screen width (increased)
+        self.create_button("←", self.menu.quit_editor, back_x, back_y, back_width)
         
-        # Add "New Map" button at top right
-        new_button_width = 175
-        self.button_manager.create_button(
-            "Add", 
-            self.parent.create_new_map, 
-            start_x,
-            grid_start_y - 100,  # Top edge with some margin
-            new_button_width
-        )
+        # Add "New Map" button - position relative to screen size
+        new_map_x = int(DISPLAY_SIZE[0] * 0.75)  # 15% from left
+        new_map_y = int(DISPLAY_SIZE[1] * 0.15)  # 15% from top
+        new_map_width = int(DISPLAY_SIZE[0] * 0.1)  # 15% of screen width (increased)
+        self.create_button("Add", self.menu.create_new_map, new_map_x, new_map_y, new_map_width)
         
-        # Previous page button (if not on first page)
+        # Previous page button - moved further to edge
         if self.current_page > 0:
-            self.button_manager.create_button(
-                "◀",
-                self.previous_page,
-                250,  # Left side
-                middle_y,  # Middle of the map grid height
-                100
-            )
+            prev_x = int(DISPLAY_SIZE[0] * 0.12)  # 5% from left (closer to edge)
+            nav_button_width = int(DISPLAY_SIZE[0] * 0.08)  # 10% of screen width
+            self.create_button("◀", self.previous_page, prev_x, middle_y, nav_button_width)
         
-        # Next page button (if not on last page)
+        # Next page button - moved further to edge
         if self.current_page < self.total_pages - 1:
-            self.button_manager.create_button(
-                "▶",
-                self.next_page,
-                DISPLAY_SIZE[0] - 350,  # Right side
-                middle_y,  # Middle of the map grid height
-                100
-            )
+            next_x = int(DISPLAY_SIZE[0] * 0.8)  # 85% from left (closer to right edge)
+            nav_button_width = int(DISPLAY_SIZE[0] * 0.08)  # 10% of screen width
+            self.create_button("▶", self.next_page, next_x, middle_y, nav_button_width)
         
-        pagebutton_width = 400
-        # Add pagination info at bottom center
+        # Add pagination info
         if self.total_pages > 1:
-            # Page info display
             page_info = f"Page {self.current_page + 1}/{self.total_pages}"
             center_x = DISPLAY_SIZE[0] // 2
-            bottom_y = DISPLAY_SIZE[1] * 0.7  # Bottom with margin
+            page_y = DISPLAY_SIZE[1] * 0.7  # 70% down the screen
+            page_width = int(DISPLAY_SIZE[0] * 0.25)  # 25% of screen width
             
-            self.button_manager.create_button(
-                page_info,
-                lambda: None,  # No action for info display
-                center_x - pagebutton_width/2,  # Centered
-                bottom_y,
-                pagebutton_width
-            )
+            self.create_button(page_info, lambda: None, center_x - (page_width // 2), page_y, page_width)
     
     def next_page(self):
         if self.current_page < self.total_pages - 1:
@@ -223,12 +186,6 @@ class MapSelectionScreen(MenuScreen):
         if self.current_page > 0:
             self.current_page -= 1
             self.create_map_buttons()
-            
-    def enable(self):
-        self.enabled = True
-        # Refresh maps when enabling the screen
-        self.load_maps()
-        self.create_map_buttons()
 
 class Editor:
     def __init__(self, menu, map_file=None):
@@ -377,22 +334,38 @@ class Editor:
         directory = 'data/maps'
         if not os.path.exists(directory):
             os.makedirs(directory)  # Ensure the directory exists
-            
+        
+        # For debugging - print state before save
+        print(f"Before save - current_map_file: {self.current_map_file}")
+        
         # If editing an existing map, update it directly
         if self.current_map_file:
-            self.tilemap.save(os.path.join(directory, self.current_map_file))
+            file_path = os.path.join(directory, self.current_map_file)
+            print(f"Saving existing map to: {file_path}")
+            self.tilemap.save(file_path)
             saved_map_name = self.current_map_file
         else:
-            # For new maps, create a new file
+            # For new maps, create a new file with debugging
+            print("Creating new map file")
             next_filename = find_next_numeric_filename(directory, extension='.json')
-            self.current_map_file = next_filename  # Update the current map file
-            self.tilemap.save(os.path.join(directory, next_filename))
+            print(f"Generated filename: {next_filename}")
+            
+            file_path = os.path.join(directory, next_filename)
+            print(f"Saving to: {file_path}")
+            
+            self.tilemap.save(file_path)
+            print(f"Save completed, updating current_map_file to: {next_filename}")
+            
+            self.current_map_file = next_filename
             saved_map_name = next_filename
         
         # Set the save notification
         self.show_save_message = True
         self.save_message_timer = 0
         self.saved_map_name = saved_map_name
+        
+        # For debugging - print state after save
+        print(f"After save - current_map_file: {self.current_map_file}, saved_map_name: {saved_map_name}")
         
         # Return to menu immediately if called from elsewhere
         if not pygame.key.get_pressed()[pygame.K_o]:

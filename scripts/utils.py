@@ -33,6 +33,24 @@ def find_next_numeric_filename(directory, extension='.json'):
     next_number = max(numeric_names, default=-1) + 1
     return f"{next_number}{extension}"
 
+
+def scale_position(x_percent, y_percent, display_size):
+    return (int(display_size[0] * x_percent), int(display_size[1] * y_percent))
+
+def scale_size(width_percent, height_percent, display_size):
+    return (int(display_size[0] * width_percent), int(display_size[1] * height_percent))
+
+def scale_font(base_size, display_size, reference_size=(1920, 1080)):
+    # Calculate scaling factor based on the geometric mean of width and height ratios
+    width_ratio = display_size[0] / reference_size[0]
+    height_ratio = display_size[1] / reference_size[1]
+    scale_factor = (width_ratio * height_ratio) ** 0.5
+    
+    # Apply scaling with limits to prevent extreme sizes
+    scaled_size = max(12, min(72, int(base_size * scale_factor)))
+    return scaled_size
+
+
 def draw_debug_info(game, surface, offset):
     # Draw player rect
     player_rect = game.player.rect()
@@ -169,140 +187,59 @@ class Animation:
     def img(self):
         return self.images[int(self.frame / self.img_duration)]
 
-from pygame import Rect
-
-class ButtonManager:
-    def __init__(self, font, button_height=80, min_width=300, text_padding=40, padding=30):
-        self.font = font
-        self.button_height = button_height
-        self.min_width = min_width
-        self.text_padding = text_padding
-        self.padding = padding
-        self.buttons = []
-        self.selected_index = None
-        
-    def calculate_button_size(self, text):
-        text_surf = self.font.render(text, True, (255, 255, 255))
-        width = text_surf.get_width() + self.text_padding
-        
-        if width < self.min_width:
-            width = self.min_width
-            
-        return width, self.button_height
-    
-    def create_button(self, text, action, x, y, width=None):
-        if width is None:
-            width, _ = self.calculate_button_size(text)
-            
-        button = Button(
-            Rect(x, y, width, self.button_height),
-            text,
-            action,
-            self.font,
-            self.min_width,
-            self.text_padding
-        )
-        
-        self.buttons.append(button)
-        return button
-    
-    def create_centered_button_list(self, button_texts, button_actions, start_x, start_y):
-        max_width = self.min_width
-        
-        for text in button_texts:
-            width, _ = self.calculate_button_size(text)
-            max_width = max(max_width, width)
-        
-        centered_x = start_x - (max_width // 2)
-        
-        for i, (text, action) in enumerate(zip(button_texts, button_actions)):
-            y_pos = start_y + i * (self.button_height + self.padding)
-            self.create_button(text, action, centered_x, y_pos, max_width)
-    
-    def create_grid_buttons(self, texts, actions, columns, start_x, start_y, fixed_width=None):
-        if fixed_width is None:
-            fixed_width = self.min_width
-            
-        for i, (text, action) in enumerate(zip(texts, actions)):
-            row = i // columns
-            col = i % columns
-            
-            button_x = start_x + col * (fixed_width + self.padding)
-            button_y = start_y + row * (self.button_height + self.padding)
-            
-            self.create_button(text, action, button_x, button_y, fixed_width)
-    
-    def update(self, mouse_pos):
-        self.selected_index = None
-        
-        for i, button in enumerate(self.buttons):
-            button.selected = button.is_hovered(mouse_pos)
-            if button.selected:
-                self.selected_index = i
-    
-    def handle_events(self, events, sound_callback=None):
-        for button in self.buttons:
-            if button.handle_events(events, sound_callback):
-                return True
-        return False
-    
-    def draw(self, surface):
-        for button in self.buttons:
-            button.draw(surface)
-    
-    def clear(self):
-        self.buttons = []
-        self.selected_index = None
-
 class Button:
-    def __init__(self, rect, text, action, font, min_width=300, text_padding=40):
+    def __init__(self, rect, text, action, font, menu):
         self.rect = rect
         self.text = text
         self.action = action
         self.font = font
-        self.min_width = min_width
-        self.text_padding = text_padding
+        self.menu = menu  # Store reference to menu for access to UI_CONSTANTS
         self.selected = False
         
+        # Calculate proportional border radius based on button height
+        self.border_radius = max(6, int(rect.height * 0.1))  # 10% of height, minimum 6px
+        
+        # Calculate shadow offset based on display size
+        display_height = pygame.display.get_surface().get_height()
+        self.shadow_offset = max(2, int(4 * (display_height / 1080)))
+    
     def is_hovered(self, mouse_pos):
         return self.rect.collidepoint(mouse_pos)
     
-    def draw(self, surface, highlight_color=(255, 215, 0)):
-        # Add shadow behind the button
-        shadow_offset = 4
+    def draw(self, surface):
+        # Add shadow behind the button - scaled with display size
         shadow_surface = pygame.Surface((self.rect.width, self.rect.height), pygame.SRCALPHA)
-
-        # Change shadow color based on hover state
         shadow_color = (255, 255, 255, 90) if self.selected else (0, 0, 0, 90)
         shadow_surface.fill(shadow_color)
-
-        surface.blit(shadow_surface, (self.rect.x + shadow_offset, self.rect.y + shadow_offset))
+        surface.blit(shadow_surface, (self.rect.x + self.shadow_offset, self.rect.y + self.shadow_offset))
         
-        # Button background with improved colors
-        button_color = (100, 120, 255, 200) if self.selected else (80, 80, 120, 180)
+        # Button background
+        button_color = self.menu.UI_CONSTANTS['BUTTON_HOVER_COLOR'] if self.selected else self.menu.UI_CONSTANTS['BUTTON_COLOR']
         button_surface = pygame.Surface((self.rect.width, self.rect.height), pygame.SRCALPHA)
         button_surface.fill(button_color)
         surface.blit(button_surface, (self.rect.x, self.rect.y))
         
-        # Text with shadow effect
+        # Text with shadow effect - shadow offset scaled with display size
         text_shadow = self.font.render(self.text, True, (0, 0, 0, 180))
         text_surf = self.font.render(self.text, True, (255, 255, 255))
         
-        # Position text with shadow offset
         text_x = self.rect.x + (self.rect.width - text_surf.get_width()) // 2
         text_y = self.rect.y + (self.rect.height - text_surf.get_height()) // 2
         
-        # Draw text shadow slightly offset
-        surface.blit(text_shadow, (text_x + 2, text_y + 2))
+        # Scale text shadow offset with display size
+        text_shadow_offset = max(1, int(2 * pygame.display.get_surface().get_height() / 1080))
+        
+        surface.blit(text_shadow, (text_x + text_shadow_offset, text_y + text_shadow_offset))
         surface.blit(text_surf, (text_x, text_y))
         
-        # Draw highlight border if selected
+        # Draw highlight border if selected - scale glow with display size
         if self.selected:
-            glow_color = (200, 230, 255)  # clean white glow
-            glow_size = 3 # number of glow layers
+            glow_color = self.menu.UI_CONSTANTS['BUTTON_GLOW_COLOR']
+            display_width = pygame.display.get_surface().get_width()
+            glow_size = max(2, int(3 * (display_width / 1920)))
 
             for i in range(glow_size, 0, -1):
-                alpha = 60 - i * 10  # fade out each outer layer
+                alpha = 60 - i * 10
                 glow_rect = self.rect.inflate(i * 4, i * 4)
                 glow_surface = pygame.Surface(glow_rect.size, pygame.SRCALPHA)
 
@@ -310,7 +247,7 @@ class Button:
                     glow_surface,
                     (*glow_color, alpha),
                     glow_surface.get_rect(),
-                    border_radius=6  # nice soft corners
+                    border_radius=self.border_radius
                 )
 
                 surface.blit(glow_surface, (
@@ -318,71 +255,119 @@ class Button:
                     self.rect.y - i * 2
                 ))
 
-
-    
-    def handle_events(self, events, sound_callback=None):
-        if self.selected:
-            for event in events:
-                if event.type == pygame.MOUSEBUTTONDOWN and event.button == 1:
-                    if sound_callback:
-                        sound_callback('click')
-                    self.action()
-                    return True
-        return False
-
-
 class MenuScreen:
-    def __init__(self, parent, title="Menu"):
-        self.parent = parent
-        self.screen = parent.screen
-        self.background = parent.background
-        self.font = pygame.font.Font(parent.font_path, 40)
-        self.title_font = pygame.font.Font(parent.font_path, 70)
+    def __init__(self, menu, title="Menu"):
+        self.menu = menu
+        self.screen = menu.screen
+        self.UI_CONSTANTS = calculate_ui_constants(DISPLAY_SIZE)
+        
+        # Scale fonts based on display size
+        font_size = scale_font(40, DISPLAY_SIZE)
+        title_font_size = scale_font(70, DISPLAY_SIZE)
+        
+        self.font = pygame.font.Font(FONT, font_size)
+        self.title_font = pygame.font.Font(FONT, title_font_size)
         self.enabled = False
         self.title = title
+        self.buttons = []
         
-        self.button_manager = ButtonManager(
-            self.font,
-            parent.button_props['height'],
-            parent.button_props['min_width'],
-            parent.button_props['text_padding'],
-            parent.button_props['padding']
-        )
-        
-        self.initialize()
-    
-    def initialize(self):
-        pass
-    
     def enable(self):
         self.enabled = True
+        self.initialize()
     
     def disable(self):
         self.enabled = False
+    
+    def initialize(self):
+        # Override in subclasses
+        pass
     
     def update(self, events):
         if not self.enabled:
             return
             
         mouse_pos = pygame.mouse.get_pos()
-        self.button_manager.update(mouse_pos)
         
-        self.button_manager.handle_events(events, self.parent._play_sound)
+        # Update button hover states
+        for button in self.buttons:
+            button.selected = button.is_hovered(mouse_pos)
+        
+        # Handle button clicks
+        for button in self.buttons:
+            if button.selected:
+                for event in events:
+                    if event.type == pygame.MOUSEBUTTONDOWN and event.button == 1:
+                        self.menu._play_sound('click')
+                        button.action()
+                        return
     
     def draw(self, surface):
         if not self.enabled:
             return
-            
-        # Create title text with shadow effect
+        
+        # Draw title with shadow
         title_shadow = self.title_font.render(self.title, True, (0, 0, 0))
         title_text = self.title_font.render(self.title, True, (255, 255, 255))
         
-        title_x = (self.parent.display_size[0] - title_text.get_width()) // 2
-        title_y = (self.parent.display_size[1] - title_text.get_height()) // 7
+        title_x = (DISPLAY_SIZE[0] - title_text.get_width()) // 2
+        title_y = int(DISPLAY_SIZE[1] * 0.1)  # 10% from top
         
-        # Draw shadow with offset
-        surface.blit(title_shadow, (title_x + 4, title_y + 4))
-        # Draw main text
+        # Scale shadow offset with display size
+        shadow_offset = max(2, int(4 * (DISPLAY_SIZE[1] / 1080)))
+        
+        surface.blit(title_shadow, (title_x + shadow_offset, title_y + shadow_offset))
         surface.blit(title_text, (title_x, title_y))
         
-        self.button_manager.draw(surface)
+        # Draw all buttons
+        for button in self.buttons:
+            button.draw(surface)
+    
+    def clear_buttons(self):
+        self.buttons = []
+    
+    def create_button(self, text, action, x, y, width=None):
+        # Calculate button size based on text if width not specified
+        if width is None:
+            text_surf = self.font.render(text, True, (255, 255, 255))
+            width = text_surf.get_width() + self.UI_CONSTANTS['BUTTON_TEXT_PADDING']
+            width = max(width, self.UI_CONSTANTS['BUTTON_MIN_WIDTH'])
+            
+        button = Button(
+            pygame.Rect(x, y, width, self.UI_CONSTANTS['BUTTON_HEIGHT']),
+            text,
+            action,
+            self.font,
+            self.menu  # Pass menu reference to Button
+        )
+        
+        self.buttons.append(button)
+        return button
+    
+    def create_centered_button_list(self, button_texts, button_actions, center_x, start_y):
+        # Calculate the maximum width needed for buttons
+        max_width = self.UI_CONSTANTS['BUTTON_MIN_WIDTH']
+        for text in button_texts:
+            text_surf = self.font.render(text, True, (255, 255, 255))
+            width = text_surf.get_width() + self.UI_CONSTANTS['BUTTON_TEXT_PADDING']
+            max_width = max(max_width, width)
+        
+        # Create centered buttons
+        left_x = center_x - (max_width // 2)
+        for i, (text, action) in enumerate(zip(button_texts, button_actions)):
+            y_pos = start_y + i * (self.UI_CONSTANTS['BUTTON_HEIGHT'] + self.UI_CONSTANTS['BUTTON_SPACING'])
+            self.create_button(text, action, left_x, y_pos, max_width)
+    
+    def create_grid_buttons(self, texts, actions, start_x, start_y, fixed_width=None):
+        if fixed_width is None:
+            fixed_width = self.UI_CONSTANTS['BUTTON_MIN_WIDTH']
+            
+        columns = self.UI_CONSTANTS['GRID_COLUMNS']
+        for i, (text, action) in enumerate(zip(texts, actions)):
+            row = i // columns
+            col = i % columns
+            
+            button_x = start_x + col * (fixed_width + self.UI_CONSTANTS['BUTTON_SPACING'])
+            button_y = start_y + row * (self.UI_CONSTANTS['BUTTON_HEIGHT'] + self.UI_CONSTANTS['BUTTON_SPACING'])
+            
+            self.create_button(text, action, button_x, button_y, fixed_width)
+

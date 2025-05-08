@@ -11,7 +11,6 @@ class Player:
         self._initialize()
 
     def _initialize(self):
-        print(list(self.start_pos))
         self.pos = list(self.start_pos)
         self.velocity = [0, 0]
         self.collisions = {'up': False, 'down': False, 'right': False, 'left': False}

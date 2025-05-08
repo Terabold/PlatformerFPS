@@ -135,7 +135,6 @@ class GameMenu:
     
     def load_next_map(self):
         self.environment.load_next_map()
-        self._play_sound('click')
     
     def update(self, events):
         if self.active_menu:
@@ -154,24 +153,46 @@ class GameMenu:
 class Environment:
     def __init__(self, display, clock, ai_train_mode=False):
         self.player_type = game_state_manager.player_type
-        self.ai_train_mode = ai_train_mode 
-        
-        if self.player_type == 1:  
-            self.ai_train_mode = True
-        
+        self.ai_train_mode = ai_train_mode if not self.player_type == 1 else True
         self.display = display
         self.clock = clock
         self.menu = False
         self.rotated_assets = {}
         self.show_rotation_values = False
-        self.tilemap = Tilemap(self, tile_size=TILE_SIZE)
         
-        # Get the latest map selection
+        # Initialize important state variables upfront
+        self.death_sound_played = False
+        self.finish_sound_played = False
+        self.countdeathframes = 0
+        self.debug_mode = False
+        self.player_finished = False
+        self.buffer_time = 0
+
+        # Initialize scroll variable here, before it's used in center_scroll_on_player
+        self.scroll = [0, 0]
+        self.render_scroll = [0, 0]
+
+        # Initialize font with scaled size based on display
+        font_size = scale_font(36, DISPLAY_SIZE)
+        pygame.font.init()
+        self.fps_font = pygame.font.Font(FONT, font_size)
+        
+        # Initialize tilemap and load map
+        self.tilemap = Tilemap(self, tile_size=TILE_SIZE)
+        self.load_current_map()
+        
+        # Initialize input handler
+        self.input_handler = InputHandler()
+        
+        # Initialize game menu with scaled UI
+        self.game_menu = GameMenu(self)
+    
+    def load_current_map(self):
         map_path = game_state_manager.selected_map
         self.tilemap.load(map_path)
         IMGscale = (self.tilemap.tile_size, self.tilemap.tile_size)
 
-        # Rest of initialization continues as before
+        # Load assets
         self.assets = {          
             'decor': load_images('tiles/decor', scale=IMGscale),
             'grass': load_images('tiles/grass', scale=IMGscale),
@@ -197,6 +218,7 @@ class Environment:
             'saws': load_images('tiles/saws', scale=IMGscale),
         }
         
+        # Load sounds
         self.sfx = {
             'death': load_sounds('death', volume=0.25),
             'jump': load_sounds('jump'),
@@ -205,60 +227,79 @@ class Environment:
             'click': load_sounds('click'),
         }
 
+        # Get spawner positions
         self.pos = self.tilemap.extract([('spawners', 0), ('spawners', 1)])
-        self.default_pos = self.pos[0]['pos'] if self.pos else [10, 10]
-        self.player = Player(self, self.default_pos, PLAYERS_SIZE, self.sfx)
-
-        self.keys = {'left': False, 'right': False, 'jump': False}
-
-        self.buffer_times = {'jump': 0}
-
-        self.reset()
         
-        # Initialize font with scaled size based on display
-        font_size = scale_font(36, DISPLAY_SIZE)
-        pygame.font.init()
-        self.fps_font = pygame.font.Font(FONT, font_size)
-
-        if self.player_type == 0:
-            self.input_handler = InputHandler()
-        elif self.player_type == 1:
-            self.input_handler = InputHandler() 
-
-        self.scroll = self.default_pos.copy()
-
-        # Initialize game menu with scaled UI
-        self.game_menu = GameMenu(self)
+        if not self.pos:
+            self.default_pos = [10, 10]
+        else:
+            self.default_pos = self.pos[0]['pos'].copy()
+        
+        self.player = Player(self, self.default_pos.copy(), PLAYERS_SIZE, self.sfx)
+        
+        self.center_scroll_on_player()
+        
+        # Initialize input state
+        self.keys = {'left': False, 'right': False, 'jump': False}
+        self.buffer_times = {'jump': 0}
+    
+    def center_scroll_on_player(self):
+        player_rect = self.player.rect()
+        display_width = self.display.get_width()
+        display_height = self.display.get_height()
+        
+        self.scroll[0] = player_rect.centerx - display_width // 2
+        self.scroll[1] = player_rect.centery - display_height // 2
+        
+        self.render_scroll = (int(self.scroll[0]), int(self.scroll[1]))
     
     def reset(self):
         self.death_sound_played = False
         self.finish_sound_played = False
         self.countdeathframes = 0
         self.player.reset()
+        
+        self.player.pos = self.default_pos.copy()
+        
         self.keys = {'left': False, 'right': False, 'jump': False}
         self.buffer_times = {'jump': 0}
         self.menu = False
         self.input_handler = InputHandler()
         self.debug_mode = False
-        self.death_sound_played = False
-        self.finish_sound_played = False
-        self.countdeathframes = 0
         self.buffer_time = 0
         self.player_finished = False
+        
+        # Re-center the scroll on the player's position
+        self.center_scroll_on_player()
 
     def restart_game(self):
         """Restart the entire game (for use with congratulations screen)"""
         self.load_map_id(0)
-        # Optionally reset any level progress or settings here
 
     def load_map_id (self, map_id):
+        """Load a specific map by ID"""
         next_map = f'data\maps\{map_id}.json'
         game_state_manager.selected_map = next_map
+        
+        # Reset the environment
         self.reset()
+        
+        # Load the new map
         self.tilemap.load(next_map)
+        
+        # Update player spawn position
         self.pos = self.tilemap.extract([('spawners', 0), ('spawners', 1)])
-        self.default_pos = self.pos[0]['pos'] if self.pos else [10, 10]
+        if self.pos:
+            # Always use a copy of the position to avoid reference issues
+            self.default_pos = self.pos[0]['pos'].copy()
+        else:
+            self.default_pos = [10, 10]
+            
         self.player.pos = self.default_pos.copy()
+        
+        # Center the view on the player
+        self.center_scroll_on_player()
+        
         self.menu = False
     
     def resume_game(self):
@@ -269,22 +310,23 @@ class Environment:
         game_state_manager.returnToPrevState()
 
     def is_last_map(self):
-        # get current level index
+        """Check if this is the last map in the sequence"""
+        # Get current level index
         current_map = game_state_manager.selected_map
         current_index = int(current_map.split('\\')[-1].split('.')[0])
-        # get all maps
+        
+        # Get all maps
         maps_folder = os.path.join('data', 'maps')
         map_files = [f for f in os.listdir(maps_folder) if f.endswith('.json')]
-        # return tre if the map is the last one
+        
+        # Return true if this is NOT the last map (i.e., there are more maps to play)
         return current_index < len(map_files) - 1
 
     def load_next_map(self):
         """Load the next map after completing a level"""
         # Get current map and find next map
         current_map = game_state_manager.selected_map
-        print('current map: ', current_map)
         if current_map:
-            try:
                 # Check if we're on the last map
                 maps_folder = os.path.join('data', 'maps')
                 map_files = sorted([f for f in os.listdir(maps_folder) if f.endswith('.json')])
@@ -297,8 +339,6 @@ class Environment:
                 else:
                     # Can't find current map, just reset
                     self.reset()
-            except Exception as e:
-                self.reset()
         else:
             self.reset()
 
@@ -387,7 +427,6 @@ class Environment:
                 self.game_menu.show_level_complete_menu()
             else:
                 self.game_menu.show_congratulations_menu()
-
             
         if not self.menu:
             self.player.update(self.tilemap, self.keys, self.countdeathframes)

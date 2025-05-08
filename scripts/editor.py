@@ -256,12 +256,12 @@ class Editor:
             'spawners': load_images('tiles/spawners', scale=IMGscale),
             'spikes': load_images('tiles/spikes', scale=IMGscale),
             'finish': load_images('tiles/finish', scale=IMGscale),
-            # 'ores': load_images('tiles/ores', scale=IMGscale),
+            'ores': load_images('tiles/ores', scale=IMGscale),
             'weather': load_images('tiles/weather', scale=IMGscale),
             'kill': load_images('tiles/kill', scale=IMGscale),
             'nether': load_images('tiles/nether', scale=IMGscale),
             'wood': load_images('tiles/wood', scale=IMGscale),
-            # 'wool': load_images('tiles/wool', scale=IMGscale),
+            'wool': load_images('tiles/wool', scale=IMGscale),
         }
         self.rotated_assets = {}
         return assets

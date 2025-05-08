@@ -77,27 +77,6 @@ class CongratulationsScreen(MenuScreen):
             start_y
         )
 
-class GameOverMenuScreen(MenuScreen):
-    def initialize(self):
-        self.title = "Game Over"
-        self.clear_buttons()
-        
-        center_x = self.menu.display_size[0] // 2
-        start_y = int(self.menu.display_size[1] * 0.4)  # 40% from top
-        
-        button_texts = ['Restart Level', 'Main Menu']
-        button_actions = [
-            self.menu.reset,
-            self.menu.return_to_main
-        ]
-        
-        self.create_centered_button_list(
-            button_texts, 
-            button_actions, 
-            center_x, 
-            start_y
-        )
-
 class GameMenu:
     def __init__(self, environment):
         self.environment = environment
@@ -111,7 +90,6 @@ class GameMenu:
         # Initialize menu screens
         self.pause_menu = PauseMenuScreen(self, "Game Paused")
         self.level_complete_menu = LevelCompleteMenuScreen(self, "Level Complete!")
-        self.game_over_menu = GameOverMenuScreen(self, "Game Over")
         self.congratulations_menu = CongratulationsScreen(self, "Congratulations!")
         
         self.active_menu = None
@@ -140,28 +118,18 @@ class GameMenu:
     def show_pause_menu(self):
         self.pause_menu.enable()
         self.level_complete_menu.disable()
-        self.game_over_menu.disable()
         self.congratulations_menu.disable()
         self.active_menu = self.pause_menu
     
     def show_level_complete_menu(self):
         self.pause_menu.disable()
         self.level_complete_menu.enable()
-        self.game_over_menu.disable()
         self.congratulations_menu.disable()
         self.active_menu = self.level_complete_menu
-    
-    def show_game_over_menu(self):
-        self.pause_menu.disable()
-        self.level_complete_menu.disable()
-        self.game_over_menu.enable()
-        self.congratulations_menu.disable()
-        self.active_menu = self.game_over_menu
     
     def show_congratulations_menu(self):
         self.pause_menu.disable()
         self.level_complete_menu.disable()
-        self.game_over_menu.disable()
         self.congratulations_menu.enable()
         self.active_menu = self.congratulations_menu
     
@@ -280,10 +248,19 @@ class Environment:
 
     def restart_game(self):
         """Restart the entire game (for use with congratulations screen)"""
-        self.reset()
-        game_state_manager.returnToPrevState()
+        self.load_map_id(0)
         # Optionally reset any level progress or settings here
 
+    def load_map_id (self, map_id):
+        next_map = f'data\maps\{map_id}.json'
+        game_state_manager.selected_map = next_map
+        self.reset()
+        self.tilemap.load(next_map)
+        self.pos = self.tilemap.extract([('spawners', 0), ('spawners', 1)])
+        self.default_pos = self.pos[0]['pos'] if self.pos else [10, 10]
+        self.player.pos = self.default_pos.copy()
+        self.menu = False
+    
     def resume_game(self):
         self.menu = False
         
@@ -291,36 +268,36 @@ class Environment:
         self.reset()
         game_state_manager.returnToPrevState()
 
+    def is_last_map(self):
+        # get current level index
+        current_map = game_state_manager.selected_map
+        current_index = int(current_map.split('\\')[-1].split('.')[0])
+        # get all maps
+        maps_folder = os.path.join('data', 'maps')
+        map_files = [f for f in os.listdir(maps_folder) if f.endswith('.json')]
+        # return tre if the map is the last one
+        return current_index < len(map_files) - 1
+
     def load_next_map(self):
         """Load the next map after completing a level"""
         # Get current map and find next map
         current_map = game_state_manager.selected_map
+        print('current map: ', current_map)
         if current_map:
             try:
                 # Check if we're on the last map
                 maps_folder = os.path.join('data', 'maps')
                 map_files = sorted([f for f in os.listdir(maps_folder) if f.endswith('.json')])
-                
-                if current_map in map_files:
-                    current_index = map_files.index(current_map)
+
+                current_index = int(current_map.split('\\')[-1].split('.')[0])
+                if f'{current_index}.json' in map_files:
                     if current_index < len(map_files) - 1:
                         # Load next map
-                        next_map = map_files[current_index + 1]
-                        game_state_manager.selected_map = next_map
-                        self.reset()
-                        self.tilemap.load(next_map)
-                        self.pos = self.tilemap.extract([('spawners', 0), ('spawners', 1)])
-                        self.default_pos = self.pos[0]['pos'] if self.pos else [10, 10]
-                        self.player.pos = self.default_pos.copy()
-                        self.menu = False
-                    else:
-                        # Show congratulations screen (all maps completed)
-                        self.game_menu.show_congratulations_menu()
+                        self.load_map_id(current_index + 1)
                 else:
                     # Can't find current map, just reset
                     self.reset()
             except Exception as e:
-                print(f"Error loading next map: {e}")
                 self.reset()
         else:
             self.reset()
@@ -398,15 +375,19 @@ class Environment:
                 random.choice(self.sfx['death']).play()
                 self.death_sound_played = True
             if self.countdeathframes >= 40:
-                self.menu = True
-                self.game_menu.show_game_over_menu()
+                self.reset()
         
         elif self.player.finishLevel:
             if not self.finish_sound_played:
                 random.choice(self.sfx['finish']).play()
                 self.finish_sound_played = True
             self.menu = True
-            self.game_menu.show_level_complete_menu()
+            
+            if self.is_last_map():
+                self.game_menu.show_level_complete_menu()
+            else:
+                self.game_menu.show_congratulations_menu()
+
             
         if not self.menu:
             self.player.update(self.tilemap, self.keys, self.countdeathframes)

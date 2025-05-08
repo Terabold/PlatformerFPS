@@ -11,6 +11,7 @@ class Player:
         self._initialize()
 
     def _initialize(self):
+        print(list(self.start_pos))
         self.pos = list(self.start_pos)
         self.velocity = [0, 0]
         self.collisions = {'up': False, 'down': False, 'right': False, 'left': False}
@@ -29,6 +30,7 @@ class Player:
 
     def reset(self):
         self._initialize()
+        #self.game.scroll = list(self.start_pos).copy()
     
     def rect(self):
         return pygame.Rect(self.pos[0], self.pos[1], self.size[0], self.size[1])

@@ -370,4 +370,3 @@ class MenuScreen:
             button_y = start_y + row * (self.UI_CONSTANTS['BUTTON_HEIGHT'] + self.UI_CONSTANTS['BUTTON_SPACING'])
             
             self.create_button(text, action, button_x, button_y, fixed_width)
-

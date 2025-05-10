@@ -33415,5 +33415,6 @@
         }
     },
     "offgrid": [],
-    "lowest_y": 42
+    "lowest_y": 42,
+    "map": "menu/cave.png"
 }

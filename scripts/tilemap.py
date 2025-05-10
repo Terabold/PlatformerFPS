@@ -1,5 +1,5 @@
+# tilemap.py
 import json
-
 import pygame
 from scripts.constants import PHYSICS_TILES, INTERACTIVE_TILES, SPIKE_SIZE
 
@@ -11,6 +11,8 @@ class Tilemap:
         self.tile_size = tile_size
         self.tilemap = {}
         self.offgrid_tiles = []
+        self.lowest_y = 0
+        self.map_background = None
     
     def tiles_around(self, pos):
         tiles = []
@@ -29,13 +31,11 @@ class Tilemap:
                 if not keep:
                     self.offgrid_tiles.remove(tile)
         
-        # Convert dict keys to a list before iteration to avoid RuntimeError
         tilemap_keys = list(self.tilemap.keys())
         for loc in tilemap_keys:
             tile = self.tilemap[loc]
             if (tile['type'], tile['variant']) in id_pairs:
                 match = tile.copy()
-                # Check if pos is a tuple and convert to list if necessary
                 if isinstance(match['pos'], tuple):
                     match['pos'] = list(match['pos'])
                 else:
@@ -46,7 +46,6 @@ class Tilemap:
                 if not keep:
                     del self.tilemap[loc]
         
-        # Return the matches list
         return matches
 
     def save(self, path):
@@ -61,7 +60,7 @@ class Tilemap:
             spawner = spawner_tiles[0]
             if 'pos' in spawner:
                 pos = spawner['pos'].copy()
-                if len(str(pos[0]).split('.')) == 1:  # Integer check
+                if len(str(pos[0]).split('.')) == 1:
                     pos[0] = pos[0] // self.tile_size
                     pos[1] = pos[1] // self.tile_size
                 
@@ -76,7 +75,8 @@ class Tilemap:
         json.dump({
             'tilemap': self.tilemap, 
             'offgrid': self.offgrid_tiles,
-            'lowest_y': lowest_y
+            'lowest_y': lowest_y,
+            'map': self.map_background
         }, f, indent=4)
         f.close()
         
@@ -86,6 +86,7 @@ class Tilemap:
         self.tilemap = map_data['tilemap']
         self.offgrid_tiles = map_data['offgrid']
         self.lowest_y = map_data.get('lowest_y', 0)
+        self.map_background = map_data.get('map', None)
 
         spawner_tiles = self.extract([('spawners', 0), ('spawners', 1)], keep=True)
         if len(spawner_tiles) > 1:
@@ -93,7 +94,7 @@ class Tilemap:
             spawner = spawner_tiles[0]
             if 'pos' in spawner:
                 pos = spawner['pos'].copy()
-                if len(str(pos[0]).split('.')) == 1: 
+                if len(str(pos[0]).split('.')) == 1:
                     pos[0] = pos[0] // self.tile_size
                     pos[1] = pos[1] // self.tile_size
                 
@@ -111,18 +112,14 @@ class Tilemap:
                 rects.append(pygame.Rect(tile['pos'][0] * self.tile_size, tile['pos'][1] * self.tile_size, self.tile_size, self.tile_size))
         return rects
     
-    # Updated to handle spike rotation
-    
     def get_spike_rect_with_rotation(self, tile):
         spike_width = int(self.tile_size * SPIKE_SIZE[0])
         spike_height = int(self.tile_size * SPIKE_SIZE[1])
         rotation = tile.get('rotation', 0)
         
-        # Base position for the tile
         tile_x = tile['pos'][0] * self.tile_size
         tile_y = tile['pos'][1] * self.tile_size
         
-        # Use dictionary lookup instead of if/elif chain
         rect_data = {
             0: (tile_x + (self.tile_size - spike_width) // 2,
                 tile_y + (self.tile_size - spike_height),
@@ -136,10 +133,9 @@ class Tilemap:
                 spike_height, spike_width)
         }
         
-        # Get rect data for this rotation
         x, y, width, height = rect_data.get(rotation, rect_data[0])
         return pygame.Rect(x, y, width, height)
-    # Updated spike hitbox code for interactive_rects_around method
+
     def interactive_rects_around(self, pos):
         tiles = []
         for tile in self.tiles_around(pos):
@@ -186,3 +182,9 @@ class Tilemap:
                 surf.blit(self.game.assets[tile['type']][tile['variant']], 
                         (tile['pos'][0] * self.tile_size - offset[0], 
                         tile['pos'][1] * self.tile_size - offset[1]))
+    
+    def get_background_map(self):
+        return self.map_background
+    
+    def set_background_map(self, map_path):
+        self.map_background = map_path

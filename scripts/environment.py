@@ -207,7 +207,6 @@ class Environment:
             'wood': load_images('tiles/wood', scale=IMGscale),
             'wool': load_images('tiles/wool', scale=IMGscale),       
             'player': load_image('player/player.png', scale=PLAYERS_IMAGE_SIZE),
-            'background': load_image('background.png', scale=DISPLAY_SIZE),
             'player/run': Animation(load_images('player/run', scale=PLAYERS_IMAGE_SIZE), img_dur=5),
             'player/idle': Animation(load_images('player/idle', scale=PLAYERS_IMAGE_SIZE), img_dur=25),
             'player/wallslide': Animation(load_images('player/wallslide', scale=PLAYERS_IMAGE_SIZE), loop=False),
@@ -218,6 +217,11 @@ class Environment:
             'saws': load_images('tiles/saws', scale=IMGscale),
         }
         
+        if self.tilemap.get_background_map() is not None:
+            self.background = load_image(self.tilemap.get_background_map(), scale=DISPLAY_SIZE, remove_color=None)
+        else:
+            self.background = load_image('menu/background.png', scale=DISPLAY_SIZE, remove_color=None)
+
         # Load sounds
         self.sfx = {
             'death': load_sounds('death', volume=0.25),
@@ -434,7 +438,7 @@ class Environment:
             self.render_scroll = (int(self.scroll[0]), int(self.scroll[1]))
 
     def render(self):
-        self.display.blit(self.assets['background'], (0, 0))
+        self.display.blit(self.background, (0, 0))
         self.tilemap.render(self.display, offset=self.render_scroll)
 
         if self.debug_mode and not self.menu:

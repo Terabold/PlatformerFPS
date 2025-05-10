@@ -44796,5 +44796,6 @@
         }
     },
     "offgrid": [],
-    "lowest_y": 64
+    "lowest_y": 64,
+    "map": "menu/nether.png"
 }

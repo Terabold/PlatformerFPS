@@ -7,7 +7,7 @@ DISPLAY_SIZE = (screen_width, screen_height)
 
 FPS = 60
 
-TILE_SIZE = DISPLAY_SIZE[0] // 35 # tilemap tile size
+TILE_SIZE = DISPLAY_SIZE[0] // 28 # tilemap tile size
 
 PLAYER_SPEED = 0.8   *TILE_SIZE/36 # added per frame
 JUMP_SPEED = 14  *TILE_SIZE/36 # initial jump velocity

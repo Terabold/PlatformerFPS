@@ -57976,5 +57976,6 @@
             ]
         }
     ],
-    "lowest_y": 15
+    "lowest_y": 15,
+    "map": "menu/nether.png"
 }

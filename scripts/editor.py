@@ -205,7 +205,7 @@ class Editor:
         
         # Asset handling
         self.assets = self.reload_assets()
-        self.background_image = load_image('background.png', scale=DISPLAY_SIZE)
+        self.background_image = load_image('menu/background.png', scale=DISPLAY_SIZE)
         self.rotated_assets = {}
         
         # Tile selection

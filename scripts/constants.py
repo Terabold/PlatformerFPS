@@ -4,6 +4,8 @@ screen_width = root.winfo_screenwidth()
 screen_height = root.winfo_screenheight()
 root.destroy()
 DISPLAY_SIZE = (screen_width, screen_height)
+if DISPLAY_SIZE[0] / 16 != 0 or DISPLAY_SIZE[1] / 9 != 0:
+    DISPLAY_SIZE = (DISPLAY_SIZE[0] - DISPLAY_SIZE[0] % 16, DISPLAY_SIZE[1] - DISPLAY_SIZE[1] % 9)
 
 FPS = 60
 

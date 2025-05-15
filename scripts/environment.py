@@ -6,6 +6,7 @@ from scripts.constants import *
 from scripts.player import Player
 from scripts.humanagent import InputHandler
 from scripts.tilemap import Tilemap
+from scripts.GameTimer import GameTimer
 from scripts.utils import (
     load_image, load_images, Animation, load_sounds, 
     draw_debug_info, update_camera_with_box, MenuScreen,
@@ -179,6 +180,11 @@ class Environment:
         
         # Initialize tilemap and load map
         self.tilemap = Tilemap(self, tile_size=TILE_SIZE)
+        
+        # Initialize game timer
+        self.initialize_timer()
+        
+        # Load the current map
         self.load_current_map()
         
         # Initialize input handler
@@ -186,6 +192,57 @@ class Environment:
         
         # Initialize game menu with scaled UI
         self.game_menu = GameMenu(self)
+    
+    def initialize_timer(self):
+        self.timer = GameTimer()
+        self.movement_started = False
+        
+        # Timer display settings
+        timer_font_size = scale_font(24, DISPLAY_SIZE)
+        self.timer_font = pygame.font.Font(FONT, timer_font_size)
+        self.timer_color = (255, 255, 255)
+        self.timer_highlight_color = (255, 255, 0)
+        self.show_timer = True
+
+    def update_timer(self):
+        # Start timer on first movement
+        if not self.movement_started and (self.keys['left'] or self.keys['right'] or self.keys['jump']):
+            self.movement_started = True
+            self.timer.start()
+        
+        # Handle timer pausing based on game state
+        if self.menu and not self.timer.is_paused:
+            self.timer.pause()
+        elif not self.menu and self.timer.is_paused and not self.player.death and not self.player.finishLevel:
+            self.timer.resume()
+        
+        # Stop timer on level completion
+        if self.player.finishLevel and self.timer.is_running:
+            self.timer.stop()
+        
+        # Update timer if running
+        self.timer.update()
+
+    def render_timer(self):
+        if not self.show_timer:
+            return
+            
+        # Position in top right corner with padding
+        padding = 10
+        timer_pos = (25, padding)
+        
+        # Use the new direct rendering method
+        self.timer.render(self.display, timer_pos, self.timer_font)
+
+    def toggle_timer_highlight(self):
+        self.timer.toggle_highlight()
+
+    def toggle_timer_visibility(self):
+        self.show_timer = not self.show_timer
+
+    def reset_timer(self):
+        self.timer.reset()
+        self.movement_started = False
     
     def load_current_map(self):
         map_path = game_state_manager.selected_map
@@ -273,16 +330,17 @@ class Environment:
         self.buffer_time = 0
         self.player_finished = False
         
+        # Reset the timer
+        self.reset_timer()
+        
         # Re-center the scroll on the player's position
         self.center_scroll_on_player()
 
     def restart_game(self):
-        """Restart the entire game (for use with congratulations screen)"""
         self.load_map_id(0)
 
-    def load_map_id (self, map_id):
-        """Load a specific map by ID"""
-        next_map = f'data\maps\{map_id}.json'
+    def load_map_id(self, map_id):
+        next_map = f'data/maps/{map_id}.json'
         game_state_manager.selected_map = next_map
         
         # Reset the environment
@@ -301,6 +359,9 @@ class Environment:
             
         self.player.pos = self.default_pos.copy()
         
+        # Reset the timer for the new map
+        self.reset_timer()
+        
         # Center the view on the player
         self.center_scroll_on_player()
         
@@ -314,10 +375,12 @@ class Environment:
         game_state_manager.returnToPrevState()
 
     def is_last_map(self):
-        """Check if this is the last map in the sequence"""
         # Get current level index
         current_map = game_state_manager.selected_map
-        current_index = int(current_map.split('\\')[-1].split('.')[0])
+        
+        # Use proper string splitting that's compatible with both slash types
+        import os
+        current_index = int(os.path.basename(current_map).split('.')[0])
         
         # Get all maps
         maps_folder = os.path.join('data', 'maps')
@@ -327,15 +390,17 @@ class Environment:
         return current_index < len(map_files) - 1
 
     def load_next_map(self):
-        """Load the next map after completing a level"""
         # Get current map and find next map
         current_map = game_state_manager.selected_map
         if current_map:
+                import os
                 # Check if we're on the last map
                 maps_folder = os.path.join('data', 'maps')
                 map_files = sorted([f for f in os.listdir(maps_folder) if f.endswith('.json')])
 
-                current_index = int(current_map.split('\\')[-1].split('.')[0])
+                # Properly extract the current index from the filename
+                current_index = int(os.path.basename(current_map).split('.')[0])
+                
                 if f'{current_index}.json' in map_files:
                     if current_index < len(map_files) - 1:
                         # Load next map
@@ -354,6 +419,98 @@ class Environment:
             self.rotated_assets[key] = pygame.transform.rotate(original, rotation)
         
         return self.rotated_assets[key]
+    
+    def process_human_input(self, events):
+        if not self.ai_train_mode:
+            # Handle escape key to toggle pause menu
+            for event in events:
+                if event.type == pygame.KEYDOWN and event.key == pygame.K_ESCAPE:
+                    if not self.menu and not self.player.death and not self.player.finishLevel:
+                        # Open pause menu
+                        self.menu = True
+                        self.game_menu.show_pause_menu()
+                    elif self.menu and not self.player.death and not self.player.finishLevel:
+                        # Close pause menu
+                        self.menu = False
+                        self.game_menu.active_menu = None
+                    
+            # Continue with normal input processing
+            self.keys, self.buffer_times = self.input_handler.process_events(events, self.menu)
+            self.buffer_time = self.buffer_times['jump']
+    
+    def update(self):
+        # Update the timer first
+        self.update_timer()
+        
+        if self.player.death:
+            self.countdeathframes += 1
+            if not self.death_sound_played:
+                random.choice(self.sfx['death']).play()
+                self.death_sound_played = True
+            if self.countdeathframes >= 40:
+                self.reset()
+        
+        elif self.player.finishLevel:
+            if not self.finish_sound_played:
+                random.choice(self.sfx['finish']).play()
+                self.finish_sound_played = True
+            self.menu = True
+            
+            if self.is_last_map():
+                self.game_menu.show_level_complete_menu()
+            else:
+                self.game_menu.show_congratulations_menu()
+            
+        if not self.menu:
+            self.player.update(self.tilemap, self.keys, self.countdeathframes)
+            update_camera_with_box(self.player, self.scroll, self.display.get_width(), self.display.get_height())
+            self.render_scroll = (int(self.scroll[0]), int(self.scroll[1]))
+
+    def render(self):
+        self.display.blit(self.background, (0, 0))
+        self.tilemap.render(self.display, offset=self.render_scroll)
+
+        if self.debug_mode and not self.menu:
+            self.debug_render()
+
+        self.player.render(self.display, offset=self.render_scroll)
+        
+        # Render the timer
+        self.render_timer()
+        
+        if self.menu:
+            # Get the current mouse position every frame to update button hover states
+            # This ensures hover effects work in every menu screen
+            mouse_pos = pygame.mouse.get_pos()
+            if self.game_menu.active_menu:
+                for button in self.game_menu.active_menu.buttons:
+                    button.selected = button.is_hovered(mouse_pos)
+                    
+            self.game_menu.draw(self.display)
+
+    def process_menu_events(self, events):
+        if self.menu:
+            for event in events:
+                if event.type == pygame.KEYDOWN and event.key == pygame.K_ESCAPE:
+                    # Handle escape in different menus
+                    if self.player.finishLevel:
+                        # From level complete menu -> return to main
+                        self.return_to_main()
+                    elif self.player.death:
+                        # From game over menu -> return to main
+                        self.return_to_main()
+                    else:
+                        # From pause menu -> resume game
+                        self.menu = False
+                        self.game_menu.active_menu = None
+            
+            self.game_menu.update(events)
+
+    def debug_render(self):
+        draw_debug_info(self, self.display, self.render_scroll)  
+        fps = self.clock.get_fps()
+        fps_text = self.fps_font.render(f"FPS: {int(fps)}", True, (255, 255, 0))
+        self.display.blit(fps_text, (10, 10))
     
     def get_state(self):
         if self.ai_train_mode:
@@ -393,89 +550,3 @@ class Environment:
                 self.buffer_times['jump'] = 0
                 
             self.buffer_time = self.buffer_times['jump']
-
-    def process_human_input(self, events):
-        if not self.ai_train_mode:
-            # Handle escape key to toggle pause menu
-            for event in events:
-                if event.type == pygame.KEYDOWN and event.key == pygame.K_ESCAPE:
-                    if not self.menu and not self.player.death and not self.player.finishLevel:
-                        # Open pause menu
-                        self.menu = True
-                        self.game_menu.show_pause_menu()
-                    elif self.menu and not self.player.death and not self.player.finishLevel:
-                        # Close pause menu
-                        self.menu = False
-                        self.game_menu.active_menu = None
-                    
-            # Continue with normal input processing
-            self.keys, self.buffer_times = self.input_handler.process_events(events, self.menu)
-            self.buffer_time = self.buffer_times['jump']
-    
-    def update(self):
-        if self.player.death:
-            self.countdeathframes += 1
-            if not self.death_sound_played:
-                random.choice(self.sfx['death']).play()
-                self.death_sound_played = True
-            if self.countdeathframes >= 40:
-                self.reset()
-        
-        elif self.player.finishLevel:
-            if not self.finish_sound_played:
-                random.choice(self.sfx['finish']).play()
-                self.finish_sound_played = True
-            self.menu = True
-            
-            if self.is_last_map():
-                self.game_menu.show_level_complete_menu()
-            else:
-                self.game_menu.show_congratulations_menu()
-            
-        if not self.menu:
-            self.player.update(self.tilemap, self.keys, self.countdeathframes)
-            update_camera_with_box(self.player, self.scroll, self.display.get_width(), self.display.get_height())
-            self.render_scroll = (int(self.scroll[0]), int(self.scroll[1]))
-
-    def render(self):
-        self.display.blit(self.background, (0, 0))
-        self.tilemap.render(self.display, offset=self.render_scroll)
-
-        if self.debug_mode and not self.menu:
-            self.debug_render()
-
-        self.player.render(self.display, offset=self.render_scroll)
-        
-        if self.menu:
-            # Get the current mouse position every frame to update button hover states
-            # This ensures hover effects work in every menu screen
-            mouse_pos = pygame.mouse.get_pos()
-            if self.game_menu.active_menu:
-                for button in self.game_menu.active_menu.buttons:
-                    button.selected = button.is_hovered(mouse_pos)
-                    
-            self.game_menu.draw(self.display)
-
-    def process_menu_events(self, events):
-        if self.menu:
-            for event in events:
-                if event.type == pygame.KEYDOWN and event.key == pygame.K_ESCAPE:
-                    # Handle escape in different menus
-                    if self.player.finishLevel:
-                        # From level complete menu -> return to main
-                        self.return_to_main()
-                    elif self.player.death:
-                        # From game over menu -> return to main
-                        self.return_to_main()
-                    else:
-                        # From pause menu -> resume game
-                        self.menu = False
-                        self.game_menu.active_menu = None
-            
-            self.game_menu.update(events)
-
-    def debug_render(self):
-        draw_debug_info(self, self.display, self.render_scroll)  
-        fps = self.clock.get_fps()
-        fps_text = self.fps_font.render(f"FPS: {int(fps)}", True, (255, 255, 0))
-        self.display.blit(fps_text, (10, 10))

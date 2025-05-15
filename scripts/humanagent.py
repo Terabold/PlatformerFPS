@@ -9,11 +9,11 @@ class InputHandler:
         for event in events:
             if event.type == pygame.KEYDOWN:
                 if not menu_active:
-                    if event.key == pygame.K_d:
+                    if event.key == pygame.K_d or event.key == pygame.K_RIGHT:
                         self.keys['right'] = True
-                    if event.key == pygame.K_a:
+                    if event.key == pygame.K_a or event.key == pygame.K_LEFT:
                         self.keys['left'] = True
-                    if event.key == pygame.K_SPACE:
+                    if event.key == pygame.K_SPACE or event.key == pygame.K_UP:
                         self.keys['jump'] = True
                         
             if event.type == pygame.KEYUP:

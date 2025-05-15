@@ -33,6 +33,28 @@ def find_next_numeric_filename(directory, extension='.json'):
     next_number = max(numeric_names, default=-1) + 1
     return f"{next_number}{extension}"
 
+# This is a sample of what to add to scripts/utils.py
+
+def render_text_with_shadow(surface, text, font, color, x, y, shadow_offset=1, centered=False):
+    text_surface = font.render(text, True, color)
+    shadow_surface = font.render(text, True, (0, 0, 0))
+    
+    if centered:
+        text_rect = text_surface.get_rect(center=(x, y))
+        shadow_rect = shadow_surface.get_rect(
+            center=(x + shadow_offset, y + shadow_offset)
+        )
+    else:
+        text_rect = text_surface.get_rect(topleft=(x, y))
+        shadow_rect = shadow_surface.get_rect(
+            topleft=(x + shadow_offset, y + shadow_offset)
+        )
+    
+    # Draw shadow first, then text
+    surface.blit(shadow_surface, shadow_rect)
+    surface.blit(text_surface, text_rect)
+    
+    return text_rect  # Return rect in case positioning is needed
 
 def scale_position(x_percent, y_percent, display_size):
     return (int(display_size[0] * x_percent), int(display_size[1] * y_percent))

@@ -6,17 +6,16 @@ from scripts.utils import load_images, load_image, find_next_numeric_filename, M
 from scripts.tilemap import Tilemap
 from scripts.constants import TILE_SIZE, DISPLAY_SIZE, FPS, PHYSICS_TILES, FONT, MENUBG, calculate_ui_constants
 from scripts.GameManager import game_state_manager
-
 class EditorMenu:
     def __init__(self, display):
         self.screen = display
         self.sfx = {'click': load_sounds('click')}
         
-        # Load and scale background
+        
         self.background = pygame.image.load(MENUBG).convert()
         self.background = pygame.transform.scale(self.background, DISPLAY_SIZE)
         
-        # Calculate UI constants based on screen size
+        
         self.UI_CONSTANTS = calculate_ui_constants(DISPLAY_SIZE)
      
         self.selected_map = None
@@ -38,7 +37,7 @@ class EditorMenu:
         self.start_editor(None)
 
     def start_editor(self, map_file):
-        self.editor = Editor(self, map_file)  # Assuming Editor class exists
+        self.editor = Editor(self, map_file)  
         self.editor_active = True
 
     def quit_editor(self):
@@ -89,7 +88,6 @@ class EditorMapSelectionScreen(MenuScreen):
             
         self.map_files = [f for f in os.listdir(maps_dir) if f.endswith('.json')]
         
-        # Sort map files numerically
         def get_map_number(filename):
             try:
                 return int(filename.split('.')[0])
@@ -98,7 +96,6 @@ class EditorMapSelectionScreen(MenuScreen):
                 
         self.map_files.sort(key=get_map_number)
         
-        # Fixed at 20 maps per page
         maps_per_page = 20
         self.total_pages = (len(self.map_files) + maps_per_page - 1) // maps_per_page
         
@@ -110,70 +107,61 @@ class EditorMapSelectionScreen(MenuScreen):
     def create_map_buttons(self):
         self.clear_buttons()
         
-        # Fixed at 20 maps per page
         maps_per_page = 20
-        # Calculate pagination
+        
         start_index = self.current_page * maps_per_page
         end_index = min(start_index + maps_per_page, len(self.map_files))
         
-        # Get maps for current page
         current_page_files = self.map_files[start_index:end_index]
         current_page_numbers = self.map_numbers[start_index:end_index]
         
-        # Scale button width with screen size - increased for better text padding
-        button_width = int(DISPLAY_SIZE[0] * 0.1)  # 18% of screen width
+        button_width = int(DISPLAY_SIZE[0] * 0.1)  
         padding = self.UI_CONSTANTS['BUTTON_SPACING']
         columns = self.UI_CONSTANTS['GRID_COLUMNS']
         
         grid_width = columns * (button_width + padding) - padding
         start_x = (DISPLAY_SIZE[0] - grid_width) // 2
         
-        # Create actions for selecting maps
+        
         actions = [lambda i=i: self.menu._select_map(self.map_files[start_index + i]) 
                   for i in range(len(current_page_files))]
         
-        # Create map buttons - use relative positioning with larger size
         self.create_grid_buttons(
             current_page_numbers,
             actions,
             start_x,
-            int(DISPLAY_SIZE[1] * 0.25),  # 25% from top
+            int(DISPLAY_SIZE[1] * 0.25),  
             button_width
         )
         
-        # Calculate the position for navigation buttons - use relative positioning
-        middle_y = DISPLAY_SIZE[1] * 0.37  # 40% down the screen
+        middle_y = DISPLAY_SIZE[1] * 0.37  
         
-        # Add "Return" button - position relative to screen size
-        back_x = int(DISPLAY_SIZE[0] * 0.02)  # 2% from left
-        back_y = int(DISPLAY_SIZE[1] * 0.02)  # 2% from top
-        back_width = int(DISPLAY_SIZE[0] * 0.08)  # 10% of screen width (increased)
+        back_x = int(DISPLAY_SIZE[0] * 0.02)  
+        back_y = int(DISPLAY_SIZE[1] * 0.02)  
+        back_width = int(DISPLAY_SIZE[0] * 0.08)  
         self.create_button("←", self.menu.quit_editor, back_x, back_y, back_width)
         
-        # Add "New Map" button - position relative to screen size
-        new_map_x = int(DISPLAY_SIZE[0] * 0.75)  # 15% from left
-        new_map_y = int(DISPLAY_SIZE[1] * 0.15)  # 15% from top
-        new_map_width = int(DISPLAY_SIZE[0] * 0.1)  # 15% of screen width (increased)
+        
+        new_map_x = int(DISPLAY_SIZE[0] * 0.75)  
+        new_map_y = int(DISPLAY_SIZE[1] * 0.15)  
+        new_map_width = int(DISPLAY_SIZE[0] * 0.1)  
         self.create_button("Add", self.menu.create_new_map, new_map_x, new_map_y, new_map_width)
         
-        # Previous page button - moved further to edge
         if self.current_page > 0:
-            prev_x = int(DISPLAY_SIZE[0] * 0.12)  # 5% from left (closer to edge)
-            nav_button_width = int(DISPLAY_SIZE[0] * 0.08)  # 10% of screen width
+            prev_x = int(DISPLAY_SIZE[0] * 0.12)  
+            nav_button_width = int(DISPLAY_SIZE[0] * 0.08)  
             self.create_button("◀", self.previous_page, prev_x, middle_y, nav_button_width)
         
-        # Next page button - moved further to edge
         if self.current_page < self.total_pages - 1:
-            next_x = int(DISPLAY_SIZE[0] * 0.8)  # 85% from left (closer to right edge)
-            nav_button_width = int(DISPLAY_SIZE[0] * 0.08)  # 10% of screen width
+            next_x = int(DISPLAY_SIZE[0] * 0.8)  
+            nav_button_width = int(DISPLAY_SIZE[0] * 0.08)  
             self.create_button("▶", self.next_page, next_x, middle_y, nav_button_width)
-        
-        # Add pagination info
+         
         if self.total_pages > 1:
             page_info = f"Page {self.current_page + 1}/{self.total_pages}"
             center_x = DISPLAY_SIZE[0] // 2
-            page_y = DISPLAY_SIZE[1] * 0.7  # 70% down the screen
-            page_width = int(DISPLAY_SIZE[0] * 0.25)  # 25% of screen width
+            page_y = DISPLAY_SIZE[1] * 0.7  
+            page_width = int(DISPLAY_SIZE[0] * 0.25)  
             
             self.create_button(page_info, lambda: None, center_x - (page_width // 2), page_y, page_width)
     
@@ -186,7 +174,6 @@ class EditorMapSelectionScreen(MenuScreen):
         if self.current_page > 0:
             self.current_page -= 1
             self.create_map_buttons()
-
 class Editor:
     def __init__(self, menu, map_file=None):
         self.menu = menu
@@ -195,43 +182,38 @@ class Editor:
         self.display = pygame.display.set_mode(DISPLAY_SIZE)
         self.clock = pygame.time.Clock()
         
-        # Core settings
         self.zoom = 10
         self.tilemap = Tilemap(self, tile_size=TILE_SIZE)
         self.scroll = [0, 0]
         
-        # Store the current map file path
         self.current_map_file = map_file
         
-        # Asset handling
         self.assets = self.reload_assets()
-        self.background_image = load_image('menu/background.png', scale=DISPLAY_SIZE)
+        self.background_image = load_image('background/background.png', scale=DISPLAY_SIZE)
         self.rotated_assets = {}
-        
-        # Tile selection
+            
         self.tile_list = list(self.assets)
         self.tile_group = 0
         self.tile_variant = 0
         self.current_rotation = 0
         self.ongrid = True
         
-        # Input states
-        self.movement = [False, False, False, False]  # Left, Right, Up, Down
+        self.movement = [False, False, False, False]  
         self.clicking = False
         self.right_clicking = False
         self.shift = False
         self.ctrl = False
         
-        # Save notification
+        
         self.show_save_message = False
         self.save_message_timer = 0
         self.save_message_duration = 80  
 
-        # UI
+        
         self.font = pygame.font.SysFont(FONT, 16)
         self.save_font = pygame.font.SysFont(FONT, 32)
         
-        # Load existing map if available
+        
         if map_file:
             try:
                 self.tilemap.load(os.path.join('data/maps', map_file))
@@ -289,27 +271,27 @@ class Editor:
     def handle_tile_placement(self, tile_pos, mpos):
         current_tile_type = self.tile_list[self.tile_group]
         
-        # Handle grid-based placement
+        
         if self.ongrid and self.clicking:
-            # Special handling for spawners - only allow one
+            
             if current_tile_type == 'spawners' and self.count_spawners() > 0:
                 self.tilemap.extract([('spawners', 0), ('spawners', 1)], keep=False)
             
-            # Create tile data with rotation if needed
+            
             tile_data = {
                 'type': current_tile_type,
                 'variant': self.tile_variant,
                 'pos': tile_pos
             }
             
-            # Add rotation for spikes
+            
             if current_tile_type == 'spikes':
                 tile_data['rotation'] = self.current_rotation
                 
-            # Add to tilemap
+            
             self.tilemap.tilemap[f"{tile_pos[0]};{tile_pos[1]}"] = tile_data
         
-        # Handle off-grid placement
+        
         elif not self.ongrid and self.clicking:
             if current_tile_type == 'spawners' and self.count_spawners() > 0:
                 return
@@ -324,7 +306,7 @@ class Editor:
                     'pos': tile_pos
                 }
                 
-                # Add rotation for spikes
+                
                 if current_tile_type == 'spikes':
                     tile_data['rotation'] = self.current_rotation
                     
@@ -333,52 +315,36 @@ class Editor:
     def save_map(self):
         directory = 'data/maps'
         if not os.path.exists(directory):
-            os.makedirs(directory)  # Ensure the directory exists
-        
-        # For debugging - print state before save
-        print(f"Before save - current_map_file: {self.current_map_file}")
-        
-        # If editing an existing map, update it directly
+            os.makedirs(directory)  
+    
         if self.current_map_file:
             file_path = os.path.join(directory, self.current_map_file)
-            print(f"Saving existing map to: {file_path}")
             self.tilemap.save(file_path)
             saved_map_name = self.current_map_file
         else:
-            # For new maps, create a new file with debugging
-            print("Creating new map file")
-            next_filename = find_next_numeric_filename(directory, extension='.json')
-            print(f"Generated filename: {next_filename}")
-            
+            next_filename = find_next_numeric_filename(directory, extension='.json')            
             file_path = os.path.join(directory, next_filename)
-            print(f"Saving to: {file_path}")
             
             self.tilemap.save(file_path)
-            print(f"Save completed, updating current_map_file to: {next_filename}")
-            
+
             self.current_map_file = next_filename
             saved_map_name = next_filename
         
-        # Set the save notification
         self.show_save_message = True
         self.save_message_timer = 0
-        self.saved_map_name = saved_map_name
+        self.saved_map_name = saved_map_name        
         
-        # For debugging - print state after save
-        print(f"After save - current_map_file: {self.current_map_file}, saved_map_name: {saved_map_name}")
-        
-        # Return to menu immediately if called from elsewhere
         if not pygame.key.get_pressed()[pygame.K_o]:
             self.menu.return_to_menu()
 
     def handle_tile_removal(self, tile_pos, mpos):
         if self.right_clicking:
-            # Remove grid tiles
+            
             tile_loc = f"{tile_pos[0]};{tile_pos[1]}"
             if tile_loc in self.tilemap.tilemap:
                 del self.tilemap.tilemap[tile_loc]
             
-            # Remove offgrid tiles
+            
             for tile in self.tilemap.offgrid_tiles.copy():
                 tile_img = self.assets[tile['type']][tile['variant']]
                 tile_r = pygame.Rect(
@@ -406,38 +372,38 @@ class Editor:
     
     def handle_mouse_events(self, event, tile_pos, mpos):
         if event.type == pygame.MOUSEBUTTONDOWN:
-            if event.button == 1:  # Left click
+            if event.button == 1:  
                 if self.ctrl:
                     self.rotate_spike_at_position(tile_pos)
                 else:
                     self.clicking = True
             
-            elif event.button == 3:  # Right click
+            elif event.button == 3:  
                 self.right_clicking = True
                 
-            # Mouse wheel for tile selection
-            elif event.button == 4:  # Scroll up
+            
+            elif event.button == 4:  
                 if self.shift:
-                    # Change variant
+                    
                     current_type = self.tile_list[self.tile_group]
                     self.tile_variant = (self.tile_variant - 1) % len(self.assets[current_type])
                 else:
-                    # Change tile type
+                    
                     self.tile_group = (self.tile_group - 1) % len(self.tile_list)
                     self.tile_variant = 0
                     self.current_rotation = 0
                     
-            elif event.button == 5:  # Scroll down
+            elif event.button == 5:  
                 if self.shift:
-                    # Change variant
+                    
                     current_type = self.tile_list[self.tile_group]
                     self.tile_variant = (self.tile_variant + 1) % len(self.assets[current_type]) 
                 else:
-                    # Change tile type
+                    
                     self.tile_group = (self.tile_group + 1) % len(self.tile_list)
                     self.tile_variant = 0
                     self.current_rotation = 0
-        
+
         elif event.type == pygame.MOUSEBUTTONUP:
             if event.button == 1:
                 self.clicking = False
@@ -446,7 +412,6 @@ class Editor:
     
     def handle_keyboard_events(self, event):
         if event.type == pygame.KEYDOWN:
-            # Movement keys
             if event.key == pygame.K_a:
                 self.movement[0] = True
             elif event.key == pygame.K_d:
@@ -456,7 +421,6 @@ class Editor:
             elif event.key == pygame.K_s:
                 self.movement[3] = True
             
-            # Feature keys
             elif event.key == pygame.K_g:
                 self.ongrid = not self.ongrid
             elif event.key == pygame.K_o:
@@ -465,15 +429,13 @@ class Editor:
                 self.shift = True
             elif event.key in {pygame.K_LCTRL, pygame.K_RCTRL}:
                 self.ctrl = True
-            elif event.key == pygame.K_ESCAPE:  # This is the key change
+            elif event.key == pygame.K_ESCAPE:  
                 self.menu.return_to_menu()
-                return True  # Indicate we want to exit the editor
+                return True  
             
-            # Spike rotation
             elif event.key == pygame.K_r and self.tile_list[self.tile_group] == 'spikes':
                 self.current_rotation = (self.current_rotation + 90) % 360
             
-            # Zoom controls
             elif event.key == pygame.K_UP:
                 if self.zoom < 20:
                     self.setZoom(self.zoom+1)
@@ -483,7 +445,6 @@ class Editor:
                     self.setZoom(self.zoom-1)
         
         elif event.type == pygame.KEYUP:
-            # Movement keys
             if event.key == pygame.K_a:
                 self.movement[0] = False
             elif event.key == pygame.K_d:
@@ -493,7 +454,6 @@ class Editor:
             elif event.key == pygame.K_s:
                 self.movement[3] = False
             
-            # Modifier keys
             elif event.key in {pygame.K_LSHIFT, pygame.K_RSHIFT}:
                 self.shift = False
             elif event.key in {pygame.K_LCTRL, pygame.K_RCTRL}:
@@ -502,46 +462,41 @@ class Editor:
         return False
     
     def update_scroll(self):
-        self.scroll[0] += (self.movement[1] - self.movement[0]) * 8  # Horizontal
-        self.scroll[1] += (self.movement[3] - self.movement[2]) * 8  # Vertical
+        self.scroll[0] += (self.movement[1] - self.movement[0]) * 8  
+        self.scroll[1] += (self.movement[3] - self.movement[2]) * 8  
         return (int(self.scroll[0]), int(self.scroll[1]))
         
     def draw_save_notification(self):
         if self.show_save_message:
-            # Create a semi-transparent background
+            
             overlay = pygame.Surface((DISPLAY_SIZE[0], 80), pygame.SRCALPHA)
             overlay.fill((0, 0, 0, 180))
             
-            # Position the overlay in the middle of the screen
             overlay_y = (DISPLAY_SIZE[1] - overlay.get_height()) // 2
             self.display.blit(overlay, (0, overlay_y))
             
-            # Render and position the text
             save_text = self.save_font.render(f"Map saved: {self.saved_map_name}", True, (255, 255, 255))
             text_x = (DISPLAY_SIZE[0] - save_text.get_width()) // 2
             text_y = overlay_y + (overlay.get_height() - save_text.get_height()) // 2
             self.display.blit(save_text, (text_x, text_y))
             
-            # Update timer and check if we should hide the message
             self.save_message_timer += 1
             if self.save_message_timer >= self.save_message_duration:
                 self.show_save_message = False
     
     def draw_ui(self, current_tile_img):
-        # Show current tile preview
+        
         self.display.blit(current_tile_img, (5, 5))
         
-        # Show spawner count
         spawner_count = self.count_spawners()
         spawner_text = self.font.render(f"Spawners: {spawner_count}/1", True, (255, 255, 255))
         self.display.blit(spawner_text, (5, 40))
         
-        # Show current tile info
         current_type = self.tile_list[self.tile_group]
         tile_info = self.font.render(f"Type: {current_type} ({self.tile_variant})", True, (255, 255, 255))
         self.display.blit(tile_info, (5, 60))
         
-        # Show spike rotation info if applicable
+        
         if current_type == 'spikes':
             rotation_info = self.font.render(f"Rotation: {self.current_rotation}°", True, (255, 255, 255))
             self.display.blit(rotation_info, (5, 80))
@@ -549,7 +504,7 @@ class Editor:
             controls_info = self.font.render("R: Rotate spike | Ctrl+Click: Rotate placed spike", True, (255, 255, 255))
             self.display.blit(controls_info, (5, 100))
         
-        # Show file info
+        
         if self.current_map_file:
             file_info = self.font.render(f"Editing: {self.current_map_file}", True, (255, 255, 255))
             self.display.blit(file_info, (5, DISPLAY_SIZE[1] - 50))
@@ -557,7 +512,7 @@ class Editor:
             new_map_info = self.font.render("Creating new map", True, (255, 255, 255))
             self.display.blit(new_map_info, (5, DISPLAY_SIZE[1] - 50))
         
-        # Show menu return info
+        
         menu_info = self.font.render("ESC: Return to Menu | O: Save Map", True, (255, 255, 255))
         self.display.blit(menu_info, (5, DISPLAY_SIZE[1] - 30))
         
@@ -600,7 +555,6 @@ class Editor:
             
             self.draw_ui(current_tile_img)
             
-            # Draw save notification over everything else
             self.draw_save_notification()
             
             for event in pygame.event.get():

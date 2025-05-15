@@ -1,0 +1,128 @@
+{
+  "0": {
+    "path": "data/maps/0.json",
+    "name": "Prologue",
+    "creator": "YourName",
+    "difficulty": "beginner",
+    "description": "An introduction to the storyline and basic controls.",
+    "best_time": null,
+    "thumbnail": "menu/map_thumbnails/map0.png"
+  },
+  "1": {
+    "path": "data/maps/1.json",
+    "name": "Welcome to the Game",
+    "creator": "YourName",
+    "difficulty": "tutorial",
+    "description": "A simple introduction to movement mechanics.",
+    "best_time": null,
+    "thumbnail": "menu/map_thumbnails/map1.png"
+  },
+  "2": {
+    "path": "data/maps/2.json",
+    "name": "First Challenge",
+    "creator": "YourName",
+    "difficulty": "easy",
+    "description": "Introduces basic jumping puzzles.",
+    "best_time": null,
+    "thumbnail": "menu/map_thumbnails/map2.png"
+  },
+  "3": {
+    "path": "data/maps/3.json",
+    "name": "Spike Valley",
+    "creator": "YourName",
+    "difficulty": "normal",
+    "description": "Watch your step! Spikes everywhere.",
+    "best_time": null,
+    "thumbnail": "menu/map_thumbnails/map3.png"
+  },
+  "4": {
+    "path": "data/maps/4.json",
+    "name": "Precision Required",
+    "creator": "YourName",
+    "difficulty": "hard",
+    "description": "Test your precision jumping skills.",
+    "best_time": null,
+    "thumbnail": "menu/map_thumbnails/map4.png"
+  },
+  "5": {
+    "path": "data/maps/5.json",
+    "name": "Saw Madness",
+    "creator": "YourName",
+    "difficulty": "harder",
+    "description": "Timing is everything to avoid the saws.",
+    "best_time": null,
+    "thumbnail": "menu/map_thumbnails/map5.png"
+  },
+  "6": {
+    "path": "data/maps/6.json",
+    "name": "The Gauntlet",
+    "creator": "YourName",
+    "difficulty": "insane",
+    "description": "Only the most skilled players will succeed.",
+    "best_time": null,
+    "thumbnail": "menu/map_thumbnails/map6.png"
+  },
+  "7": {
+    "path": "data/maps/7.json",
+    "name": "Maze of Doom",
+    "creator": "YourName",
+    "difficulty": "very hard",
+    "description": "Navigate through a maze filled with traps.",
+    "best_time": null,
+    "thumbnail": "menu/map_thumbnails/map7.png"
+  },
+  "8": {
+    "path": "data/maps/8.json",
+    "name": "Lava Run",
+    "creator": "YourName",
+    "difficulty": "extreme",
+    "description": "Run fast to escape the rising lava.",
+    "best_time": null,
+    "thumbnail": "menu/map_thumbnails/map8.png"
+  },
+  "9": {
+    "path": "data/maps/9.json",
+    "name": "The Tower",
+    "creator": "YourName",
+    "difficulty": "challenging",
+    "description": "Climb the tower while avoiding falling objects.",
+    "best_time": null,
+    "thumbnail": "menu/map_thumbnails/map9.png"
+  },
+  "10": {
+    "path": "data/maps/10.json",
+    "name": "Ice Caverns",
+    "creator": "YourName",
+    "difficulty": "advanced",
+    "description": "Slippery surfaces and falling icicles await.",
+    "best_time": null,
+    "thumbnail": "menu/map_thumbnails/map10.png"
+  },
+  "11": {
+    "path": "data/maps/11.json",
+    "name": "Dark Abyss",
+    "creator": "YourName",
+    "difficulty": "expert",
+    "description": "Traverse a pitch-black map with hidden traps.",
+    "best_time": null,
+    "thumbnail": "menu/map_thumbnails/map11.png"
+  },
+  "12": {
+    "path": "data/maps/12.json",
+    "name": "Final Showdown",
+    "creator": "YourName",
+    "difficulty": "ultimate",
+    "description": "Face the toughest challenges in this final map.",
+    "best_time": null,
+    "thumbnail": "menu/map_thumbnails/map12.png"
+  },
+  "13": {
+    "path": "data/maps/13.json",
+    "name": "Bonus Map",
+    "creator": "YourName",
+    "difficulty": "bonus",
+    "description": "A fun and rewarding bonus map for explorers.",
+    "best_time": null,
+    "thumbnail": "menu/map_thumbnails/map13.png"
+  }
+}

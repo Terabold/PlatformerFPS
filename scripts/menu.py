@@ -1,6 +1,7 @@
 import pygame
 import random
 import os
+import json
 from scripts.constants import DISPLAY_SIZE, FONT, MENUBG    
 from scripts.utils import load_sounds, MenuScreen, render_text_with_shadow
 from scripts.GameManager import game_state_manager
@@ -67,7 +68,13 @@ class Menu:
         if self.active_menu == self.options_menu:
             self._return_to_main()
         elif self.active_menu == self.map_menu:
-            self._return_to_options()
+            
+            if hasattr(self.map_menu, 'showing_level_page') and self.map_menu.showing_level_page:
+                
+                self.map_menu.return_to_selection()
+            else:
+                
+                self._return_to_options()
 
     def _set_player_type(self, value):
         self.player_type = value
@@ -405,7 +412,6 @@ class OptionsMenuScreen(MenuScreen):
                     button.rect.y - i * 2
                 ))
 
-
 class MapSelectionScreen(MenuScreen):
     def __init__(self, menu, title="Select a Map"):
         super().__init__(menu, title)
@@ -413,15 +419,84 @@ class MapSelectionScreen(MenuScreen):
         self.total_pages = 0
         self.map_files = []
         self.map_numbers = []
+        self.map_metadata = {}  
         
         
         info_font_size = int(DISPLAY_SIZE[1] * 0.02)  
+        detail_font_size = int(DISPLAY_SIZE[1] * 0.025)  
+        title_font_size = int(DISPLAY_SIZE[1] * 0.045)
         self.info_font = pygame.font.Font(FONT, info_font_size)
+        self.detail_font = pygame.font.Font(FONT, detail_font_size)
+        self.title_font = pygame.font.Font(FONT, title_font_size)
+        
+        
+        self.difficulty_colors = {
+            'beginner': (50, 200, 50),
+            'tutorial': (100, 200, 100),
+            'easy': (150, 200, 50),
+            'normal': (200, 200, 50),
+            'hard': (200, 150, 50),
+            'harder': (250, 100, 50),
+            'very hard': (250, 50, 50),
+            'insane': (250, 20, 20),
+            'extreme': (200, 20, 100),
+            'challenging': (180, 100, 180),
+            'advanced': (120, 100, 200),
+            'expert': (50, 50, 200),
+            'ultimate': (150, 20, 250),
+            'bonus': (200, 200, 200)
+        }
+        
+        
+        self.showing_level_page = False
+        self.selected_map_id = None
+        
+        
+        self.load_metadata()
+
+    def load_metadata(self):
+        try:
+            with open('metadata.json', 'r') as f:
+                self.map_metadata = json.load(f)
+        except Exception as e:
+            print(f"Error loading metadata.json: {e}")
+            self.map_metadata = {}
 
     def initialize(self):
-        self.title = "Select a Map"
-        self.load_maps()
-        self.recreate_buttons()
+        if self.showing_level_page:
+            self.initialize_level_page()
+        else:
+            self.title = "Select a Map"
+            self.load_maps()
+            self.recreate_buttons()
+
+    def initialize_level_page(self):
+        self.title = "Level Details"
+        self.clear_buttons()
+        
+        
+        back_x = int(DISPLAY_SIZE[0] * 0.02)
+        back_y = int(DISPLAY_SIZE[1] * 0.02)
+        back_width = int(DISPLAY_SIZE[0] * 0.08)
+        self.create_button("←", self.return_to_selection, back_x, back_y, back_width)
+        
+        
+        play_width = int(DISPLAY_SIZE[0] * 0.2)
+        play_height = int(DISPLAY_SIZE[1] * 0.08)
+        
+        
+        panel_height = int(DISPLAY_SIZE[1] * 0.6)
+        panel_y = DISPLAY_SIZE[1] * 0.15
+        
+        
+        play_x = DISPLAY_SIZE[0] // 2 - (play_width // 2)
+        play_y = panel_y + panel_height - play_height - int(DISPLAY_SIZE[1] * 0.05)
+        
+        
+        self.create_button("", self.play_selected_map, play_x, play_y, play_width)
+        
+        if self.buttons:
+            self.buttons[-1].rect.height = play_height
 
     def load_maps(self):
         maps_dir = 'data/maps'
@@ -432,9 +507,10 @@ class MapSelectionScreen(MenuScreen):
             try:
                 return int(filename.split('.')[0])
             except ValueError:
-                return float('inf')  
+                return float('inf')
                 
         self.map_files.sort(key=get_map_number)
+        
         
         self.total_pages = (len(self.map_files) + self.UI_CONSTANTS['MAPS_PER_PAGE'] - 1) // self.UI_CONSTANTS['MAPS_PER_PAGE']
         
@@ -465,96 +541,359 @@ class MapSelectionScreen(MenuScreen):
         start_x = (DISPLAY_SIZE[0] - grid_width) // 2
         
         
-        actions = [lambda i=i: self.menu._select_map(current_page_files[i]) for i in range(len(current_page_files))]
+        actions = []
+        for i in range(len(current_page_files)):
+            
+            map_index = start_index + i
+            actions.append(lambda idx=map_index: self.show_level_page(idx))
+            
         self.create_grid_buttons(current_page_numbers, actions, start_x, int(DISPLAY_SIZE[1] * 0.25), button_width)
         
         
-        middle_y = DISPLAY_SIZE[1] * 0.37  
+        middle_y = DISPLAY_SIZE[1] * 0.37
         
         
-        back_x = int(DISPLAY_SIZE[0] * 0.02)  
-        back_y = int(DISPLAY_SIZE[1] * 0.02)  
-        back_width = int(DISPLAY_SIZE[0] * 0.08)  
+        back_x = int(DISPLAY_SIZE[0] * 0.02)
+        back_y = int(DISPLAY_SIZE[1] * 0.02)
+        back_width = int(DISPLAY_SIZE[0] * 0.08)
+        self.create_button("←", self.menu._return_to_options, back_x, back_y, back_width)
         
         
         if self.current_page > 0:
-            prev_x = int(DISPLAY_SIZE[0] * 0.12)  
-            nav_button_width = int(DISPLAY_SIZE[0] * 0.08)  
+            prev_x = int(DISPLAY_SIZE[0] * 0.12)
+            nav_button_width = int(DISPLAY_SIZE[0] * 0.08)
             self.create_button("◀", self.previous_page, prev_x, middle_y, nav_button_width)
         
         
         if self.current_page < self.total_pages - 1:
-            next_x = int(DISPLAY_SIZE[0] * 0.8)  
-            nav_button_width = int(DISPLAY_SIZE[0] * 0.08)  
+            next_x = int(DISPLAY_SIZE[0] * 0.8)
+            nav_button_width = int(DISPLAY_SIZE[0] * 0.08)
             self.create_button("▶", self.next_page, next_x, middle_y, nav_button_width)
         
-        
-        self.create_button("←", self.menu._return_to_options, back_x, back_y, back_width)
-
         
         if self.total_pages > 1:
             page_info = f"Page {self.current_page + 1}/{self.total_pages}"
             center_x = DISPLAY_SIZE[0] // 2
-            page_y = DISPLAY_SIZE[1] * 0.68  
-            page_width = int(DISPLAY_SIZE[0] * 0.25)  
-            
+            page_y = DISPLAY_SIZE[1] * 0.68
+            page_width = int(DISPLAY_SIZE[0] * 0.25)
             self.create_button(page_info, lambda: None, center_x - (page_width // 2), page_y, page_width)
 
-    def draw(self, surface):
-        super().draw(surface)
+    def show_level_page(self, map_index):
+        self.menu._play_sound('click')
         
+        if map_index < 0 or map_index >= len(self.map_files):
+            return
+            
+        
+        map_file = self.map_files[map_index]
+        map_id = map_file.split('.')[0]  
+        
+        self.selected_map_id = map_id
+        self.showing_level_page = True
+        
+        
+        self.menu.selected_map = os.path.join('data', 'maps', map_file)
+        game_state_manager.selected_map = self.menu.selected_map
+        
+        
+        self.initialize_level_page()
+
+    def return_to_selection(self):
+        self.menu._play_sound('click')
+        self.showing_level_page = False
+        self.initialize()
+
+    def play_selected_map(self):
+        if self.selected_map_id is not None:
+            self.menu._play_sound('click')
+            self.menu.play_game()
+
+    def draw(self, surface):
+        if self.showing_level_page:
+            self.draw_level_page(surface)
+        else:
+            super().draw(surface)
+            self.draw_map_selection_help(surface)
+
+    def draw_map_selection_help(self, surface):
         center_x = DISPLAY_SIZE[0] // 2
         shadow_offset = max(1, int(2 * (DISPLAY_SIZE[1] / 1080)))
         
         
-        hint_y_bottom = int(DISPLAY_SIZE[1] * 0.85)  
-        hint_y_usage = int(DISPLAY_SIZE[1] * 0.8)    
+        hint_y_usage = int(DISPLAY_SIZE[1] * 0.8)
+        hint_y_bottom = int(DISPLAY_SIZE[1] * 0.85)
         
-        
+        usage_text = "Click on a map number to view level details"
         nav_hint_text = "Press ESC or click ← to return to the options menu"
+        
+        usage_hint_width = self.info_font.size(usage_text)[0] + int(DISPLAY_SIZE[0] * 0.05)
         nav_hint_width = self.info_font.size(nav_hint_text)[0] + int(DISPLAY_SIZE[0] * 0.05)
         
-        
-        usage_text = "Click on a map number to play that level"
-        usage_hint_width = self.info_font.size(usage_text)[0] + int(DISPLAY_SIZE[0] * 0.05)
-        
-        
         hint_width = max(nav_hint_width, usage_hint_width)
-        hint_height = int(DISPLAY_SIZE[1] * 0.04)  
-        
+        hint_height = int(DISPLAY_SIZE[1] * 0.04)
         
         hint_backdrop = pygame.Surface((hint_width, hint_height * 2 + int(DISPLAY_SIZE[1] * 0.02)), pygame.SRCALPHA)
-        hint_backdrop.fill((0, 0, 0, 90))  
+        hint_backdrop.fill((0, 0, 0, 90))
         
         backdrop_x = center_x - hint_width // 2
-        backdrop_y = hint_y_usage - hint_height // 2  
-        
+        backdrop_y = hint_y_usage - hint_height // 2
         
         surface.blit(hint_backdrop, (backdrop_x, backdrop_y))
-        
         
         render_text_with_shadow(
             surface,
             usage_text,
             self.info_font,
-            (220, 220, 255),  
+            (220, 220, 255),
             center_x,
             hint_y_usage,
             shadow_offset,
-            True  
+            True
         )
-        
         
         render_text_with_shadow(
             surface,
             nav_hint_text,
             self.info_font,
-            (220, 220, 255),  
+            (220, 220, 255),
             center_x,
             hint_y_bottom,
             shadow_offset,
-            True  
+            True
         )
+
+    def draw_level_page(self, surface):
+        
+        super().draw(surface)
+        
+        if self.selected_map_id is None:
+            return
+            
+        center_x = DISPLAY_SIZE[0] // 2
+        shadow_offset = max(1, int(2 * (DISPLAY_SIZE[1] / 1080)))
+        
+        
+        map_data = self.map_metadata.get(self.selected_map_id, {})
+        
+        if not map_data:
+            render_text_with_shadow(
+                surface,
+                "Map data not found",
+                self.title_font,
+                (255, 100, 100),
+                center_x,
+                DISPLAY_SIZE[1] * 0.2,
+                shadow_offset,
+                True
+            )
+            return
+            
+        
+        panel_width = int(DISPLAY_SIZE[0] * 0.8)
+        panel_height = int(DISPLAY_SIZE[1] * 0.6)  
+        panel_x = center_x - panel_width // 2
+        panel_y = DISPLAY_SIZE[1] * 0.15
+        
+        panel = pygame.Surface((panel_width, panel_height), pygame.SRCALPHA)
+        panel.fill((0, 0, 0, 120))  
+        surface.blit(panel, (panel_x, panel_y))
+        
+        
+        level_name = map_data.get('name', f"Level {self.selected_map_id}")
+        render_text_with_shadow(
+            surface,
+            level_name,
+            self.title_font,
+            (255, 255, 160),
+            center_x,
+            panel_y + int(DISPLAY_SIZE[1] * 0.05),
+            shadow_offset,
+            True
+        )
+        
+        
+        creator_y = panel_y + int(DISPLAY_SIZE[1] * 0.12)
+        difficulty = map_data.get('difficulty', 'normal')
+        creator = map_data.get('creator', 'YourName')
+        
+        
+        creator_text = f"Creator: {creator}"
+        render_text_with_shadow(
+            surface,
+            creator_text,
+            self.detail_font,
+            (200, 200, 255),
+            center_x - int(DISPLAY_SIZE[0] * 0.15),
+            creator_y,
+            shadow_offset,
+            True
+        )
+        
+        
+        difficulty_text = f"Difficulty: {difficulty.upper()}"
+        diff_color = self.difficulty_colors.get(difficulty.lower(), (200, 200, 200))
+        
+        
+        diff_text_x = center_x + int(DISPLAY_SIZE[0] * 0.15)
+        render_text_with_shadow(
+            surface,
+            difficulty_text,
+            self.detail_font,
+            diff_color,
+            diff_text_x,
+            creator_y,
+            shadow_offset,
+            True
+        )
+        
+        
+        
+        diff_text_width = self.detail_font.size(difficulty_text)[0]
+        circle_x = diff_text_x + (diff_text_width // 2) + int(DISPLAY_SIZE[0] * 0.04)
+        
+        pygame.draw.circle(
+            surface,
+            diff_color,
+            (circle_x, creator_y),
+            int(DISPLAY_SIZE[1] * 0.012)
+        )
+        
+        
+        description_y = panel_y + int(DISPLAY_SIZE[1] * 0.2)
+        description = map_data.get('description', "No description available.")
+        
+        
+        render_text_with_shadow(
+            surface,
+            "Description:",
+            self.detail_font,
+            (255, 220, 160),
+            center_x,
+            description_y,
+            shadow_offset,
+            True
+        )
+        
+        
+        render_text_with_shadow(
+            surface,
+            description,
+            self.info_font,
+            (220, 220, 220),
+            center_x,
+            description_y + int(DISPLAY_SIZE[1] * 0.05),
+            shadow_offset,
+            True
+        )
+        
+        
+        leaderboard_y = panel_y + int(DISPLAY_SIZE[1] * 0.32)
+        
+        
+        render_text_with_shadow(
+            surface,
+            "Top Times:",
+            self.detail_font,
+            (160, 255, 255),
+            center_x,
+            leaderboard_y,
+            shadow_offset,
+            True
+        )
+        
+        
+        
+        best_time = map_data.get('best_time')
+        
+        leaderboard_entries = []
+        if best_time:
+            leaderboard_entries.append(("Player1", best_time))
+        
+        
+        if leaderboard_entries:
+            for i, (player, time) in enumerate(leaderboard_entries):
+                entry_y = leaderboard_y + int(DISPLAY_SIZE[1] * 0.05) + (i * int(DISPLAY_SIZE[1] * 0.035))
+                entry_text = f"{i+1}. {player}: {time}"
+                
+                render_text_with_shadow(
+                    surface,
+                    entry_text,
+                    self.info_font,
+                    (160, 255, 160),
+                    center_x,
+                    entry_y,
+                    shadow_offset,
+                    True
+                )
+        else:
+            
+            render_text_with_shadow(
+                surface,
+                "No records yet. Be the first!",
+                self.info_font,
+                (200, 200, 200),
+                center_x,
+                leaderboard_y + int(DISPLAY_SIZE[1] * 0.05),
+                shadow_offset,
+                True
+            )
+        
+        
+        play_width = int(DISPLAY_SIZE[0] * 0.2)
+        play_height = int(DISPLAY_SIZE[1] * 0.08)
+        play_x = center_x - (play_width // 2)
+        play_y = panel_y + panel_height - play_height - int(DISPLAY_SIZE[1] * 0.05)
+        
+        
+        play_button_bg = pygame.Surface((play_width, play_height), pygame.SRCALPHA)
+        play_button_bg.fill((40, 180, 40, 220))  
+        
+        
+        for i in range(play_height // 2):
+            highlight = pygame.Surface((play_width, 2), pygame.SRCALPHA)
+            alpha = 40 - int(i * 0.8)
+            if alpha > 0:
+                highlight.fill((255, 255, 255, alpha))
+                play_button_bg.blit(highlight, (0, i * 2))
+        
+        
+        play_button_rect = pygame.Rect(play_x, play_y, play_width, play_height)
+        
+        
+        shadow_surface = pygame.Surface((play_width, play_height), pygame.SRCALPHA)
+        shadow_surface.fill((0, 0, 0, 90))
+        surface.blit(shadow_surface, (play_x + shadow_offset, play_y + shadow_offset))
+        
+        
+        pygame.draw.rect(
+            surface,
+            (40, 180, 40),  
+            play_button_rect,
+        )
+        
+        
+        highlight_rect = pygame.Rect(play_x, play_y, play_width, int(play_height * 0.3))
+        highlight_surface = pygame.Surface((highlight_rect.width, highlight_rect.height), pygame.SRCALPHA)
+        highlight_surface.fill((255, 255, 255, 30))  
+        surface.blit(highlight_surface, highlight_rect)
+        
+        
+        play_text = "PLAY"
+        play_font = pygame.font.Font(FONT, int(DISPLAY_SIZE[1] * 0.04))  
+        
+        
+        text_shadow = play_font.render(play_text, True, (0, 0, 0, 180))
+        text_surf = play_font.render(play_text, True, (255, 255, 255))
+        
+        text_x = play_x + (play_width - text_surf.get_width()) // 2
+        text_y = play_y + (play_height - text_surf.get_height()) // 2
+        
+        
+        text_shadow_offset = max(1, int(2 * pygame.display.get_surface().get_height() / 1080))
+        
+        surface.blit(text_shadow, (text_x + text_shadow_offset, text_y + text_shadow_offset))
+        surface.blit(text_surf, (text_x, text_y))
+
 
     def next_page(self):
         if self.current_page < self.total_pages - 1:

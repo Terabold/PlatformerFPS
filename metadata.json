@@ -4,7 +4,11 @@
         "name": "The Start",
         "creator": "Terbold",
         "difficulty": "hard",
-        "best_time": [],
+        "best_time": [
+            2.076,
+            2.08,
+            2.082
+        ],
         "description": "No description available."
     },
     "1": {
@@ -13,9 +17,9 @@
         "creator": "Terbold",
         "difficulty": "easy",
         "best_time": [
-            3.059,
-            3.116,
-            3.122
+            2.882,
+            2.893,
+            2.958
         ]
     },
     "2": {
@@ -23,7 +27,9 @@
         "name": "First Challenge",
         "creator": "Terbold",
         "difficulty": "normal",
-        "best_time": []
+        "best_time": [
+            8.623
+        ]
     },
     "3": {
         "path": "data/maps/3.json",
@@ -31,7 +37,9 @@
         "creator": "Terbold",
         "difficulty": "normal",
         "best_time": [
-            2.981
+            1.653,
+            1.66,
+            1.662
         ]
     },
     "4": {
@@ -39,42 +47,59 @@
         "name": "Feel the Nether",
         "creator": "Terbold",
         "difficulty": "normal",
-        "best_time": []
+        "best_time": [
+            8.735,
+            12.219
+        ]
     },
     "5": {
         "path": "data/maps/5.json",
         "name": "nothing here lazy developer",
         "creator": "Terbold",
         "difficulty": "insane",
-        "best_time": []
+        "best_time": [
+            0.705,
+            0.706,
+            0.707
+        ]
     },
     "6": {
         "path": "data/maps/6.json",
         "name": "Sorry in advance",
         "creator": "Terbold",
         "difficulty": "normal",
-        "best_time": []
+        "best_time": [
+            46.945
+        ]
     },
     "7": {
         "path": "data/maps/7.json",
         "name": "where are we?",
         "creator": "Terbold",
         "difficulty": "hard",
-        "best_time": []
+        "best_time": [
+            8.877
+        ]
     },
     "8": {
         "path": "data/maps/8.json",
         "name": "still lazy",
         "creator": "Terbold",
         "difficulty": "easy",
-        "best_time": []
+        "best_time": [
+            0.293,
+            0.296,
+            0.299
+        ]
     },
     "9": {
         "path": "data/maps/9.json",
         "name": "The library",
         "creator": "Terbold",
         "difficulty": "challenging",
-        "best_time": []
+        "best_time": [
+            11.791
+        ]
     },
     "10": {
         "path": "data/maps/10.json",
@@ -97,14 +122,18 @@
         "name": "Only up",
         "creator": "Idanh100",
         "difficulty": "expert",
-        "best_time": []
+        "best_time": [
+            348.702
+        ]
     },
     "13": {
         "path": "data/maps/12.json",
         "name": "Loop or what?",
         "creator": "Roeeov",
         "difficulty": "easy",
-        "best_time": []
+        "best_time": [
+            8.728
+        ]
     },
     "14": {
         "path": "data/maps/14.json",

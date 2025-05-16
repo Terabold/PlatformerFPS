@@ -7,6 +7,15 @@ from scripts.utils import load_sounds, MenuScreen, render_text_with_shadow
 from scripts.GameManager import game_state_manager
 from scripts.utils import calculate_ui_constants
 
+import pygame
+import random
+import os
+import json
+from scripts.constants import DISPLAY_SIZE, FONT, MENUBG    
+from scripts.utils import load_sounds, MenuScreen, render_text_with_shadow
+from scripts.GameManager import game_state_manager
+from scripts.utils import calculate_ui_constants
+
 class Menu:
     def __init__(self, screen):
         pygame.font.init()
@@ -68,12 +77,9 @@ class Menu:
         if self.active_menu == self.options_menu:
             self._return_to_main()
         elif self.active_menu == self.map_menu:
-            
-            if hasattr(self.map_menu, 'showing_level_page') and self.map_menu.showing_level_page:
-                
+            if self.map_menu.showing_level_page:
                 self.map_menu.return_to_selection()
             else:
-                
                 self._return_to_options()
 
     def _set_player_type(self, value):
@@ -431,20 +437,11 @@ class MapSelectionScreen(MenuScreen):
         
         
         self.difficulty_colors = {
-            'beginner': (50, 200, 50),
-            'tutorial': (100, 200, 100),
-            'easy': (150, 200, 50),
-            'normal': (200, 200, 50),
-            'hard': (200, 150, 50),
-            'harder': (250, 100, 50),
-            'very hard': (250, 50, 50),
-            'insane': (250, 20, 20),
-            'extreme': (200, 20, 100),
-            'challenging': (180, 100, 180),
-            'advanced': (120, 100, 200),
-            'expert': (50, 50, 200),
-            'ultimate': (150, 20, 250),
-            'bonus': (200, 200, 200)
+            'easy': (0, 255, 0),
+            'normal': (255, 255, 0),
+            'hard': (255, 165, 0),
+            'expert': (255, 0, 0),
+            'insane': (128, 0, 128),
         }
         
         
@@ -471,7 +468,7 @@ class MapSelectionScreen(MenuScreen):
             self.recreate_buttons()
 
     def initialize_level_page(self):
-        self.title = "Level Details"
+        self.title = ""
         self.clear_buttons()
         
         
@@ -759,35 +756,7 @@ class MapSelectionScreen(MenuScreen):
         )
         
         
-        description_y = panel_y + int(DISPLAY_SIZE[1] * 0.2)
-        description = map_data.get('description', "No description available.")
-        
-        
-        render_text_with_shadow(
-            surface,
-            "Description:",
-            self.detail_font,
-            (255, 220, 160),
-            center_x,
-            description_y,
-            shadow_offset,
-            True
-        )
-        
-        
-        render_text_with_shadow(
-            surface,
-            description,
-            self.info_font,
-            (220, 220, 220),
-            center_x,
-            description_y + int(DISPLAY_SIZE[1] * 0.05),
-            shadow_offset,
-            True
-        )
-        
-        
-        leaderboard_y = panel_y + int(DISPLAY_SIZE[1] * 0.32)
+        leaderboard_y = panel_y + int(DISPLAY_SIZE[1] * 0.2)
         
         
         render_text_with_shadow(

@@ -1,0 +1,79 @@
+{
+    "tilemap": {
+        "11;5": {
+            "type": "decor",
+            "variant": 0,
+            "pos": [
+                11,
+                5
+            ]
+        },
+        "12;5": {
+            "type": "decor",
+            "variant": 0,
+            "pos": [
+                12,
+                5
+            ]
+        },
+        "13;5": {
+            "type": "decor",
+            "variant": 0,
+            "pos": [
+                13,
+                5
+            ]
+        },
+        "14;5": {
+            "type": "decor",
+            "variant": 0,
+            "pos": [
+                14,
+                5
+            ]
+        },
+        "15;5": {
+            "type": "decor",
+            "variant": 0,
+            "pos": [
+                15,
+                5
+            ]
+        },
+        "16;5": {
+            "type": "decor",
+            "variant": 0,
+            "pos": [
+                16,
+                5
+            ]
+        },
+        "17;5": {
+            "type": "decor",
+            "variant": 0,
+            "pos": [
+                17,
+                5
+            ]
+        },
+        "18;5": {
+            "type": "decor",
+            "variant": 0,
+            "pos": [
+                18,
+                5
+            ]
+        },
+        "19;5": {
+            "type": "decor",
+            "variant": 0,
+            "pos": [
+                19,
+                5
+            ]
+        }
+    },
+    "offgrid": [],
+    "lowest_y": 5,
+    "map": null
+}

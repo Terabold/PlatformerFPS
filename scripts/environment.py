@@ -277,7 +277,7 @@ class Environment:
         if self.tilemap.get_background_map() is not None:
             self.background = load_image(self.tilemap.get_background_map(), scale=DISPLAY_SIZE, remove_color=None)
         else:
-            self.background = load_image('menu/background.png', scale=DISPLAY_SIZE, remove_color=None)
+            self.background = load_image('background/background.png', scale=DISPLAY_SIZE, remove_color=None)
 
         # Load sounds
         self.sfx = {

@@ -392,3 +392,63 @@ class MenuScreen:
             button_y = start_y + row * (self.UI_CONSTANTS['BUTTON_HEIGHT'] + self.UI_CONSTANTS['BUTTON_SPACING'])
             
             self.create_button(text, action, button_x, button_y, fixed_width)
+
+class TextInput:
+    def __init__(self, rect, font, menu, max_chars=20, placeholder="Enter text..."):
+        self.rect = rect
+        self.font = font
+        self.menu = menu
+        self.UI_CONSTANTS = calculate_ui_constants(DISPLAY_SIZE)
+        self.max_chars = max_chars
+        self.placeholder = placeholder
+        self.text = ""
+        self.active = False  # Whether the input box is selected
+        self.border_radius = max(6, int(rect.height * 0.1))
+        self.cursor_visible = True
+        self.cursor_counter = 0
+
+    def handle_event(self, event):
+        if event.type == pygame.MOUSEBUTTONDOWN:
+            # Click toggles active if clicked inside
+            if self.rect.collidepoint(event.pos):
+                self.active = True
+            else:
+                self.active = False
+
+        if self.active and event.type == pygame.KEYDOWN:
+            if event.key == pygame.K_BACKSPACE:
+                self.text = self.text[:-1]
+            elif event.key == pygame.K_RETURN:
+                self.active = False  # Optional: deactivate on Enter
+            elif len(self.text) < self.max_chars:
+                if event.unicode.isprintable():
+                    self.text += event.unicode
+
+    def update(self):
+        # Simple blinking cursor
+        self.cursor_counter += 1
+        if self.cursor_counter >= 30:
+            self.cursor_visible = not self.cursor_visible
+            self.cursor_counter = 0
+
+    def draw(self, surface):
+        # Background box
+        bg_color = self.UI_CONSTANTS['BUTTON_HOVER_COLOR'] if self.active else self.UI_CONSTANTS['BUTTON_COLOR']
+        pygame.draw.rect(surface, bg_color, self.rect, border_radius=self.border_radius)
+
+        # Text
+        if self.text:
+            text_surface = self.font.render(self.text, True, (255, 255, 255))
+        else:
+            text_surface = self.font.render(self.placeholder, True, (150, 150, 150))
+
+        text_x = self.rect.x + 10
+        text_y = self.rect.y + (self.rect.height - text_surface.get_height()) // 2
+        surface.blit(text_surface, (text_x, text_y))
+
+        # Cursor
+        if self.active and self.cursor_visible:
+            cursor_x = text_x + text_surface.get_width() + 2
+            cursor_y = text_y
+            cursor_height = text_surface.get_height()
+            pygame.draw.line(surface, (255, 255, 255), (cursor_x, cursor_y), (cursor_x, cursor_y + cursor_height), 2)

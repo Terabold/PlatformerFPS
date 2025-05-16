@@ -2,7 +2,8 @@ import sys
 import pygame
 import os
 import random
-from scripts.utils import load_images, load_image, find_next_numeric_filename, MenuScreen, load_sounds
+import json
+from scripts.utils import load_images, load_image, find_next_numeric_filename, MenuScreen, load_sounds, TextInput, render_text_with_shadow
 from scripts.tilemap import Tilemap
 from scripts.constants import TILE_SIZE, DISPLAY_SIZE, FPS, PHYSICS_TILES, FONT, MENUBG, calculate_ui_constants
 from scripts.GameManager import game_state_manager
@@ -11,10 +12,8 @@ class EditorMenu:
         self.screen = display
         self.sfx = {'click': load_sounds('click')}
         
-        
         self.background = pygame.image.load(MENUBG).convert()
         self.background = pygame.transform.scale(self.background, DISPLAY_SIZE)
-        
         
         self.UI_CONSTANTS = calculate_ui_constants(DISPLAY_SIZE)
      
@@ -34,14 +33,38 @@ class EditorMenu:
         self.start_editor(map_file)
 
     def create_new_map(self):
-        self.start_editor(None)
+        # Create a new map with default parameters
+        # Generate a new map ID
+        self.map_menu.showing_edit_page = True
+        
+        # Get the next available map number
+        next_id = "1"
+        if self.map_menu.map_files:
+            try:
+                map_ids = [int(f.split('.')[0]) for f in self.map_menu.map_files if f.split('.')[0].isdigit()]
+                if map_ids:
+                    next_id = str(max(map_ids) + 1)
+            except:
+                pass
+                
+        self.map_menu.selected_map_id = next_id
+        self.map_menu.title = f"Creating Map #{next_id}"
+        self.map_menu.initialize_edit_page()
 
     def start_editor(self, map_file):
         self.editor = Editor(self, map_file)  
         self.editor_active = True
 
     def quit_editor(self):
-        game_state_manager.setState('menu')
+        # Check if we're coming from the editor and the map menu has a selected map
+        if self.editor_active and self.map_menu.selected_map_id:
+            # Return to edit page of current map
+            self.editor_active = False
+            self.editor = None
+            self.map_menu.showing_edit_page = True
+            self.map_menu.initialize_edit_page()
+        else:
+            game_state_manager.setState('menu')
 
     def return_to_menu(self):
         self.editor_active = False
@@ -63,24 +86,88 @@ class EditorMenu:
                 exit()
             if event.type == pygame.KEYDOWN:
                 if event.key == pygame.K_ESCAPE:
-                    self.quit_editor()
+                    # Changed to match back button functionality
+                    if self.map_menu.showing_edit_page:
+                        # If on edit page, return to map list
+                        self.map_menu.return_to_map_list()
+                    else:
+                        # Otherwise quit to main menu
+                        self.quit_editor()
 
         self.map_menu.update(events)
         self.map_menu.draw(self.screen)
 
 class EditorMapSelectionScreen(MenuScreen):
-    def __init__(self, menu, title="Edit a Map"):
+    def __init__(self, menu, title="Map Selection"):
         super().__init__(menu, title)
         self.current_page = 0
         self.total_pages = 0
         self.map_files = []
         self.map_numbers = []
-
-    def initialize(self):
-        self.title = "Edit a Map"
-        self.load_maps()
-        self.create_map_buttons()
+        self.map_metadata = {}
         
+        # Set up fonts for this screen
+        info_font_size = int(DISPLAY_SIZE[1] * 0.02)  
+        detail_font_size = int(DISPLAY_SIZE[1] * 0.025)  
+        title_font_size = int(DISPLAY_SIZE[1] * 0.045)
+        self.info_font = pygame.font.Font(FONT, info_font_size)
+        self.detail_font = pygame.font.Font(FONT, detail_font_size)
+        self.title_font = pygame.font.Font(FONT, title_font_size)
+        
+        # Store the selected map
+        self.selected_map_id = None
+        
+        # Flag to show the edit page for a map
+        self.showing_edit_page = False
+        
+        # Text input fields
+        self.text_inputs = {}
+        
+        # Define difficulty options and colors
+        self.difficulty_options = ['easy', 'normal', 'hard', 'expert', 'insane']
+        self.selected_difficulty = 0  # Index in difficulty_options
+        
+        self.difficulty_colors = {
+            'easy': (0, 255, 0),
+            'normal': (255, 255, 0),
+            'hard': (255, 165, 0),
+            'expert': (255, 0, 0),
+            'insane': (128, 0, 128),
+        }
+        
+        # Save confirmation variables
+        self.show_save_confirmation = False
+        self.save_time = 0
+        
+        # Load metadata
+        self.load_metadata()
+        
+    def load_metadata(self):
+        try:
+            with open('metadata.json', 'r') as f:
+                self.map_metadata = json.load(f)
+        except Exception as e:
+            print(f"Error loading metadata.json: {e}")
+            self.map_metadata = {}
+            
+    def save_metadata(self):
+        try:
+            with open('metadata.json', 'w') as f:
+                json.dump(self.map_metadata, f, indent=2)
+            print("Metadata saved successfully!")
+            return True
+        except Exception as e:
+            print(f"Error saving metadata.json: {e}")
+            return False
+    
+    def initialize(self):
+        if self.showing_edit_page:
+            self.initialize_edit_page()
+        else:
+            self.title = "Map Selection"
+            self.load_maps()
+            self.recreate_buttons()
+            
     def load_maps(self):
         maps_dir = 'data/maps'
         if not os.path.exists(maps_dir):
@@ -96,19 +183,18 @@ class EditorMapSelectionScreen(MenuScreen):
                 
         self.map_files.sort(key=get_map_number)
         
-        maps_per_page = 20
+        maps_per_page = self.UI_CONSTANTS.get('MAPS_PER_PAGE', 20)  # Default to 20 if not defined
         self.total_pages = (len(self.map_files) + maps_per_page - 1) // maps_per_page
         
         if self.current_page >= self.total_pages:
             self.current_page = max(0, self.total_pages - 1)
-        
+            
         self.map_numbers = [str(index) for index in range(len(self.map_files))]
     
-    def create_map_buttons(self):
+    def recreate_buttons(self):
         self.clear_buttons()
         
-        maps_per_page = 20
-        
+        maps_per_page = self.UI_CONSTANTS.get('MAPS_PER_PAGE', 20)  # Default to 20 if not defined
         start_index = self.current_page * maps_per_page
         end_index = min(start_index + maps_per_page, len(self.map_files))
         
@@ -122,58 +208,445 @@ class EditorMapSelectionScreen(MenuScreen):
         grid_width = columns * (button_width + padding) - padding
         start_x = (DISPLAY_SIZE[0] - grid_width) // 2
         
-        
-        actions = [lambda i=i: self.menu._select_map(self.map_files[start_index + i]) 
-                  for i in range(len(current_page_files))]
-        
+        # Create actions for each map button
+        actions = []
+        for i in range(len(current_page_files)):
+            map_index = start_index + i
+            map_id = self.map_files[map_index].split('.')[0]
+            actions.append(lambda idx=map_id: self.show_edit_page(idx))
+            
         self.create_grid_buttons(
             current_page_numbers,
             actions,
             start_x,
-            int(DISPLAY_SIZE[1] * 0.25),  
+            int(DISPLAY_SIZE[1] * 0.25),
             button_width
         )
         
-        middle_y = DISPLAY_SIZE[1] * 0.37  
+        middle_y = DISPLAY_SIZE[1] * 0.37
         
-        back_x = int(DISPLAY_SIZE[0] * 0.02)  
-        back_y = int(DISPLAY_SIZE[1] * 0.02)  
-        back_width = int(DISPLAY_SIZE[0] * 0.08)  
-        self.create_button("←", self.menu.quit_editor, back_x, back_y, back_width)
+        # Back button to editor map selection
+        back_x = int(DISPLAY_SIZE[0] * 0.02)
+        back_y = int(DISPLAY_SIZE[1] * 0.02)
+        back_width = int(DISPLAY_SIZE[0] * 0.08)
+        self.create_button("←", self.return_to_editor_menu, back_x, back_y, back_width)
         
-        
+        # Add Map button - restored from original code
         new_map_x = int(DISPLAY_SIZE[0] * 0.75)  
         new_map_y = int(DISPLAY_SIZE[1] * 0.15)  
         new_map_width = int(DISPLAY_SIZE[0] * 0.1)  
         self.create_button("Add", self.menu.create_new_map, new_map_x, new_map_y, new_map_width)
         
+        # Navigation buttons for pages
         if self.current_page > 0:
-            prev_x = int(DISPLAY_SIZE[0] * 0.12)  
-            nav_button_width = int(DISPLAY_SIZE[0] * 0.08)  
+            prev_x = int(DISPLAY_SIZE[0] * 0.12)
+            nav_button_width = int(DISPLAY_SIZE[0] * 0.08)
             self.create_button("◀", self.previous_page, prev_x, middle_y, nav_button_width)
         
         if self.current_page < self.total_pages - 1:
-            next_x = int(DISPLAY_SIZE[0] * 0.8)  
-            nav_button_width = int(DISPLAY_SIZE[0] * 0.08)  
+            next_x = int(DISPLAY_SIZE[0] * 0.8)
+            nav_button_width = int(DISPLAY_SIZE[0] * 0.08)
             self.create_button("▶", self.next_page, next_x, middle_y, nav_button_width)
-         
+        
+        # Page counter
         if self.total_pages > 1:
             page_info = f"Page {self.current_page + 1}/{self.total_pages}"
             center_x = DISPLAY_SIZE[0] // 2
-            page_y = DISPLAY_SIZE[1] * 0.7  
-            page_width = int(DISPLAY_SIZE[0] * 0.25)  
-            
+            page_y = DISPLAY_SIZE[1] * 0.68
+            page_width = int(DISPLAY_SIZE[0] * 0.25)
             self.create_button(page_info, lambda: None, center_x - (page_width // 2), page_y, page_width)
+    
+    def initialize_edit_page(self):
+        self.clear_buttons()
+        
+        # Back button
+        back_x = int(DISPLAY_SIZE[0] * 0.02)
+        back_y = int(DISPLAY_SIZE[1] * 0.02)
+        back_width = int(DISPLAY_SIZE[0] * 0.08)
+        self.create_button("←", self.return_to_map_list, back_x, back_y, back_width)
+        
+        # Define panel dimensions for reference
+        panel_width = int(DISPLAY_SIZE[0] * 0.8)
+        panel_height = int(DISPLAY_SIZE[1] * 0.6)
+        panel_x = (DISPLAY_SIZE[0] - panel_width) // 2
+        panel_y = DISPLAY_SIZE[1] * 0.15
+        
+        # Create save button with blue background - positioned at bottom center-left inside panel
+        save_x = panel_x + int(panel_width * 0.25) - int(DISPLAY_SIZE[0] * 0.1)
+        save_y = panel_y + panel_height - int(DISPLAY_SIZE[1] * 0.12)
+        save_width = int(DISPLAY_SIZE[0] * 0.2)
+        save_button = self.create_button("Save Changes", self.save_map_metadata, save_x, save_y, save_width)
+        save_button.color = (50, 100, 240)  # Blue background
+        
+        # Create edit button with green background - positioned at bottom center-right inside panel
+        edit_x = panel_x + int(panel_width * 0.75) - int(DISPLAY_SIZE[0] * 0.1)
+        edit_y = panel_y + panel_height - int(DISPLAY_SIZE[1] * 0.12)
+        edit_width = int(DISPLAY_SIZE[0] * 0.2)
+        edit_button = self.create_button("Edit Map", self.edit_selected_map, edit_x, edit_y, edit_width)
+        edit_button.color = (50, 200, 50)  # Green background
+        
+        # Create difficulty cycling buttons
+        self.create_difficulty_buttons()
+        
+        # Create text input fields
+        self.create_text_inputs()
+    
+    def create_difficulty_buttons(self):
+        button_width = int(DISPLAY_SIZE[0] * 0.05)
+        
+        # Adjusted Y position (lower to fit better between buttons)
+        button_y = DISPLAY_SIZE[1] * 0.44  # Lowered from 0.4
+        
+        # Position difficulty on the right side
+        right_x = DISPLAY_SIZE[0] * 0.75  # Moved from center to right side
+        
+        # Left difficulty button - positioned to the left of the difficulty text
+        diff_left_x = right_x - int(DISPLAY_SIZE[0] * 0.1) - button_width
+        self.create_button("◀", self.previous_difficulty, diff_left_x, button_y, button_width)
+        
+        # Right difficulty button - positioned to the right of the difficulty text
+        diff_right_x = right_x + int(DISPLAY_SIZE[0] * 0.1)
+        self.create_button("▶", self.next_difficulty, diff_right_x, button_y, button_width)
+    
+    def create_text_inputs(self):
+        panel_width = int(DISPLAY_SIZE[0] * 0.8)
+        panel_x = (DISPLAY_SIZE[0] - panel_width) // 2
+        
+        # Define input field positions and sizes
+        input_width = int(DISPLAY_SIZE[0] * 0.5)
+        input_height = int(DISPLAY_SIZE[1] * 0.05)
+        
+        # Map name input - lowered position
+        name_y = DISPLAY_SIZE[1] * 0.33  # Lowered from 0.3
+        name_rect = pygame.Rect(
+            DISPLAY_SIZE[0] // 2 - input_width // 2,
+            name_y,
+            input_width,
+            input_height
+        )
+        
+        # Creator input - lowered position
+        creator_y = DISPLAY_SIZE[1] * 0.44  # Lowered from 0.4 to match difficulty position
+        creator_rect = pygame.Rect(
+            panel_x + int(DISPLAY_SIZE[0] * 0.05),
+            creator_y,
+            int(input_width * 0.6),
+            input_height
+        )
+        
+        # Clear previous inputs
+        self.text_inputs = {}
+        
+        # Get current map data
+        map_data = {}
+        if self.selected_map_id in self.map_metadata:
+            map_data = self.map_metadata[self.selected_map_id]
+        
+        # Create text input fields
+        self.text_inputs['name'] = TextInput(
+            name_rect, 
+            self.detail_font, 
+            self.menu, 
+            max_chars=30, 
+            placeholder="Enter map name..."
+        )
+        self.text_inputs['name'].text = map_data.get('name', f"Level {self.selected_map_id}")
+        
+        self.text_inputs['creator'] = TextInput(
+            creator_rect, 
+            self.detail_font, 
+            self.menu, 
+            max_chars=20, 
+            placeholder="Creator name..."
+        )
+        self.text_inputs['creator'].text = map_data.get('creator', "YourName")
+        
+        # Set the difficulty
+        current_difficulty = map_data.get('difficulty', 'normal')
+        if current_difficulty in self.difficulty_options:
+            self.selected_difficulty = self.difficulty_options.index(current_difficulty)
+        else:
+            self.selected_difficulty = 1  # Default to normal
+    
+    def edit_selected_map(self):
+        self.menu._play_sound('click')
+        map_filename = f"{self.selected_map_id}.json"  # Get just the filename
+        map_path = f"data/maps/{map_filename}"  # Full path
+        
+        # Find the actual file in map_files list to match the original code's expectations
+        for map_file in self.map_files:
+            if map_file == map_filename:
+                self.menu._select_map(map_file)  # Pass the filename as in the original code
+                return
+                
+        # Fallback if file not found in list (new map)
+        self.menu._select_map(map_path)
+    
+    def show_edit_page(self, map_id):
+        self.menu._play_sound('click')
+        self.selected_map_id = map_id
+        self.showing_edit_page = True
+        self.title = f"Editing Map #{map_id}"  # Set the title to "Editing Map #number"
+        self.initialize_edit_page()
+    
+    def return_to_map_list(self):
+        self.menu._play_sound('click')
+        self.showing_edit_page = False
+        self.initialize()
+    
+    def return_to_editor_menu(self):
+        self.menu._play_sound('click')
+        self.menu.quit_editor()  # This should properly call the parent's method to quit
+    
+    def save_map_metadata(self):
+        self.menu._play_sound('click')
+        
+        # Create or update metadata for this map
+        if self.selected_map_id not in self.map_metadata:
+            self.map_metadata[self.selected_map_id] = {}
+        
+        # Update with new values from text inputs
+        self.map_metadata[self.selected_map_id].update({
+            'path': f"data/maps/{self.selected_map_id}.json",
+            'name': self.text_inputs['name'].text,
+            'creator': self.text_inputs['creator'].text,
+            'difficulty': self.difficulty_options[self.selected_difficulty],
+        })
+        
+        # Keep existing best_time if present
+        if 'best_time' not in self.map_metadata[self.selected_map_id]:
+            self.map_metadata[self.selected_map_id]['best_time'] = None
+        
+        # Save to file
+        if self.save_metadata():
+            # Show save confirmation message
+            self.show_save_confirmation = True
+            self.save_time = pygame.time.get_ticks()
+        
+    def next_difficulty(self):
+        self.selected_difficulty = (self.selected_difficulty + 1) % len(self.difficulty_options)
+    
+    def previous_difficulty(self):
+        self.selected_difficulty = (self.selected_difficulty - 1) % len(self.difficulty_options)
     
     def next_page(self):
         if self.current_page < self.total_pages - 1:
             self.current_page += 1
-            self.create_map_buttons()
+            self.recreate_buttons()
 
     def previous_page(self):
         if self.current_page > 0:
             self.current_page -= 1
-            self.create_map_buttons()
+            self.recreate_buttons()
+    
+    def update(self, events):
+        super().update(events)
+        
+        # Update text inputs if on edit page
+        if self.showing_edit_page:
+            for input_field in self.text_inputs.values():
+                for event in events:
+                    input_field.handle_event(event)
+                input_field.update()
+    
+    def draw(self, surface):
+        # Draw the background first for both pages
+        if self.showing_edit_page:
+            self.draw_edit_page(surface)
+        else:
+            # Draw background elements first
+            self.draw_map_selection_background(surface)
+            
+            # Then draw buttons on top
+            super().draw(surface)
+            
+            # Finally draw help text
+            self.draw_map_selection_help(surface)
+    
+    def draw_map_selection_background(self, surface):
+        # Draw any background elements for the map selection screen
+        # This is separated so buttons can be drawn on top
+        pass
+    
+    def draw_map_selection_help(self, surface):
+        center_x = DISPLAY_SIZE[0] // 2
+        shadow_offset = max(1, int(2 * (DISPLAY_SIZE[1] / 1080)))
+        
+        hint_y_usage = int(DISPLAY_SIZE[1] * 0.8)
+        hint_y_bottom = int(DISPLAY_SIZE[1] * 0.85)
+        
+        usage_text = "Click on a map number to edit its metadata"
+        nav_hint_text = "Press ESC or click ← to return to the editor menu"
+        
+        usage_hint_width = self.info_font.size(usage_text)[0] + int(DISPLAY_SIZE[0] * 0.05)
+        nav_hint_width = self.info_font.size(nav_hint_text)[0] + int(DISPLAY_SIZE[0] * 0.05)
+        
+        hint_width = max(nav_hint_width, usage_hint_width)
+        hint_height = int(DISPLAY_SIZE[1] * 0.04)
+        
+        hint_backdrop = pygame.Surface((hint_width, hint_height * 2 + int(DISPLAY_SIZE[1] * 0.02)), pygame.SRCALPHA)
+        hint_backdrop.fill((0, 0, 0, 90))
+        
+        backdrop_x = center_x - hint_width // 2
+        backdrop_y = hint_y_usage - hint_height // 2
+        
+        surface.blit(hint_backdrop, (backdrop_x, backdrop_y))
+        
+        render_text_with_shadow(
+            surface,
+            usage_text,
+            self.info_font,
+            (220, 220, 255),
+            center_x,
+            hint_y_usage,
+            shadow_offset,
+            True
+        )
+        
+        render_text_with_shadow(
+            surface,
+            nav_hint_text,
+            self.info_font,
+            (220, 220, 255),
+            center_x,
+            hint_y_bottom,
+            shadow_offset,
+            True
+        )
+    
+    def draw_edit_page(self, surface):
+        # Draw panel and other background elements first
+        center_x = DISPLAY_SIZE[0] // 2
+        shadow_offset = max(1, int(2 * (DISPLAY_SIZE[1] / 1080)))
+        
+        # Draw the background panel
+        panel_width = int(DISPLAY_SIZE[0] * 0.8)
+        panel_height = int(DISPLAY_SIZE[1] * 0.6)
+        panel_x = center_x - panel_width // 2
+        panel_y = DISPLAY_SIZE[1] * 0.15
+        
+        panel = pygame.Surface((panel_width, panel_height), pygame.SRCALPHA)
+        panel.fill((0, 0, 0, 120))
+        surface.blit(panel, (panel_x, panel_y))
+        
+        # Draw buttons on top of the panel now
+        super().draw(surface)
+        
+        # Draw field labels and other content after buttons
+        name_label_y = DISPLAY_SIZE[1] * 0.30  # Lowered from 0.27
+        render_text_with_shadow(
+            surface,
+            "Map Name:",
+            self.detail_font,
+            (200, 200, 255),
+            center_x,
+            name_label_y,
+            shadow_offset,
+            True
+        )
+        
+        creator_label_x = panel_x + int(DISPLAY_SIZE[0] * 0.05)
+        creator_label_y = DISPLAY_SIZE[1] * 0.41  # Lowered from 0.37
+        render_text_with_shadow(
+            surface,
+            "Creator:",
+            self.detail_font,
+            (200, 200, 255),
+            creator_label_x,
+            creator_label_y,
+            shadow_offset,
+            False  # Left-aligned
+        )
+        
+        # Draw difficulty label
+        difficulty_label_y = DISPLAY_SIZE[1] * 0.41  # Lowered from 0.37
+        right_x = DISPLAY_SIZE[0] * 0.75  # Right side position
+        render_text_with_shadow(
+            surface,
+            "Difficulty:",
+            self.detail_font,
+            (200, 200, 255),
+            right_x,
+            difficulty_label_y,
+            shadow_offset,
+            True
+        )
+
+        # Draw current difficulty
+        current_difficulty = self.difficulty_options[self.selected_difficulty]
+        diff_color = self.difficulty_colors.get(current_difficulty.lower(), (200, 200, 200))
+
+        diff_text_y = DISPLAY_SIZE[1] * 0.44  # Lowered from 0.4
+
+        render_text_with_shadow(
+            surface,
+            current_difficulty.upper(),
+            self.detail_font,
+            diff_color,
+            right_x,
+            diff_text_y,
+            shadow_offset,
+            True
+        )
+
+        # Draw colored difficulty indicator
+        diff_text_width = self.detail_font.size(current_difficulty.upper())[0]
+        circle_x = right_x + (diff_text_width // 2) + int(DISPLAY_SIZE[0] * 0.04)
+
+        pygame.draw.circle(
+            surface,
+            diff_color,
+            (circle_x, diff_text_y),
+            int(DISPLAY_SIZE[1] * 0.012)
+        )
+        
+        # Draw text input fields
+        for input_field in self.text_inputs.values():
+            input_field.draw(surface)
+        
+        # Draw help text inside the panel at bottom
+        hint_y = panel_y + panel_height
+        hint_text = "Save Changes to update metadata, Edit Map to start editing"
+        
+        render_text_with_shadow(
+            surface,
+            hint_text,
+            self.info_font,
+            (180, 180, 180),
+            center_x,
+            hint_y,
+            shadow_offset,
+            True
+        )
+        
+        # Draw save confirmation if recently saved
+        if self.show_save_confirmation:
+            current_time = pygame.time.get_ticks()
+            if current_time - self.save_time < 2000:  # Show for 2 seconds
+                confirm_y = panel_y + panel_height - int(DISPLAY_SIZE[1] * 0.2)  # Moved up
+                
+                confirm_text = "Metadata saved successfully!"
+                
+                # Semi-transparent background
+                text_width = self.detail_font.size(confirm_text)[0] + int(DISPLAY_SIZE[0] * 0.1)
+                text_height = int(DISPLAY_SIZE[1] * 0.05)
+                confirm_bg = pygame.Surface((text_width, text_height), pygame.SRCALPHA)
+                confirm_bg.fill((0, 0, 0, 100))
+                
+                surface.blit(confirm_bg, (center_x - text_width // 2, confirm_y - text_height // 2))
+                
+                render_text_with_shadow(
+                    surface,
+                    confirm_text,
+                    self.detail_font,
+                    (100, 255, 100),
+                    center_x,
+                    confirm_y,
+                    shadow_offset,
+                    True
+                )
+            else:
+                self.show_save_confirmation = False
 class Editor:
     def __init__(self, menu, map_file=None):
         self.menu = menu

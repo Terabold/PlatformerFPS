@@ -210,13 +210,14 @@ class Animation:
         return self.images[int(self.frame / self.img_duration)]
 
 class Button:
-    def __init__(self, rect, text, action, font, menu):
+    def __init__(self, rect, text, action, font, menu, bg_color=None):
         self.rect = rect
         self.text = text
         self.action = action
         self.font = font
         self.menu = menu  # Store reference to menu for access to UI_CONSTANTS
         self.selected = False
+        self.bg_color = bg_color  # Custom background color
         
         # Calculate proportional border radius based on button height
         self.border_radius = max(6, int(rect.height * 0.1))  # 10% of height, minimum 6px
@@ -235,8 +236,21 @@ class Button:
         shadow_surface.fill(shadow_color)
         surface.blit(shadow_surface, (self.rect.x + self.shadow_offset, self.rect.y + self.shadow_offset))
         
-        # Button background
-        button_color = self.menu.UI_CONSTANTS['BUTTON_HOVER_COLOR'] if self.selected else self.menu.UI_CONSTANTS['BUTTON_COLOR']
+        # Button background - use custom color if provided, otherwise use default
+        if self.bg_color:
+            # For custom colored buttons, lighten the color when hovered
+            if self.selected:
+                # Lighten the custom color by blending with white
+                r = min(self.bg_color[0] + 40, 255)
+                g = min(self.bg_color[1] + 40, 255)
+                b = min(self.bg_color[2] + 40, 255)
+                button_color = (r, g, b)
+            else:
+                button_color = self.bg_color
+        else:
+            # Use default colors
+            button_color = self.menu.UI_CONSTANTS['BUTTON_HOVER_COLOR'] if self.selected else self.menu.UI_CONSTANTS['BUTTON_COLOR']
+            
         button_surface = pygame.Surface((self.rect.width, self.rect.height), pygame.SRCALPHA)
         button_surface.fill(button_color)
         surface.blit(button_surface, (self.rect.x, self.rect.y))
@@ -347,7 +361,7 @@ class MenuScreen:
     def clear_buttons(self):
         self.buttons = []
     
-    def create_button(self, text, action, x, y, width=None):
+    def create_button(self, text, action, x, y, width=None, bg_color=None):
         # Calculate button size based on text if width not specified
         if width is None:
             text_surf = self.font.render(text, True, (255, 255, 255))
@@ -359,13 +373,14 @@ class MenuScreen:
             text,
             action,
             self.font,
-            self.menu  # Pass menu reference to Button
+            self.menu,  # Pass menu reference to Button
+            bg_color    # Pass custom background color
         )
         
         self.buttons.append(button)
         return button
     
-    def create_centered_button_list(self, button_texts, button_actions, center_x, start_y):
+    def create_centered_button_list(self, button_texts, button_actions, center_x, start_y, bg_colors=None):
         # Calculate the maximum width needed for buttons
         max_width = self.UI_CONSTANTS['BUTTON_MIN_WIDTH']
         for text in button_texts:
@@ -376,23 +391,30 @@ class MenuScreen:
         # Create centered buttons
         left_x = center_x - (max_width // 2)
         for i, (text, action) in enumerate(zip(button_texts, button_actions)):
+            bg_color = None
+            if bg_colors and i < len(bg_colors):
+                bg_color = bg_colors[i]
+                
             y_pos = start_y + i * (self.UI_CONSTANTS['BUTTON_HEIGHT'] + self.UI_CONSTANTS['BUTTON_SPACING'])
-            self.create_button(text, action, left_x, y_pos, max_width)
+            self.create_button(text, action, left_x, y_pos, max_width, bg_color)
     
-    def create_grid_buttons(self, texts, actions, start_x, start_y, fixed_width=None):
+    def create_grid_buttons(self, texts, actions, start_x, start_y, fixed_width=None, bg_colors=None):
         if fixed_width is None:
             fixed_width = self.UI_CONSTANTS['BUTTON_MIN_WIDTH']
             
         columns = self.UI_CONSTANTS['GRID_COLUMNS']
         for i, (text, action) in enumerate(zip(texts, actions)):
+            bg_color = None
+            if bg_colors and i < len(bg_colors):
+                bg_color = bg_colors[i]
+                
             row = i // columns
             col = i % columns
             
             button_x = start_x + col * (fixed_width + self.UI_CONSTANTS['BUTTON_SPACING'])
             button_y = start_y + row * (self.UI_CONSTANTS['BUTTON_HEIGHT'] + self.UI_CONSTANTS['BUTTON_SPACING'])
             
-            self.create_button(text, action, button_x, button_y, fixed_width)
-
+            self.create_button(text, action, button_x, button_y, fixed_width, bg_color)
 class TextInput:
     def __init__(self, rect, font, menu, max_chars=20, placeholder="Enter text..."):
         self.rect = rect
@@ -403,7 +425,6 @@ class TextInput:
         self.placeholder = placeholder
         self.text = ""
         self.active = False  # Whether the input box is selected
-        self.border_radius = max(6, int(rect.height * 0.1))
         self.cursor_visible = True
         self.cursor_counter = 0
 
@@ -434,7 +455,7 @@ class TextInput:
     def draw(self, surface):
         # Background box
         bg_color = self.UI_CONSTANTS['BUTTON_HOVER_COLOR'] if self.active else self.UI_CONSTANTS['BUTTON_COLOR']
-        pygame.draw.rect(surface, bg_color, self.rect, border_radius=self.border_radius)
+        pygame.draw.rect(surface, bg_color, self.rect)
 
         # Text
         if self.text:

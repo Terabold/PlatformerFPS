@@ -7,15 +7,6 @@ from scripts.utils import load_sounds, MenuScreen, render_text_with_shadow
 from scripts.GameManager import game_state_manager
 from scripts.utils import calculate_ui_constants
 
-import pygame
-import random
-import os
-import json
-from scripts.constants import DISPLAY_SIZE, FONT, MENUBG    
-from scripts.utils import load_sounds, MenuScreen, render_text_with_shadow
-from scripts.GameManager import game_state_manager
-from scripts.utils import calculate_ui_constants
-
 class Menu:
     def __init__(self, screen):
         pygame.font.init()
@@ -132,14 +123,13 @@ class MainMenuScreen(MenuScreen):
         self.flash_timer = 0
         self.is_flashing = False
         
-        
         info_font_size = int(DISPLAY_SIZE[1] * 0.02)  
         header_font_size = int(DISPLAY_SIZE[1] * 0.025)  
         self.info_font = pygame.font.Font(FONT, info_font_size)
         self.header_font = pygame.font.Font(FONT, header_font_size)
         
         self.clear_buttons()
-        center_x = DISPLAY_SIZE[0] // 2
+        left_x = int(DISPLAY_SIZE[0] * 0.1)  # 10% from left
         
         button_texts = ['PLAY', 'EDIT', 'TRAIN AI', 'QUIT']
         button_actions = [
@@ -149,10 +139,14 @@ class MainMenuScreen(MenuScreen):
             self.menu.quit_game
         ]
         
-        
+        button_color = [None, None, None, (255, 25, 25)]
         start_y = int(DISPLAY_SIZE[1] * 0.3)  
         
-        self.create_centered_button_list(button_texts, button_actions, center_x, start_y)
+        # Create buttons aligned to left
+        for i, (text, action) in enumerate(zip(button_texts, button_actions)):
+            bg_color = button_color[i] if i < len(button_color) else None
+            y_pos = start_y + i * (self.UI_CONSTANTS['BUTTON_HEIGHT'] + self.UI_CONSTANTS['BUTTON_SPACING'])
+            self.create_button(text, action, left_x, y_pos, DISPLAY_SIZE[0]*0.24, bg_color)
     
     def flash_train_ai_button(self):
         self.is_flashing = True
@@ -190,18 +184,15 @@ class MainMenuScreen(MenuScreen):
                     button.rect.y - i * 2
                 ))
         
-        
         self.draw_info_text(surface)
     
     def draw_info_text(self, surface):
-        
         if not self.buttons:
             return
             
-        last_button = self.buttons[-1]
-        info_start_y = last_button.rect.bottom + int(DISPLAY_SIZE[1] * 0.05)  
-        center_x = DISPLAY_SIZE[0] // 2
-        
+        # Position info panel on the right side
+        right_x = int(DISPLAY_SIZE[0] * 0.45)  # Start at 60% of screen width
+        info_start_y = int(DISPLAY_SIZE[1] * 0.35)  # Same vertical start as buttons
         
         info_lines = [
             ("←/→ / A/D", "Move character"),
@@ -209,24 +200,19 @@ class MainMenuScreen(MenuScreen):
             ("ESC/←", "Return to previous menu"),
         ]
         
-        
-        
         backdrop_padding = int(DISPLAY_SIZE[1] * 0.03)  
-        backdrop_width = int(DISPLAY_SIZE[0] * 0.35)  
-        backdrop_height = int(DISPLAY_SIZE[1] * 0.22)  
+        backdrop_width = int(DISPLAY_SIZE[0] * 0.45)  
+        backdrop_height = int(DISPLAY_SIZE[1] * 0.3)  
         
         backdrop = pygame.Surface((backdrop_width, backdrop_height), pygame.SRCALPHA)
         backdrop.fill((0, 0, 0, 90))  
         
-        backdrop_x = center_x - backdrop_width // 2
+        backdrop_x = right_x - backdrop_padding
         backdrop_y = info_start_y - backdrop_padding
-        
         
         surface.blit(backdrop, (backdrop_x, backdrop_y))
         
-        
         shadow_offset = max(1, int(2 * (DISPLAY_SIZE[1] / 1080)))
-        
         
         header_color = (255, 255, 160)  
         render_text_with_shadow(
@@ -234,30 +220,26 @@ class MainMenuScreen(MenuScreen):
             "Controls:", 
             self.header_font, 
             header_color, 
-            center_x, 
+            right_x + (backdrop_width // 2) - backdrop_padding, 
             info_start_y, 
             shadow_offset, 
             True
         )
         
-        
         line_spacing = int(DISPLAY_SIZE[1] * 0.025)  
-        
-        
         title_content_spacing = int(DISPLAY_SIZE[1] * 0.015)  
         
-        
         y_offset = info_start_y + self.header_font.get_height() + title_content_spacing
-        
         
         for i in range(2):
             if i >= len(info_lines):
                 break
                 
             key, description = info_lines[i]
-            self.draw_instruction_line(surface, key, description, center_x, y_offset, shadow_offset)
+            self.draw_instruction_line(surface, key, description, 
+                                     right_x + (backdrop_width // 2) - backdrop_padding, 
+                                     y_offset, shadow_offset)
             y_offset += line_spacing
-        
         
         y_offset += line_spacing - 5  
         render_text_with_shadow(
@@ -265,30 +247,27 @@ class MainMenuScreen(MenuScreen):
             "Navigation:", 
             self.header_font, 
             header_color, 
-            center_x, 
+            right_x + (backdrop_width // 2) - backdrop_padding, 
             y_offset, 
             shadow_offset, 
             True
         )
         
-        
         y_offset += self.header_font.get_height() + title_content_spacing
         
-        
         key, description = info_lines[2]  
-        self.draw_instruction_line(surface, key, description, center_x, y_offset, shadow_offset)
+        self.draw_instruction_line(surface, key, description, 
+                                 right_x + (backdrop_width // 2) - backdrop_padding, 
+                                 y_offset, shadow_offset)
     
     def draw_instruction_line(self, surface, key, description, center_x, y_offset, shadow_offset):
-        
         key_color = (180, 220, 255)  
         desc_color = (255, 255, 255)  
-        
         
         key_width = self.info_font.size(key + ":")[0]
         desc_width = self.info_font.size(description)[0]
         total_width = key_width + 10 + desc_width
         start_x = center_x - (total_width // 2)
-        
         
         render_text_with_shadow(
             surface,
@@ -301,7 +280,6 @@ class MainMenuScreen(MenuScreen):
             True  
         )
         
-        
         render_text_with_shadow(
             surface,
             description,
@@ -312,8 +290,6 @@ class MainMenuScreen(MenuScreen):
             shadow_offset,
             True  
         )
-
-
 class OptionsMenuScreen(MenuScreen):
     def initialize(self):
         self.title = "Options"
@@ -364,38 +340,6 @@ class OptionsMenuScreen(MenuScreen):
     def draw(self, surface):
         super().draw(surface)
         
-        
-        center_x = DISPLAY_SIZE[0] // 2
-        hint_y = int(DISPLAY_SIZE[1] * 0.85)  
-        
-        
-        hint_text = "Press ESC or click ← to return to main menu"
-        hint_width = self.info_font.size(hint_text)[0] + int(DISPLAY_SIZE[0] * 0.05)  
-        hint_height = int(DISPLAY_SIZE[1] * 0.04)  
-        
-        hint_backdrop = pygame.Surface((hint_width, hint_height), pygame.SRCALPHA)
-        hint_backdrop.fill((0, 0, 0, 90))  
-        
-        backdrop_x = center_x - hint_width // 2
-        backdrop_y = hint_y - hint_height // 2  
-        
-        
-        surface.blit(hint_backdrop, (backdrop_x, backdrop_y))
-        
-        
-        shadow_offset = max(1, int(2 * (DISPLAY_SIZE[1] / 1080)))
-        
-        
-        render_text_with_shadow(
-            surface,
-            hint_text,
-            self.info_font,
-            (220, 220, 255),  
-            center_x,
-            hint_y,
-            shadow_offset,
-            True  
-        )
         
         if self.is_flashing and len(self.buttons) > self.player_type_button_index:
             button = self.buttons[self.player_type_button_index]
@@ -470,27 +414,23 @@ class MapSelectionScreen(MenuScreen):
     def initialize_level_page(self):
         self.title = ""
         self.clear_buttons()
-        
-        
+           
         back_x = int(DISPLAY_SIZE[0] * 0.02)
         back_y = int(DISPLAY_SIZE[1] * 0.02)
         back_width = int(DISPLAY_SIZE[0] * 0.08)
         self.create_button("←", self.return_to_selection, back_x, back_y, back_width)
         
-        
         play_width = int(DISPLAY_SIZE[0] * 0.2)
         play_height = int(DISPLAY_SIZE[1] * 0.08)
-        
-        
+            
         panel_height = int(DISPLAY_SIZE[1] * 0.6)
         panel_y = DISPLAY_SIZE[1] * 0.15
-        
         
         play_x = DISPLAY_SIZE[0] // 2 - (play_width // 2)
         play_y = panel_y + panel_height - play_height - int(DISPLAY_SIZE[1] * 0.05)
         
+        self.create_button("PLAY", self.play_selected_map, play_x, play_y, play_width, (40, 180, 40))
         
-        self.create_button("", self.play_selected_map, play_x, play_y, play_width)
         
         if self.buttons:
             self.buttons[-1].rect.height = play_height
@@ -610,68 +550,14 @@ class MapSelectionScreen(MenuScreen):
             self.draw_level_page(surface)
         else:
             super().draw(surface)
-            self.draw_map_selection_help(surface)
 
-    def draw_map_selection_help(self, surface):
-        center_x = DISPLAY_SIZE[0] // 2
-        shadow_offset = max(1, int(2 * (DISPLAY_SIZE[1] / 1080)))
-        
-        
-        hint_y_usage = int(DISPLAY_SIZE[1] * 0.8)
-        hint_y_bottom = int(DISPLAY_SIZE[1] * 0.85)
-        
-        usage_text = "Click on a map number to view level details"
-        nav_hint_text = "Press ESC or click ← to return to the options menu"
-        
-        usage_hint_width = self.info_font.size(usage_text)[0] + int(DISPLAY_SIZE[0] * 0.05)
-        nav_hint_width = self.info_font.size(nav_hint_text)[0] + int(DISPLAY_SIZE[0] * 0.05)
-        
-        hint_width = max(nav_hint_width, usage_hint_width)
-        hint_height = int(DISPLAY_SIZE[1] * 0.04)
-        
-        hint_backdrop = pygame.Surface((hint_width, hint_height * 2 + int(DISPLAY_SIZE[1] * 0.02)), pygame.SRCALPHA)
-        hint_backdrop.fill((0, 0, 0, 90))
-        
-        backdrop_x = center_x - hint_width // 2
-        backdrop_y = hint_y_usage - hint_height // 2
-        
-        surface.blit(hint_backdrop, (backdrop_x, backdrop_y))
-        
-        render_text_with_shadow(
-            surface,
-            usage_text,
-            self.info_font,
-            (220, 220, 255),
-            center_x,
-            hint_y_usage,
-            shadow_offset,
-            True
-        )
-        
-        render_text_with_shadow(
-            surface,
-            nav_hint_text,
-            self.info_font,
-            (220, 220, 255),
-            center_x,
-            hint_y_bottom,
-            shadow_offset,
-            True
-        )
-
-    def draw_level_page(self, surface):
-        
-        super().draw(surface)
-        
+    def draw_level_page(self, surface):        
         if self.selected_map_id is None:
             return
-            
+
         center_x = DISPLAY_SIZE[0] // 2
         shadow_offset = max(1, int(2 * (DISPLAY_SIZE[1] / 1080)))
-        
-        
         map_data = self.map_metadata.get(self.selected_map_id, {})
-        
         if not map_data:
             render_text_with_shadow(
                 surface,
@@ -684,18 +570,15 @@ class MapSelectionScreen(MenuScreen):
                 True
             )
             return
-            
-        
+
         panel_width = int(DISPLAY_SIZE[0] * 0.8)
-        panel_height = int(DISPLAY_SIZE[1] * 0.6)  
+        panel_height = int(DISPLAY_SIZE[1] * 0.6)
         panel_x = center_x - panel_width // 2
         panel_y = DISPLAY_SIZE[1] * 0.15
-        
         panel = pygame.Surface((panel_width, panel_height), pygame.SRCALPHA)
-        panel.fill((0, 0, 0, 120))  
+        panel.fill((0, 0, 0, 120))
         surface.blit(panel, (panel_x, panel_y))
-        
-        
+
         level_name = map_data.get('name', f"Level {self.selected_map_id}")
         render_text_with_shadow(
             surface,
@@ -707,13 +590,9 @@ class MapSelectionScreen(MenuScreen):
             shadow_offset,
             True
         )
-        
-        
         creator_y = panel_y + int(DISPLAY_SIZE[1] * 0.12)
         difficulty = map_data.get('difficulty', 'normal')
         creator = map_data.get('creator', 'YourName')
-        
-        
         creator_text = f"Creator: {creator}"
         render_text_with_shadow(
             surface,
@@ -726,11 +605,8 @@ class MapSelectionScreen(MenuScreen):
             True
         )
         
-        
         difficulty_text = f"Difficulty: {difficulty.upper()}"
         diff_color = self.difficulty_colors.get(difficulty.lower(), (200, 200, 200))
-        
-        
         diff_text_x = center_x + int(DISPLAY_SIZE[0] * 0.15)
         render_text_with_shadow(
             surface,
@@ -742,23 +618,7 @@ class MapSelectionScreen(MenuScreen):
             shadow_offset,
             True
         )
-        
-        
-        
-        diff_text_width = self.detail_font.size(difficulty_text)[0]
-        circle_x = diff_text_x + (diff_text_width // 2) + int(DISPLAY_SIZE[0] * 0.04)
-        
-        pygame.draw.circle(
-            surface,
-            diff_color,
-            (circle_x, creator_y),
-            int(DISPLAY_SIZE[1] * 0.012)
-        )
-        
-        
         leaderboard_y = panel_y + int(DISPLAY_SIZE[1] * 0.2)
-        
-        
         render_text_with_shadow(
             surface,
             "Top Times:",
@@ -769,21 +629,14 @@ class MapSelectionScreen(MenuScreen):
             shadow_offset,
             True
         )
-        
-        
-        
         best_time = map_data.get('best_time')
-        
         leaderboard_entries = []
         if best_time:
             leaderboard_entries.append(("Player1", best_time))
-        
-        
         if leaderboard_entries:
             for i, (player, time) in enumerate(leaderboard_entries):
                 entry_y = leaderboard_y + int(DISPLAY_SIZE[1] * 0.05) + (i * int(DISPLAY_SIZE[1] * 0.035))
                 entry_text = f"{i+1}. {player}: {time}"
-                
                 render_text_with_shadow(
                     surface,
                     entry_text,
@@ -795,7 +648,6 @@ class MapSelectionScreen(MenuScreen):
                     True
                 )
         else:
-            
             render_text_with_shadow(
                 surface,
                 "No records yet. Be the first!",
@@ -806,63 +658,9 @@ class MapSelectionScreen(MenuScreen):
                 shadow_offset,
                 True
             )
-        
-        
-        play_width = int(DISPLAY_SIZE[0] * 0.2)
-        play_height = int(DISPLAY_SIZE[1] * 0.08)
-        play_x = center_x - (play_width // 2)
-        play_y = panel_y + panel_height - play_height - int(DISPLAY_SIZE[1] * 0.05)
-        
-        
-        play_button_bg = pygame.Surface((play_width, play_height), pygame.SRCALPHA)
-        play_button_bg.fill((40, 180, 40, 220))  
-        
-        
-        for i in range(play_height // 2):
-            highlight = pygame.Surface((play_width, 2), pygame.SRCALPHA)
-            alpha = 40 - int(i * 0.8)
-            if alpha > 0:
-                highlight.fill((255, 255, 255, alpha))
-                play_button_bg.blit(highlight, (0, i * 2))
-        
-        
-        play_button_rect = pygame.Rect(play_x, play_y, play_width, play_height)
-        
-        
-        shadow_surface = pygame.Surface((play_width, play_height), pygame.SRCALPHA)
-        shadow_surface.fill((0, 0, 0, 90))
-        surface.blit(shadow_surface, (play_x + shadow_offset, play_y + shadow_offset))
-        
-        
-        pygame.draw.rect(
-            surface,
-            (40, 180, 40),  
-            play_button_rect,
-        )
-        
-        
-        highlight_rect = pygame.Rect(play_x, play_y, play_width, int(play_height * 0.3))
-        highlight_surface = pygame.Surface((highlight_rect.width, highlight_rect.height), pygame.SRCALPHA)
-        highlight_surface.fill((255, 255, 255, 30))  
-        surface.blit(highlight_surface, highlight_rect)
-        
-        
-        play_text = "PLAY"
-        play_font = pygame.font.Font(FONT, int(DISPLAY_SIZE[1] * 0.04))  
-        
-        
-        text_shadow = play_font.render(play_text, True, (0, 0, 0, 180))
-        text_surf = play_font.render(play_text, True, (255, 255, 255))
-        
-        text_x = play_x + (play_width - text_surf.get_width()) // 2
-        text_y = play_y + (play_height - text_surf.get_height()) // 2
-        
-        
-        text_shadow_offset = max(1, int(2 * pygame.display.get_surface().get_height() / 1080))
-        
-        surface.blit(text_shadow, (text_x + text_shadow_offset, text_y + text_shadow_offset))
-        surface.blit(text_surf, (text_x, text_y))
 
+        for button in self.buttons:
+            button.draw(surface)
 
     def next_page(self):
         if self.current_page < self.total_pages - 1:

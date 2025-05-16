@@ -17,11 +17,11 @@ class InputHandler:
                         self.keys['jump'] = True
                         
             if event.type == pygame.KEYUP:
-                if event.key == pygame.K_d:
+                if event.key == pygame.K_d or event.key == pygame.K_RIGHT:
                     self.keys['right'] = False
-                if event.key == pygame.K_a:
+                if event.key == pygame.K_a or event.key == pygame.K_LEFT:
                     self.keys['left'] = False
-                if event.key == pygame.K_SPACE:
+                if event.key == pygame.K_SPACE or event.key == pygame.K_UP:
                     self.keys['jump'] = False
                     self.buffer_times['jump'] = 0
         

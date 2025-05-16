@@ -56,6 +56,15 @@ class GameTimer:
             return self.final_time
         return 0
     
+    def save_time(self, player_name="Player"):
+        """Save the current time if it's good enough for top 5"""
+        if not self.is_running and self.final_time > 0:
+            return {
+                "player": player_name,
+                "time": round(self.final_time, 3)  # Store with 3 decimal places
+            }
+        return None
+    
     def reset(self):
         """Reset the timer"""
         self.start_ticks = None

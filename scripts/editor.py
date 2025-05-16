@@ -240,12 +240,12 @@ class EditorMapSelectionScreen(MenuScreen):
         # Navigation buttons for pages
         if self.current_page > 0:
             prev_x = int(DISPLAY_SIZE[0] * 0.12)
-            nav_button_width = int(DISPLAY_SIZE[0] * 0.08)
+            nav_button_width = int(DISPLAY_SIZE[0] * 0.09)
             self.create_button("◀", self.previous_page, prev_x, middle_y, nav_button_width)
         
         if self.current_page < self.total_pages - 1:
             next_x = int(DISPLAY_SIZE[0] * 0.8)
-            nav_button_width = int(DISPLAY_SIZE[0] * 0.08)
+            nav_button_width = int(DISPLAY_SIZE[0] * 0.09)
             self.create_button("▶", self.next_page, next_x, middle_y, nav_button_width)
         
         # Page counter
@@ -274,16 +274,14 @@ class EditorMapSelectionScreen(MenuScreen):
         # Create save button with blue background - positioned at bottom center-left inside panel
         save_x = panel_x + int(panel_width * 0.25) - int(DISPLAY_SIZE[0] * 0.1)
         save_y = panel_y + panel_height - int(DISPLAY_SIZE[1] * 0.12)
-        save_width = int(DISPLAY_SIZE[0] * 0.2)
-        save_button = self.create_button("Save Changes", self.save_map_metadata, save_x, save_y, save_width)
-        save_button.color = (50, 100, 240)  # Blue background
+        save_width = int(DISPLAY_SIZE[0] * 0.27)
+        self.create_button("Save Changes", self.save_map_metadata, save_x, save_y, save_width, 	(30,144,255))
         
         # Create edit button with green background - positioned at bottom center-right inside panel
         edit_x = panel_x + int(panel_width * 0.75) - int(DISPLAY_SIZE[0] * 0.1)
         edit_y = panel_y + panel_height - int(DISPLAY_SIZE[1] * 0.12)
         edit_width = int(DISPLAY_SIZE[0] * 0.2)
-        edit_button = self.create_button("Edit Map", self.edit_selected_map, edit_x, edit_y, edit_width)
-        edit_button.color = (50, 200, 50)  # Green background
+        self.create_button("Edit Map", self.edit_selected_map, edit_x, edit_y, edit_width, (40, 180, 40))
         
         # Create difficulty cycling buttons
         self.create_difficulty_buttons()
@@ -292,7 +290,7 @@ class EditorMapSelectionScreen(MenuScreen):
         self.create_text_inputs()
     
     def create_difficulty_buttons(self):
-        button_width = int(DISPLAY_SIZE[0] * 0.05)
+        button_width = int(DISPLAY_SIZE[0] * 0.03)
         
         # Adjusted Y position (lower to fit better between buttons)
         button_y = DISPLAY_SIZE[1] * 0.44  # Lowered from 0.4
@@ -301,11 +299,11 @@ class EditorMapSelectionScreen(MenuScreen):
         right_x = DISPLAY_SIZE[0] * 0.75  # Moved from center to right side
         
         # Left difficulty button - positioned to the left of the difficulty text
-        diff_left_x = right_x - int(DISPLAY_SIZE[0] * 0.1) - button_width
+        diff_left_x = right_x - int(DISPLAY_SIZE[0] * 0.09) - button_width
         self.create_button("◀", self.previous_difficulty, diff_left_x, button_y, button_width)
         
         # Right difficulty button - positioned to the right of the difficulty text
-        diff_right_x = right_x + int(DISPLAY_SIZE[0] * 0.1)
+        diff_right_x = right_x + int(DISPLAY_SIZE[0] * 0.09)
         self.create_button("▶", self.next_difficulty, diff_right_x, button_y, button_width)
     
     def create_text_inputs(self):
@@ -350,8 +348,8 @@ class EditorMapSelectionScreen(MenuScreen):
             max_chars=30, 
             placeholder="Enter map name..."
         )
-        self.text_inputs['name'].text = map_data.get('name', f"Level {self.selected_map_id}")
-        
+        self.text_inputs['name'].text = map_data.get('name', "")
+
         self.text_inputs['creator'] = TextInput(
             creator_rect, 
             self.detail_font, 
@@ -359,8 +357,7 @@ class EditorMapSelectionScreen(MenuScreen):
             max_chars=20, 
             placeholder="Creator name..."
         )
-        self.text_inputs['creator'].text = map_data.get('creator', "YourName")
-        
+        self.text_inputs['creator'].text = map_data.get('creator', "")
         # Set the difficulty
         current_difficulty = map_data.get('difficulty', 'normal')
         if current_difficulty in self.difficulty_options:
@@ -386,7 +383,7 @@ class EditorMapSelectionScreen(MenuScreen):
         self.menu._play_sound('click')
         self.selected_map_id = map_id
         self.showing_edit_page = True
-        self.title = f"Editing Map #{map_id}"  # Set the title to "Editing Map #number"
+        self.title = ""
         self.initialize_edit_page()
     
     def return_to_map_list(self):
@@ -450,69 +447,10 @@ class EditorMapSelectionScreen(MenuScreen):
                 input_field.update()
     
     def draw(self, surface):
-        # Draw the background first for both pages
         if self.showing_edit_page:
             self.draw_edit_page(surface)
-        else:
-            # Draw background elements first
-            self.draw_map_selection_background(surface)
-            
-            # Then draw buttons on top
-            super().draw(surface)
-            
-            # Finally draw help text
-            self.draw_map_selection_help(surface)
-    
-    def draw_map_selection_background(self, surface):
-        # Draw any background elements for the map selection screen
-        # This is separated so buttons can be drawn on top
-        pass
-    
-    def draw_map_selection_help(self, surface):
-        center_x = DISPLAY_SIZE[0] // 2
-        shadow_offset = max(1, int(2 * (DISPLAY_SIZE[1] / 1080)))
-        
-        hint_y_usage = int(DISPLAY_SIZE[1] * 0.8)
-        hint_y_bottom = int(DISPLAY_SIZE[1] * 0.85)
-        
-        usage_text = "Click on a map number to edit its metadata"
-        nav_hint_text = "Press ESC or click ← to return to the editor menu"
-        
-        usage_hint_width = self.info_font.size(usage_text)[0] + int(DISPLAY_SIZE[0] * 0.05)
-        nav_hint_width = self.info_font.size(nav_hint_text)[0] + int(DISPLAY_SIZE[0] * 0.05)
-        
-        hint_width = max(nav_hint_width, usage_hint_width)
-        hint_height = int(DISPLAY_SIZE[1] * 0.04)
-        
-        hint_backdrop = pygame.Surface((hint_width, hint_height * 2 + int(DISPLAY_SIZE[1] * 0.02)), pygame.SRCALPHA)
-        hint_backdrop.fill((0, 0, 0, 90))
-        
-        backdrop_x = center_x - hint_width // 2
-        backdrop_y = hint_y_usage - hint_height // 2
-        
-        surface.blit(hint_backdrop, (backdrop_x, backdrop_y))
-        
-        render_text_with_shadow(
-            surface,
-            usage_text,
-            self.info_font,
-            (220, 220, 255),
-            center_x,
-            hint_y_usage,
-            shadow_offset,
-            True
-        )
-        
-        render_text_with_shadow(
-            surface,
-            nav_hint_text,
-            self.info_font,
-            (220, 220, 255),
-            center_x,
-            hint_y_bottom,
-            shadow_offset,
-            True
-        )
+        else:            
+            super().draw(surface)   
     
     def draw_edit_page(self, surface):
         # Draw panel and other background elements first
@@ -528,6 +466,19 @@ class EditorMapSelectionScreen(MenuScreen):
         panel = pygame.Surface((panel_width, panel_height), pygame.SRCALPHA)
         panel.fill((0, 0, 0, 120))
         surface.blit(panel, (panel_x, panel_y))
+        
+        # Draw "Editing Map #number" inside the panel
+        edit_title = f"Editing Map #{self.selected_map_id}"
+        render_text_with_shadow(
+            surface,
+            edit_title,
+            self.title_font,
+            (255, 255, 160),  # Gold/yellow color
+            center_x,
+            panel_y + int(DISPLAY_SIZE[1] * 0.05),  # Position inside panel
+            shadow_offset,
+            True
+        )
         
         # Draw buttons on top of the panel now
         super().draw(surface)
@@ -559,7 +510,7 @@ class EditorMapSelectionScreen(MenuScreen):
         )
         
         # Draw difficulty label
-        difficulty_label_y = DISPLAY_SIZE[1] * 0.41  # Lowered from 0.37
+        difficulty_label_y = DISPLAY_SIZE[1] * 0.44  # Lowered from 0.37
         right_x = DISPLAY_SIZE[0] * 0.75  # Right side position
         render_text_with_shadow(
             surface,
@@ -576,7 +527,7 @@ class EditorMapSelectionScreen(MenuScreen):
         current_difficulty = self.difficulty_options[self.selected_difficulty]
         diff_color = self.difficulty_colors.get(current_difficulty.lower(), (200, 200, 200))
 
-        diff_text_y = DISPLAY_SIZE[1] * 0.44  # Lowered from 0.4
+        diff_text_y = DISPLAY_SIZE[1] * 0.48
 
         render_text_with_shadow(
             surface,
@@ -588,36 +539,10 @@ class EditorMapSelectionScreen(MenuScreen):
             shadow_offset,
             True
         )
-
-        # Draw colored difficulty indicator
-        diff_text_width = self.detail_font.size(current_difficulty.upper())[0]
-        circle_x = right_x + (diff_text_width // 2) + int(DISPLAY_SIZE[0] * 0.04)
-
-        pygame.draw.circle(
-            surface,
-            diff_color,
-            (circle_x, diff_text_y),
-            int(DISPLAY_SIZE[1] * 0.012)
-        )
         
         # Draw text input fields
         for input_field in self.text_inputs.values():
             input_field.draw(surface)
-        
-        # Draw help text inside the panel at bottom
-        hint_y = panel_y + panel_height
-        hint_text = "Save Changes to update metadata, Edit Map to start editing"
-        
-        render_text_with_shadow(
-            surface,
-            hint_text,
-            self.info_font,
-            (180, 180, 180),
-            center_x,
-            hint_y,
-            shadow_offset,
-            True
-        )
         
         # Draw save confirmation if recently saved
         if self.show_save_confirmation:

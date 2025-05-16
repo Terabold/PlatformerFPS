@@ -5,8 +5,7 @@
     "creator": "Terbold",
     "difficulty": "hard",
     "best_time": null,
-    "description": "No description available.",
-    "thumbnail": "menu/map_thumbnails/map0.png"
+    "description": "No description available."
   },
   "1": {
     "path": "data/maps/1.json",

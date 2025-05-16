@@ -288,14 +288,6 @@
                 10
             ]
         },
-        "6;6": {
-            "type": "spawners",
-            "variant": 0,
-            "pos": [
-                6,
-                6
-            ]
-        },
         "35;6": {
             "type": "grass",
             "variant": 1,
@@ -7626,6 +7618,14 @@
             "pos": [
                 73,
                 -6
+            ]
+        },
+        "6;7": {
+            "type": "spawners",
+            "variant": 0,
+            "pos": [
+                6,
+                7
             ]
         }
     },

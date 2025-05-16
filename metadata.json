@@ -1,112 +1,116 @@
 {
-  "0": {
-    "path": "data/maps/0.json",
-    "name": "The Start",
-    "creator": "Terbold",
-    "difficulty": "hard",
-    "best_time": [],
-    "description": "No description available."
-  },
-  "1": {
-    "path": "data/maps/1.json",
-    "name": "The Trap",
-    "creator": "Terbold",
-    "difficulty": "easy",
-    "best_time": [
-      3.059,
-      3.116,
-      3.122
-    ]
-  },
-  "2": {
-    "path": "data/maps/2.json",
-    "name": "First Challenge",
-    "creator": "Terbold",
-    "difficulty": "normal",
-    "best_time": []
-  },
-  "3": {
-    "path": "data/maps/3.json",
-    "name": "Percise",
-    "creator": "Terbold",
-    "difficulty": "normal",
-    "best_time": []
-  },
-  "4": {
-    "path": "data/maps/4.json",
-    "name": "Feel the Nether",
-    "creator": "Terbold",
-    "difficulty": "normal",
-    "best_time": []
-  },
-  "5": {
-    "path": "data/maps/5.json",
-    "name": "nothing here lazy developer",
-    "creator": "Terbold",
-    "difficulty": "insane",
-    "best_time": []
-  },
-  "6": {
-    "path": "data/maps/6.json",
-    "name": "Sorry in advance",
-    "creator": "Terbold",
-    "difficulty": "normal",
-    "best_time": []
-  },
-  "7": {
-    "path": "data/maps/7.json",
-    "name": "where are we?",
-    "creator": "Terbold",
-    "difficulty": "hard",
-    "best_time": []
-  },
-  "8": {
-    "path": "data/maps/8.json",
-    "name": "still lazy",
-    "creator": "Terbold",
-    "difficulty": "easy",
-    "best_time": []
-  },
-  "9": {
-    "path": "data/maps/9.json",
-    "name": "The library",
-    "creator": "Terbold",
-    "difficulty": "challenging",
-    "best_time": []
-  },
-  "10": {
-    "path": "data/maps/10.json",
-    "name": "Ice Caverns",
-    "creator": "Roeeov",
-    "difficulty": "insane",
-    "best_time": []
-  },
-  "11": {
-    "path": "data/maps/11.json",
-    "name": "Dark Abyss",
-    "creator": "Idanh100",
-    "difficulty": "expert",
-    "best_time": []
-  },
-  "12": {
-    "path": "data/maps/12.json",
-    "name": "Only up",
-    "creator": "Idanh100",
-    "difficulty": "expert",
-    "best_time": []
-  },
-  "13": {
-    "path": "data/maps/12.json",
-    "name": "Loop or what?",
-    "creator": "Roeeov",
-    "difficulty": "easy",
-    "best_time": []
-  },
-  "14": {
-    "path": "data/maps/14.json",
-    "name": "test",
-    "creator": "Terbold",
-    "difficulty": "easy",
-    "best_time": []
-  }
+    "0": {
+        "path": "data/maps/0.json",
+        "name": "The Start",
+        "creator": "Terbold",
+        "difficulty": "hard",
+        "best_time": [],
+        "description": "No description available."
+    },
+    "1": {
+        "path": "data/maps/1.json",
+        "name": "The Trap",
+        "creator": "Terbold",
+        "difficulty": "easy",
+        "best_time": [
+            3.059,
+            3.116,
+            3.122
+        ]
+    },
+    "2": {
+        "path": "data/maps/2.json",
+        "name": "First Challenge",
+        "creator": "Terbold",
+        "difficulty": "normal",
+        "best_time": []
+    },
+    "3": {
+        "path": "data/maps/3.json",
+        "name": "Percise",
+        "creator": "Terbold",
+        "difficulty": "normal",
+        "best_time": [
+            2.981
+        ]
+    },
+    "4": {
+        "path": "data/maps/4.json",
+        "name": "Feel the Nether",
+        "creator": "Terbold",
+        "difficulty": "normal",
+        "best_time": []
+    },
+    "5": {
+        "path": "data/maps/5.json",
+        "name": "nothing here lazy developer",
+        "creator": "Terbold",
+        "difficulty": "insane",
+        "best_time": []
+    },
+    "6": {
+        "path": "data/maps/6.json",
+        "name": "Sorry in advance",
+        "creator": "Terbold",
+        "difficulty": "normal",
+        "best_time": []
+    },
+    "7": {
+        "path": "data/maps/7.json",
+        "name": "where are we?",
+        "creator": "Terbold",
+        "difficulty": "hard",
+        "best_time": []
+    },
+    "8": {
+        "path": "data/maps/8.json",
+        "name": "still lazy",
+        "creator": "Terbold",
+        "difficulty": "easy",
+        "best_time": []
+    },
+    "9": {
+        "path": "data/maps/9.json",
+        "name": "The library",
+        "creator": "Terbold",
+        "difficulty": "challenging",
+        "best_time": []
+    },
+    "10": {
+        "path": "data/maps/10.json",
+        "name": "Ice Caverns",
+        "creator": "Roeeov",
+        "difficulty": "insane",
+        "best_time": [
+            26.41
+        ]
+    },
+    "11": {
+        "path": "data/maps/11.json",
+        "name": "Dark Abyss",
+        "creator": "Idanh100",
+        "difficulty": "expert",
+        "best_time": []
+    },
+    "12": {
+        "path": "data/maps/12.json",
+        "name": "Only up",
+        "creator": "Idanh100",
+        "difficulty": "expert",
+        "best_time": []
+    },
+    "13": {
+        "path": "data/maps/12.json",
+        "name": "Loop or what?",
+        "creator": "Roeeov",
+        "difficulty": "easy",
+        "best_time": []
+    },
+    "14": {
+        "path": "data/maps/14.json",
+        "name": "test",
+        "creator": "Terbold",
+        "difficulty": "easy",
+        "best_time": []
+    }
 }

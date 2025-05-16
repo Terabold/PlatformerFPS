@@ -453,9 +453,14 @@ class TextInput:
             self.cursor_counter = 0
 
     def draw(self, surface):
-        # Background box
-        bg_color = self.UI_CONSTANTS['BUTTON_HOVER_COLOR'] if self.active else self.UI_CONSTANTS['BUTTON_COLOR']
-        pygame.draw.rect(surface, bg_color, self.rect)
+        bg_surface = pygame.Surface((self.rect.width, self.rect.height), pygame.SRCALPHA)
+    
+        # Background box with transparency (last value is alpha)
+        bg_color = (*self.UI_CONSTANTS['BUTTON_HOVER_COLOR'][:3], 175) if self.active else (*self.UI_CONSTANTS['BUTTON_COLOR'][:3], 175)
+        pygame.draw.rect(bg_surface, bg_color, bg_surface.get_rect())
+        
+        # Blit the transparent background to the main surface
+        surface.blit(bg_surface, self.rect)
 
         # Text
         if self.text:

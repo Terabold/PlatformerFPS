@@ -139,7 +139,7 @@ class MainMenuScreen(MenuScreen):
             self.menu.quit_game
         ]
         
-        button_color = [None, None, None, (255, 25, 25)]
+        button_color = [None, None, None, (200, 50, 50)]
         start_y = int(DISPLAY_SIZE[1] * 0.3)  
         
         # Create buttons aligned to left
@@ -191,8 +191,8 @@ class MainMenuScreen(MenuScreen):
             return
             
         # Position info panel on the right side
-        right_x = int(DISPLAY_SIZE[0] * 0.45)  # Start at 60% of screen width
-        info_start_y = int(DISPLAY_SIZE[1] * 0.35)  # Same vertical start as buttons
+        right_x = int(DISPLAY_SIZE[0] * 0.45)
+        info_start_y = int(DISPLAY_SIZE[1] * 0.35)
         
         info_lines = [
             ("←/→ / A/D", "Move character"),
@@ -237,8 +237,8 @@ class MainMenuScreen(MenuScreen):
                 
             key, description = info_lines[i]
             self.draw_instruction_line(surface, key, description, 
-                                     right_x + (backdrop_width // 2) - backdrop_padding, 
-                                     y_offset, shadow_offset)
+                                    right_x + (backdrop_width // 2) - backdrop_padding, 
+                                    y_offset, shadow_offset)
             y_offset += line_spacing
         
         y_offset += line_spacing - 5  
@@ -250,6 +250,29 @@ class MainMenuScreen(MenuScreen):
             right_x + (backdrop_width // 2) - backdrop_padding, 
             y_offset, 
             shadow_offset, 
+            True
+        )
+        
+        y_offset += self.header_font.get_height() + title_content_spacing
+        
+        key, description = info_lines[2]  
+        self.draw_instruction_line(surface, key, description, 
+                                right_x + (backdrop_width // 2) - backdrop_padding, 
+                                y_offset, shadow_offset)
+        
+        # Add credits at the bottom of the backdrop
+        credits_y = backdrop_y + backdrop_height - int(DISPLAY_SIZE[1] * 0.04)
+        credits_text = "Credit to: Roeeov, Idanh100, Koron"
+        credits_color = (255, 215, 0, 200)
+        
+        render_text_with_shadow(
+            surface,
+            credits_text,
+            self.info_font,
+            credits_color,
+            right_x + (backdrop_width // 2) - backdrop_padding,
+            credits_y,
+            shadow_offset,
             True
         )
         

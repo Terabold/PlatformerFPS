@@ -551,9 +551,19 @@ class MapSelectionScreen(MenuScreen):
         else:
             super().draw(surface)
 
+    def load_metadata(self):
+        try:
+            with open('metadata.json', 'r') as f:
+                self.map_metadata = json.load(f)
+        except Exception as e:
+            print(f"Error loading metadata.json: {e}")
+            self.map_metadata = {}
+
     def draw_level_page(self, surface):        
         if self.selected_map_id is None:
             return
+        
+        self.load_metadata()
 
         center_x = DISPLAY_SIZE[0] // 2
         shadow_offset = max(1, int(2 * (DISPLAY_SIZE[1] / 1080)))
@@ -632,11 +642,11 @@ class MapSelectionScreen(MenuScreen):
         best_time = map_data.get('best_time')
         leaderboard_entries = []
         if best_time:
-            leaderboard_entries.append(("Player1", best_time))
+            leaderboard_entries = best_time.copy()
         if leaderboard_entries:
-            for i, (player, time) in enumerate(leaderboard_entries):
+            for i, time in enumerate(leaderboard_entries):
                 entry_y = leaderboard_y + int(DISPLAY_SIZE[1] * 0.05) + (i * int(DISPLAY_SIZE[1] * 0.035))
-                entry_text = f"{i+1}. {player}: {time}"
+                entry_text = f"{i+1}: {time}"
                 render_text_with_shadow(
                     surface,
                     entry_text,

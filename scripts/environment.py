@@ -1,6 +1,7 @@
 import pygame
 import random
 import os
+import json
 from scripts.GameManager import game_state_manager
 from scripts.constants import *
 from scripts.player import Player
@@ -218,7 +219,8 @@ class Environment:
         
         # Stop timer on level completion
         if self.player.finishLevel and self.timer.is_running:
-            self.timer.stop()
+            time = self.timer.stop()
+            print('new record:', self.set_map_best_time(time=time))
         
         # Update timer if running
         self.timer.update()
@@ -366,6 +368,40 @@ class Environment:
         self.center_scroll_on_player()
         
         self.menu = False
+
+    def set_map_best_time(self, time):
+        # Get the current map ID
+        current_map = game_state_manager.selected_map
+        
+        # Use proper string splitting that's compatible with both slash types
+        current_index = str(os.path.basename(current_map).split('.')[0])
+
+        # Load the map times from the JSON file
+        map_times_file = 'metadata.json'
+        with open(map_times_file, 'r') as f:
+            all_maps_data = json.load(f)
+        # Get the time for the current map
+        best_times = all_maps_data[current_index]['best_time']
+
+        # new_best_time = best_time == None or time < best_time
+        # if new_best_time:
+        #     # Update the best time in the JSON file
+        #     all_maps_data[current_index]['best_time'] = time
+            
+        #     # Save the updated data back to the JSON file
+        #     with open(map_times_file, 'w') as f:
+        #         json.dump(all_maps_data, f, indent=4)
+
+        is_new_record = len(best_times) < 3 or time > min(best_times)
+        best_times.append(time)
+        best_times = sorted(best_times)[:3]  # Keep only the top 3 times
+
+        all_maps_data[current_index]['best_time'] = best_times
+        # Save the updated data back to the JSON file
+        with open(map_times_file, 'w') as f:
+            json.dump(all_maps_data, f, indent=4)
+
+        return is_new_record
     
     def resume_game(self):
         self.menu = False
@@ -379,7 +415,6 @@ class Environment:
         current_map = game_state_manager.selected_map
         
         # Use proper string splitting that's compatible with both slash types
-        import os
         current_index = int(os.path.basename(current_map).split('.')[0])
         
         # Get all maps

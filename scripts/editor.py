@@ -151,6 +151,7 @@ class EditorMapSelectionScreen(MenuScreen):
             self.map_metadata = {}
             
     def save_metadata(self):
+        self.load_metadata()
         try:
             with open('metadata.json', 'w') as f:
                 json.dump(self.map_metadata, f, indent=2)

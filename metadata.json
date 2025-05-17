@@ -5,9 +5,15 @@
         "creator": "Terbold",
         "difficulty": "hard",
         "best_time": [
+<<<<<<< HEAD
             2.082,
             2.083,
             2.088
+=======
+            2.076,
+            2.08,
+            2.082
+>>>>>>> 96a196e440869ee8b45a52b32b25a4ef1843b0d4
         ],
         "description": "No description available."
     },
@@ -17,9 +23,15 @@
         "creator": "Terbold",
         "difficulty": "easy",
         "best_time": [
+<<<<<<< HEAD
             3.059,
             3.083,
             3.101
+=======
+            2.882,
+            2.893,
+            2.958
+>>>>>>> 96a196e440869ee8b45a52b32b25a4ef1843b0d4
         ]
     },
     "2": {
@@ -27,7 +39,9 @@
         "name": "First Challenge",
         "creator": "Terbold",
         "difficulty": "normal",
-        "best_time": []
+        "best_time": [
+            8.623
+        ]
     },
     "3": {
         "path": "data/maps/3.json",
@@ -35,9 +49,15 @@
         "creator": "Terbold",
         "difficulty": "normal",
         "best_time": [
+<<<<<<< HEAD
             1.666,
             1.671,
             1.675
+=======
+            1.653,
+            1.66,
+            1.662
+>>>>>>> 96a196e440869ee8b45a52b32b25a4ef1843b0d4
         ]
     },
     "4": {
@@ -46,8 +66,13 @@
         "creator": "Terbold",
         "difficulty": "normal",
         "best_time": [
+<<<<<<< HEAD
             9.677,
             10.331
+=======
+            8.735,
+            12.219
+>>>>>>> 96a196e440869ee8b45a52b32b25a4ef1843b0d4
         ]
     },
     "5": {
@@ -55,7 +80,11 @@
         "name": "nothing here lazy developer",
         "creator": "Terbold",
         "difficulty": "insane",
-        "best_time": []
+        "best_time": [
+            0.705,
+            0.706,
+            0.707
+        ]
     },
     "6": {
         "path": "data/maps/6.json",
@@ -63,8 +92,12 @@
         "creator": "Terbold",
         "difficulty": "normal",
         "best_time": [
+<<<<<<< HEAD
             48.738,
             48.957
+=======
+            46.945
+>>>>>>> 96a196e440869ee8b45a52b32b25a4ef1843b0d4
         ]
     },
     "7": {
@@ -72,21 +105,29 @@
         "name": "where are we?",
         "creator": "Terbold",
         "difficulty": "hard",
-        "best_time": []
+        "best_time": [
+            8.877
+        ]
     },
     "8": {
         "path": "data/maps/8.json",
         "name": "still lazy",
         "creator": "Terbold",
         "difficulty": "easy",
-        "best_time": []
+        "best_time": [
+            0.293,
+            0.296,
+            0.299
+        ]
     },
     "9": {
         "path": "data/maps/9.json",
         "name": "The library",
         "creator": "Terbold",
         "difficulty": "challenging",
-        "best_time": []
+        "best_time": [
+            11.791
+        ]
     },
     "10": {
         "path": "data/maps/10.json",
@@ -109,7 +150,9 @@
         "name": "Only up",
         "creator": "Idanh100",
         "difficulty": "expert",
-        "best_time": []
+        "best_time": [
+            348.702
+        ]
     },
     "13": {
         "path": "data/maps/12.json",
@@ -117,7 +160,11 @@
         "creator": "Roeeov",
         "difficulty": "easy",
         "best_time": [
+<<<<<<< HEAD
             9.334
+=======
+            8.728
+>>>>>>> 96a196e440869ee8b45a52b32b25a4ef1843b0d4
         ]
     },
     "14": {

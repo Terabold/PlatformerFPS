@@ -4,7 +4,11 @@
         "name": "The Start",
         "creator": "Terbold",
         "difficulty": "hard",
-        "best_time": [],
+        "best_time": [
+            2.082,
+            2.083,
+            2.088
+        ],
         "description": "No description available."
     },
     "1": {
@@ -14,8 +18,8 @@
         "difficulty": "easy",
         "best_time": [
             3.059,
-            3.116,
-            3.122
+            3.083,
+            3.101
         ]
     },
     "2": {
@@ -31,7 +35,9 @@
         "creator": "Terbold",
         "difficulty": "normal",
         "best_time": [
-            2.981
+            1.666,
+            1.671,
+            1.675
         ]
     },
     "4": {
@@ -39,7 +45,10 @@
         "name": "Feel the Nether",
         "creator": "Terbold",
         "difficulty": "normal",
-        "best_time": []
+        "best_time": [
+            9.677,
+            10.331
+        ]
     },
     "5": {
         "path": "data/maps/5.json",
@@ -53,7 +62,10 @@
         "name": "Sorry in advance",
         "creator": "Terbold",
         "difficulty": "normal",
-        "best_time": []
+        "best_time": [
+            48.738,
+            48.957
+        ]
     },
     "7": {
         "path": "data/maps/7.json",
@@ -104,7 +116,9 @@
         "name": "Loop or what?",
         "creator": "Roeeov",
         "difficulty": "easy",
-        "best_time": []
+        "best_time": [
+            9.334
+        ]
     },
     "14": {
         "path": "data/maps/14.json",

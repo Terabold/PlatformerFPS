@@ -5,15 +5,9 @@
         "creator": "Terbold",
         "difficulty": "hard",
         "best_time": [
-<<<<<<< HEAD
-            2.082,
-            2.083,
-            2.088
-=======
             2.076,
             2.08,
             2.082
->>>>>>> 96a196e440869ee8b45a52b32b25a4ef1843b0d4
         ],
         "description": "No description available."
     },
@@ -23,15 +17,9 @@
         "creator": "Terbold",
         "difficulty": "easy",
         "best_time": [
-<<<<<<< HEAD
-            3.059,
-            3.083,
-            3.101
-=======
             2.882,
             2.893,
             2.958
->>>>>>> 96a196e440869ee8b45a52b32b25a4ef1843b0d4
         ]
     },
     "2": {
@@ -49,15 +37,9 @@
         "creator": "Terbold",
         "difficulty": "normal",
         "best_time": [
-<<<<<<< HEAD
-            1.666,
-            1.671,
-            1.675
-=======
             1.653,
             1.66,
             1.662
->>>>>>> 96a196e440869ee8b45a52b32b25a4ef1843b0d4
         ]
     },
     "4": {
@@ -66,13 +48,9 @@
         "creator": "Terbold",
         "difficulty": "normal",
         "best_time": [
-<<<<<<< HEAD
+            8.735,
             9.677,
             10.331
-=======
-            8.735,
-            12.219
->>>>>>> 96a196e440869ee8b45a52b32b25a4ef1843b0d4
         ]
     },
     "5": {
@@ -92,12 +70,9 @@
         "creator": "Terbold",
         "difficulty": "normal",
         "best_time": [
-<<<<<<< HEAD
+            46.945,
             48.738,
             48.957
-=======
-            46.945
->>>>>>> 96a196e440869ee8b45a52b32b25a4ef1843b0d4
         ]
     },
     "7": {
@@ -155,16 +130,13 @@
         ]
     },
     "13": {
-        "path": "data/maps/12.json",
+        "path": "data/maps/13.json",
         "name": "Loop or what?",
         "creator": "Roeeov",
         "difficulty": "easy",
         "best_time": [
-<<<<<<< HEAD
+            8.728,
             9.334
-=======
-            8.728
->>>>>>> 96a196e440869ee8b45a52b32b25a4ef1843b0d4
         ]
     },
     "14": {

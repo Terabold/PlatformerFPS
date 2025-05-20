@@ -71,9 +71,201 @@
                 19,
                 5
             ]
+        },
+        "12;7": {
+            "type": "decor",
+            "variant": 0,
+            "pos": [
+                12,
+                7
+            ]
+        },
+        "12;6": {
+            "type": "decor",
+            "variant": 0,
+            "pos": [
+                12,
+                6
+            ]
+        },
+        "11;4": {
+            "type": "decor",
+            "variant": 0,
+            "pos": [
+                11,
+                4
+            ]
+        },
+        "10;4": {
+            "type": "decor",
+            "variant": 0,
+            "pos": [
+                10,
+                4
+            ]
+        },
+        "9;4": {
+            "type": "decor",
+            "variant": 0,
+            "pos": [
+                9,
+                4
+            ]
+        },
+        "9;3": {
+            "type": "decor",
+            "variant": 0,
+            "pos": [
+                9,
+                3
+            ]
+        },
+        "8;3": {
+            "type": "decor",
+            "variant": 0,
+            "pos": [
+                8,
+                3
+            ]
+        },
+        "9;2": {
+            "type": "decor",
+            "variant": 0,
+            "pos": [
+                9,
+                2
+            ]
+        },
+        "10;2": {
+            "type": "decor",
+            "variant": 0,
+            "pos": [
+                10,
+                2
+            ]
+        },
+        "11;2": {
+            "type": "grass",
+            "variant": 0,
+            "pos": [
+                11,
+                2
+            ]
+        },
+        "12;2": {
+            "type": "grass",
+            "variant": 0,
+            "pos": [
+                12,
+                2
+            ]
+        },
+        "5;0": {
+            "type": "grass",
+            "variant": 0,
+            "pos": [
+                5,
+                0
+            ]
+        },
+        "5;1": {
+            "type": "grass",
+            "variant": 0,
+            "pos": [
+                5,
+                1
+            ]
+        },
+        "4;1": {
+            "type": "grass",
+            "variant": 0,
+            "pos": [
+                4,
+                1
+            ]
+        },
+        "3;1": {
+            "type": "grass",
+            "variant": 0,
+            "pos": [
+                3,
+                1
+            ]
+        },
+        "2;1": {
+            "type": "grass",
+            "variant": 0,
+            "pos": [
+                2,
+                1
+            ]
+        },
+        "1;1": {
+            "type": "grass",
+            "variant": 0,
+            "pos": [
+                1,
+                1
+            ]
+        },
+        "6;1": {
+            "type": "grass",
+            "variant": 0,
+            "pos": [
+                6,
+                1
+            ]
+        },
+        "7;1": {
+            "type": "grass",
+            "variant": 0,
+            "pos": [
+                7,
+                1
+            ]
+        },
+        "8;1": {
+            "type": "grass",
+            "variant": 0,
+            "pos": [
+                8,
+                1
+            ]
+        },
+        "9;1": {
+            "type": "grass",
+            "variant": 0,
+            "pos": [
+                9,
+                1
+            ]
+        },
+        "10;1": {
+            "type": "grass",
+            "variant": 0,
+            "pos": [
+                10,
+                1
+            ]
+        },
+        "11;1": {
+            "type": "grass",
+            "variant": 0,
+            "pos": [
+                11,
+                1
+            ]
+        },
+        "1;0": {
+            "type": "spawners",
+            "variant": 0,
+            "pos": [
+                1,
+                0
+            ]
         }
     },
     "offgrid": [],
-    "lowest_y": 5,
+    "lowest_y": 7,
     "map": null
 }

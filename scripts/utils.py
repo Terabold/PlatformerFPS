@@ -307,8 +307,17 @@ class MenuScreen:
         self.title = title
         self.buttons = []
         
+        # Controller support variables
+        self.selected_button_index = 0
+        self.controller_input = ControllerInput()  # Self-contained controller input handler
+    
     def enable(self):
         self.enabled = True
+        # Set first button as selected on menu open
+        self.selected_button_index = 0
+        if self.buttons:
+            for i, button in enumerate(self.buttons):
+                button.selected = (i == self.selected_button_index)
         self.initialize()
     
     def disable(self):
@@ -319,23 +328,61 @@ class MenuScreen:
         pass
     
     def update(self, events):
-        if not self.enabled:
+        if not self.enabled or not self.buttons:
             return
             
+        # Process mouse interaction
         mouse_pos = pygame.mouse.get_pos()
+        mouse_hovered = False
         
-        # Update button hover states
-        for button in self.buttons:
-            button.selected = button.is_hovered(mouse_pos)
+        # Check if mouse is hovering any button
+        for i, button in enumerate(self.buttons):
+            if button.is_hovered(mouse_pos):
+                # Mouse takes priority over controller selection
+                if i != self.selected_button_index:
+                    # Reset previous button selection
+                    if 0 <= self.selected_button_index < len(self.buttons):
+                        self.buttons[self.selected_button_index].selected = False
+                    # Update selection to hovered button
+                    self.selected_button_index = i
+                    button.selected = True
+                mouse_hovered = True
         
-        # Handle button clicks
-        for button in self.buttons:
-            if button.selected:
-                for event in events:
-                    if event.type == pygame.MOUSEBUTTONDOWN and event.button == 1:
+        # Process controller/keyboard navigation
+        menu_actions = self.controller_input.update(events)
+        
+        # Only update selection if no mouse hover is active
+        if not mouse_hovered:
+            # Handle navigation with controller/keyboard
+            if menu_actions['down']:
+                # Move selection down
+                self.buttons[self.selected_button_index].selected = False
+                self.selected_button_index = (self.selected_button_index + 1) % len(self.buttons)
+                self.buttons[self.selected_button_index].selected = True
+                self.menu._play_sound('hover')
+                
+            elif menu_actions['up']:
+                # Move selection up
+                self.buttons[self.selected_button_index].selected = False
+                self.selected_button_index = (self.selected_button_index - 1) % len(self.buttons)
+                self.buttons[self.selected_button_index].selected = True
+                self.menu._play_sound('hover')
+                
+        # Handle button activation
+        for event in events:
+            if event.type == pygame.MOUSEBUTTONDOWN and event.button == 1:
+                # Mouse click
+                for button in self.buttons:
+                    if button.is_hovered(mouse_pos):
                         self.menu._play_sound('click')
                         button.action()
                         return
+        
+        # Controller/keyboard selection confirmation
+        if menu_actions['select'] and self.buttons:
+            current_button = self.buttons[self.selected_button_index]
+            self.menu._play_sound('click')
+            current_button.action()
     
     def draw(self, surface):
         if not self.enabled:
@@ -354,12 +401,22 @@ class MenuScreen:
         surface.blit(title_shadow, (title_x + shadow_offset, title_y + shadow_offset))
         surface.blit(title_text, (title_x, title_y))
         
+        # Draw controller hint text if controller detected
+        if self.controller_input.has_controllers():
+            hint_text = "Use D-pad/Analog to navigate, A to select"
+            hint_font = pygame.font.Font(FONT, scale_font(18, DISPLAY_SIZE))
+            hint_surface = hint_font.render(hint_text, True, (200, 200, 200))
+            hint_x = (DISPLAY_SIZE[0] - hint_surface.get_width()) // 2
+            hint_y = DISPLAY_SIZE[1] - hint_surface.get_height() - 20
+            surface.blit(hint_surface, (hint_x, hint_y))
+        
         # Draw all buttons
         for button in self.buttons:
             button.draw(surface)
     
     def clear_buttons(self):
         self.buttons = []
+        self.selected_button_index = 0
     
     def create_button(self, text, action, x, y, width=None, bg_color=None):
         # Calculate button size based on text if width not specified
@@ -376,6 +433,11 @@ class MenuScreen:
             self.menu,  # Pass menu reference to Button
             bg_color    # Pass custom background color
         )
+        
+        # First button created is automatically selected
+        if not self.buttons:
+            button.selected = True
+            self.selected_button_index = 0
         
         self.buttons.append(button)
         return button
@@ -415,6 +477,129 @@ class MenuScreen:
             button_y = start_y + row * (self.UI_CONSTANTS['BUTTON_HEIGHT'] + self.UI_CONSTANTS['BUTTON_SPACING'])
             
             self.create_button(text, action, button_x, button_y, fixed_width, bg_color)
+
+# New self-contained controller input class specifically for menu navigation
+class ControllerInput:
+    def __init__(self):
+        self.menu_actions = {'up': False, 'down': False, 'left': False, 'right': False, 'select': False, 'back': False}
+        
+        # Controller-specific variables
+        self.controller_deadzone = 0.5  # Analog stick deadzone threshold
+        self.menu_repeat_delay = 20  # Frames to wait before repeating menu navigation
+        self.menu_repeat_counter = 0
+        self.last_menu_action = None
+        
+        # Initialize controller support
+        pygame.joystick.init()
+        self.controllers = []
+        self.update_controllers()
+        
+    def update_controllers(self):
+        """Detect and initialize all connected controllers"""
+        self.controllers = [pygame.joystick.Joystick(x) for x in range(pygame.joystick.get_count())]
+        for controller in self.controllers:
+            controller.init()
+    
+    def has_controllers(self):
+        """Check if any controllers are connected"""
+        return len(self.controllers) > 0
+    
+    def reset_menu_actions(self):
+        """Reset all menu navigation flags"""
+        for action in self.menu_actions:
+            self.menu_actions[action] = False
+    
+    def update(self, events):
+        """Process input specifically for menu navigation"""
+        # Check for controller connection/disconnection
+        for event in events:
+            if event.type == pygame.JOYDEVICEADDED or event.type == pygame.JOYDEVICEREMOVED:
+                self.update_controllers()
+        
+        # Reset all menu actions at the start
+        self.reset_menu_actions()
+        
+        for event in events:
+            # Keyboard menu controls
+            if event.type == pygame.KEYDOWN:
+                if event.key == pygame.K_UP:
+                    self.menu_actions['up'] = True
+                    self.last_menu_action = 'up'
+                if event.key == pygame.K_DOWN:
+                    self.menu_actions['down'] = True
+                    self.last_menu_action = 'down'
+                if event.key == pygame.K_LEFT:
+                    self.menu_actions['left'] = True
+                    self.last_menu_action = 'left'
+                if event.key == pygame.K_RIGHT:
+                    self.menu_actions['right'] = True
+                    self.last_menu_action = 'right'
+                if event.key == pygame.K_RETURN or event.key == pygame.K_SPACE:
+                    self.menu_actions['select'] = True
+                if event.key == pygame.K_ESCAPE:
+                    self.menu_actions['back'] = True
+                    
+            # Controller menu controls - button presses
+            if event.type == pygame.JOYBUTTONDOWN:
+                if event.button == 0:  # A button (Xbox) / X button (PlayStation)
+                    self.menu_actions['select'] = True
+                if event.button == 1:  # B button (Xbox) / Circle button (PlayStation)
+                    self.menu_actions['back'] = True
+            
+            # Controller D-pad (hat) handling
+            if event.type == pygame.JOYHATMOTION:
+                hat_value = event.value
+                if hat_value[1] == 1:  # Up on D-pad
+                    self.menu_actions['up'] = True
+                    self.last_menu_action = 'up'
+                if hat_value[1] == -1:  # Down on D-pad
+                    self.menu_actions['down'] = True
+                    self.last_menu_action = 'down'
+                if hat_value[0] == -1:  # Left on D-pad
+                    self.menu_actions['left'] = True
+                    self.last_menu_action = 'left'
+                if hat_value[0] == 1:  # Right on D-pad
+                    self.menu_actions['right'] = True
+                    self.last_menu_action = 'right'
+        
+        # Process continuous controller input for menus with repeat delay
+        if self.controllers:
+            for controller in self.controllers:
+                # Left analog stick for menu navigation
+                left_stick_y = controller.get_axis(1)
+                left_stick_x = controller.get_axis(0)
+                
+                # Update repeat counter
+                if self.last_menu_action is not None:
+                    self.menu_repeat_counter += 1
+                else:
+                    self.menu_repeat_counter = 0
+                
+                # Reset menu_repeat_counter if stick is back to neutral position
+                if abs(left_stick_x) < 0.3 and abs(left_stick_y) < 0.3:
+                    self.menu_repeat_counter = 0
+                    self.last_menu_action = None
+                
+                # Only process analog inputs if enough time has passed since last action
+                if self.menu_repeat_counter == 0 or self.menu_repeat_counter > self.menu_repeat_delay:
+                    if left_stick_y < -self.controller_deadzone:  # Up on analog stick
+                        self.menu_actions['up'] = True
+                        self.last_menu_action = 'up'
+                        self.menu_repeat_counter = 1  # Reset counter but keep last_menu_action
+                    elif left_stick_y > self.controller_deadzone:  # Down on analog stick
+                        self.menu_actions['down'] = True
+                        self.last_menu_action = 'down'
+                        self.menu_repeat_counter = 1
+                    elif left_stick_x < -self.controller_deadzone:  # Left on analog stick
+                        self.menu_actions['left'] = True
+                        self.last_menu_action = 'left'
+                        self.menu_repeat_counter = 1
+                    elif left_stick_x > self.controller_deadzone:  # Right on analog stick
+                        self.menu_actions['right'] = True 
+                        self.last_menu_action = 'right'
+                        self.menu_repeat_counter = 1
+                
+        return self.menu_actions
 class TextInput:
     def __init__(self, rect, font, menu, max_chars=20, placeholder="Enter text..."):
         self.rect = rect

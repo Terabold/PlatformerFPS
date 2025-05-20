@@ -18476,6 +18476,96 @@
                 135,
                 15
             ]
+        },
+        "14;5": {
+            "type": "spikes",
+            "variant": 0,
+            "pos": [
+                14,
+                5
+            ],
+            "rotation": 0
+        },
+        "15;5": {
+            "type": "spikes",
+            "variant": 0,
+            "pos": [
+                15,
+                5
+            ],
+            "rotation": 0
+        },
+        "16;5": {
+            "type": "spikes",
+            "variant": 0,
+            "pos": [
+                16,
+                5
+            ],
+            "rotation": 0
+        },
+        "17;5": {
+            "type": "spikes",
+            "variant": 0,
+            "pos": [
+                17,
+                5
+            ],
+            "rotation": 0
+        },
+        "18;5": {
+            "type": "spikes",
+            "variant": 0,
+            "pos": [
+                18,
+                5
+            ],
+            "rotation": 0
+        },
+        "19;5": {
+            "type": "spikes",
+            "variant": 0,
+            "pos": [
+                19,
+                5
+            ],
+            "rotation": 0
+        },
+        "20;5": {
+            "type": "spikes",
+            "variant": 0,
+            "pos": [
+                20,
+                5
+            ],
+            "rotation": 0
+        },
+        "21;5": {
+            "type": "spikes",
+            "variant": 0,
+            "pos": [
+                21,
+                5
+            ],
+            "rotation": 0
+        },
+        "22;5": {
+            "type": "spikes",
+            "variant": 0,
+            "pos": [
+                22,
+                5
+            ],
+            "rotation": 0
+        },
+        "23;5": {
+            "type": "spikes",
+            "variant": 0,
+            "pos": [
+                23,
+                5
+            ],
+            "rotation": 0
         }
     },
     "offgrid": [

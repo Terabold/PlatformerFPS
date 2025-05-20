@@ -275,13 +275,6 @@ class MainMenuScreen(MenuScreen):
             shadow_offset,
             True
         )
-        
-        y_offset += self.header_font.get_height() + title_content_spacing
-        
-        key, description = info_lines[2]  
-        self.draw_instruction_line(surface, key, description, 
-                                 right_x + (backdrop_width // 2) - backdrop_padding, 
-                                 y_offset, shadow_offset)
     
     def draw_instruction_line(self, surface, key, description, center_x, y_offset, shadow_offset):
         key_color = (180, 220, 255)  

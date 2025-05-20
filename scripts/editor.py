@@ -590,12 +590,18 @@ class Editor:
         self.assets = self.reload_assets()
         self.background_image = load_image('background/background.png', scale=DISPLAY_SIZE)
         self.rotated_assets = {}
-            
+        
+        # Menu system - INCREASED WIDTH FROM 70 to 140
+        self.menu_width = 140
+        self.menu_scroll = [0, 0, 0]  # [spritesheet scroll, horizontal tile scroll, vertical tile scroll]
         self.tile_list = list(self.assets)
         self.tile_group = 0
         self.tile_variant = 0
         self.current_rotation = 0
         self.ongrid = True
+        
+        # Generate thumbnails for tile types
+        self.tile_type_thumbs = self.generate_tile_type_thumbs()
         
         self.movement = [False, False, False, False]  
         self.clicking = False
@@ -603,21 +609,41 @@ class Editor:
         self.shift = False
         self.ctrl = False
         
-        
         self.show_save_message = False
         self.save_message_timer = 0
         self.save_message_duration = 80  
-
         
         self.font = pygame.font.SysFont(FONT, 16)
         self.save_font = pygame.font.SysFont(FONT, 32)
-        
         
         if map_file:
             try:
                 self.tilemap.load(os.path.join('data/maps', map_file))
             except FileNotFoundError:
                 pass
+
+    def generate_tile_type_thumbs(self):
+        """Generate thumbnails for tile type selection"""
+        thumbs = {}
+        for tile_type in self.tile_list:
+            # Increased thumb surface width from 64 to 100
+            thumb_surf = pygame.Surface((100, 24), pygame.SRCALPHA)
+            # Get the variants
+            variants = self.assets[tile_type]
+            # Inspect if variants is a list or dict
+            if isinstance(variants, dict):
+                # If it's a dictionary, get the first 4 values
+                variant_items = list(variants.items())[:4]
+                for i, (variant_key, img) in enumerate(variant_items):
+                    # Increased tile size in thumbnails from 16x16 to 24x24
+                    thumb_surf.blit(pygame.transform.scale(img, (24, 24)), (i * 24, 0))
+            else:
+                # If it's a list, get the first 4 items
+                for i, img in enumerate(variants[:4]):
+                    # Increased tile size in thumbnails from 16x16 to 24x24
+                    thumb_surf.blit(pygame.transform.scale(img, (24, 24)), (i * 24, 0))
+            thumbs[tile_type] = thumb_surf
+        return thumbs
 
     def get_rotated_image(self, tile_type, variant, rotation):
         key = f"{tile_type}_{variant}_{rotation}"
@@ -654,6 +680,8 @@ class Editor:
         self.scroll[1] = (self.scroll[1] + DISPLAY_SIZE[1]//2) // self.tilemap.tile_size * new_tile_size - DISPLAY_SIZE[1]//2
         self.tilemap.tile_size = new_tile_size
         self.assets = self.reload_assets()
+        # Regenerate thumbnails with new scale
+        self.tile_type_thumbs = self.generate_tile_type_thumbs()
     
     def count_spawners(self):
         return len(self.tilemap.extract([('spawners', 0), ('spawners', 1)], keep=True))
@@ -670,12 +698,10 @@ class Editor:
     def handle_tile_placement(self, tile_pos, mpos):
         current_tile_type = self.tile_list[self.tile_group]
         
-        
         if self.ongrid and self.clicking:
             
             if current_tile_type == 'spawners' and self.count_spawners() > 0:
                 self.tilemap.extract([('spawners', 0), ('spawners', 1)], keep=False)
-            
             
             tile_data = {
                 'type': current_tile_type,
@@ -683,13 +709,10 @@ class Editor:
                 'pos': tile_pos
             }
             
-            
             if current_tile_type == 'spikes':
                 tile_data['rotation'] = self.current_rotation
                 
-            
             self.tilemap.tilemap[f"{tile_pos[0]};{tile_pos[1]}"] = tile_data
-        
         
         elif not self.ongrid and self.clicking:
             if current_tile_type == 'spawners' and self.count_spawners() > 0:
@@ -704,7 +727,6 @@ class Editor:
                     'variant': self.tile_variant,
                     'pos': tile_pos
                 }
-                
                 
                 if current_tile_type == 'spikes':
                     tile_data['rotation'] = self.current_rotation
@@ -743,7 +765,6 @@ class Editor:
             if tile_loc in self.tilemap.tilemap:
                 del self.tilemap.tilemap[tile_loc]
             
-            
             for tile in self.tilemap.offgrid_tiles.copy():
                 tile_img = self.assets[tile['type']][tile['variant']]
                 tile_r = pygame.Rect(
@@ -770,35 +791,60 @@ class Editor:
             )
     
     def handle_mouse_events(self, event, tile_pos, mpos):
+        # Check if mouse is in the menu area
+        in_menu = mpos[0] < self.menu_width
+        
         if event.type == pygame.MOUSEBUTTONDOWN:
-            if event.button == 1:  
-                if self.ctrl:
+            if event.button == 1:  # Left click
+                if in_menu:
+                    # Handle menu interaction
+                    self.handle_menu_click(mpos)
+                elif self.ctrl:
                     self.rotate_spike_at_position(tile_pos)
                 else:
                     self.clicking = True
             
-            elif event.button == 3:  
-                self.right_clicking = True
+            elif event.button == 3:  # Right click
+                if not in_menu:
+                    self.right_clicking = True
                 
-            
-            elif event.button == 4:  
-                if self.shift:
-                    
+            # Scrolling in menu or world
+            elif event.button == 4:  # Scroll up
+                if in_menu:
+                    if mpos[1] < 120:  # Tile types section (increased from 80)
+                        self.menu_scroll[0] -= 1
+                    else:  # Variants section
+                        if self.shift:
+                            self.menu_scroll[1] = max(0, self.menu_scroll[1] - 1)
+                        else:
+                            self.menu_scroll[2] = max(0, self.menu_scroll[2] - 1)
+                elif self.shift:
+                    # Shift+scroll outside menu changes variant
                     current_type = self.tile_list[self.tile_group]
-                    self.tile_variant = (self.tile_variant - 1) % len(self.assets[current_type])
+                    variants = self.get_variants(current_type)
+                    self.tile_variant = (self.tile_variant - 1) % len(variants)
                 else:
-                    
+                    # Normal scroll outside menu changes tile type
                     self.tile_group = (self.tile_group - 1) % len(self.tile_list)
                     self.tile_variant = 0
                     self.current_rotation = 0
                     
-            elif event.button == 5:  
-                if self.shift:
-                    
+            elif event.button == 5:  # Scroll down
+                if in_menu:
+                    if mpos[1] < 120:  # Tile types section (increased from 80)
+                        self.menu_scroll[0] += 1
+                    else:  # Variants section
+                        if self.shift:
+                            self.menu_scroll[1] += 1
+                        else:
+                            self.menu_scroll[2] += 1
+                elif self.shift:
+                    # Shift+scroll outside menu changes variant
                     current_type = self.tile_list[self.tile_group]
-                    self.tile_variant = (self.tile_variant + 1) % len(self.assets[current_type]) 
+                    variants = self.get_variants(current_type)
+                    self.tile_variant = (self.tile_variant + 1) % len(variants)
                 else:
-                    
+                    # Normal scroll outside menu changes tile type
                     self.tile_group = (self.tile_group + 1) % len(self.tile_list)
                     self.tile_variant = 0
                     self.current_rotation = 0
@@ -808,6 +854,63 @@ class Editor:
                 self.clicking = False
             elif event.button == 3:
                 self.right_clicking = False
+    
+    def get_variants(self, tile_type):
+        """Helper function to get variants for a tile type, handling both list and dict cases"""
+        variants = self.assets[tile_type]
+        if isinstance(variants, dict):
+            return list(variants.keys())
+        else:
+            return list(range(len(variants)))
+    
+    def handle_menu_click(self, mpos):
+        """Handle clicks on the left menu"""
+        # Increased height of tile type selection area from 80 to 120
+        if mpos[1] < 120:  # Tile type selection area
+            # Handle tile type selection
+            for i in range(4):
+                if i >= len(self.tile_list):
+                    break
+                    
+                lookup_i = (self.menu_scroll[0] + i) % len(self.tile_list)
+                # Increased thumbnail size
+                thumb_rect = pygame.Rect(5, 5 + i * 30, 100, 24)
+                
+                if thumb_rect.collidepoint(mpos):
+                    self.tile_group = lookup_i
+                    self.tile_variant = 0
+                    self.menu_scroll[1] = 0
+                    self.menu_scroll[2] = 0
+                    break
+        else:
+            # Handle tile variant selection
+            current_type = self.tile_list[self.tile_group]
+            variants = self.get_variants(current_type)
+            
+            # Calculate how many variants fit per row in the menu (4 now that we have more width)
+            variants_per_row = 4
+            
+            for y_index in range(10):  # Show up to 10 rows of variants
+                for x_index in range(variants_per_row):
+                    # Calculate the actual variant index from the menu scroll
+                    variant_x = x_index + self.menu_scroll[1]
+                    variant_y = y_index + self.menu_scroll[2]
+                    variant_index = variant_y * variants_per_row + variant_x
+                    
+                    if variant_index >= len(variants):
+                        continue
+                    
+                    # Calculate rect position and check for click
+                    # Increased tile sizes and spacing
+                    tile_rect = pygame.Rect(
+                        5 + x_index * 34, 
+                        125 + y_index * 34, 
+                        30, 30
+                    )
+                    
+                    if tile_rect.collidepoint(mpos):
+                        self.tile_variant = variants[variant_index]
+                        return
     
     def handle_keyboard_events(self, event):
         if event.type == pygame.KEYDOWN:
@@ -861,8 +964,8 @@ class Editor:
         return False
     
     def update_scroll(self):
-        self.scroll[0] += (self.movement[1] - self.movement[0]) * 8  
-        self.scroll[1] += (self.movement[3] - self.movement[2]) * 8  
+        self.scroll[0] += (self.movement[1] - self.movement[0]) * 14
+        self.scroll[1] += (self.movement[3] - self.movement[2]) * 14  
         return (int(self.scroll[0]), int(self.scroll[1]))
         
     def draw_save_notification(self):
@@ -883,37 +986,102 @@ class Editor:
             if self.save_message_timer >= self.save_message_duration:
                 self.show_save_message = False
     
+    def draw_menu(self):
+        """Draw the left menu for tile selection"""
+        # Create menu surface
+        menu_surf = pygame.Surface((self.menu_width, DISPLAY_SIZE[1]), pygame.SRCALPHA)
+        menu_surf.fill((0, 40, 60, 180))
+        
+        # Draw divider between tile type selection and tile variant selection
+        # Increased height from 80 to 120
+        pygame.draw.line(menu_surf, (0, 80, 120), (0, 120), (self.menu_width, 120))
+        pygame.draw.line(menu_surf, (0, 80, 120), (self.menu_width - 1, 0), (self.menu_width - 1, DISPLAY_SIZE[1]))
+        
+        # Draw tile type thumbnails (up to 4)
+        if len(self.tile_list) > 0:
+            for i in range(min(4, len(self.tile_list))):
+                lookup_i = (self.menu_scroll[0] + i) % len(self.tile_list)
+                tile_type = self.tile_list[lookup_i]
+                thumb = self.tile_type_thumbs[tile_type]
+                
+                # Highlight the currently selected tile type
+                # Increased sizes for highlighting
+                if lookup_i == self.tile_group:
+                    pygame.draw.rect(menu_surf, (100, 100, 255, 100), pygame.Rect(4, 4 + i * 30, 102, 26))
+                
+                # Adjusted position for larger thumbnails
+                menu_surf.blit(thumb, (5, 5 + i * 30))
+                
+                # Show tile type name - full name now since we have more space
+                # Increased font size
+                type_text = pygame.font.SysFont(FONT, 20).render(tile_type, True, (200, 200, 200))
+                menu_surf.blit(type_text, (5 + 100 + 4, 9 + i * 30))
+        
+        # Draw variants of the selected tile type
+        current_type = self.tile_list[self.tile_group]
+        variants = self.get_variants(current_type)
+        
+        # Calculate how many variants fit per row in the menu
+        variants_per_row = 4  # Increased from 3 since we have more width
+        
+        for y_index in range(10):  # Show up to 10 rows of variants
+            for x_index in range(variants_per_row):
+                # Calculate the actual variant index from the menu scroll
+                variant_x = x_index + self.menu_scroll[1]
+                variant_y = y_index + self.menu_scroll[2]
+                variant_index = variant_y * variants_per_row + variant_x
+                
+                if variant_index >= len(variants):
+                    continue
+                
+                variant = variants[variant_index]
+                tile_img = self.assets[current_type][variant]
+                
+                # Highlight selected variant
+                # Increased sizes for highlighting and positioning
+                if variant == self.tile_variant:
+                    pygame.draw.rect(menu_surf, (255, 255, 100, 100), 
+                                    pygame.Rect(4 + x_index * 34, 124 + y_index * 34, 32, 32))
+                
+                # Draw the tile - increased size from 18x18 to 30x30
+                if current_type == 'spikes' and self.current_rotation > 0:
+                    rotated_img = self.get_rotated_image(current_type, variant, 0) # Don't show rotation in menu
+                    menu_surf.blit(pygame.transform.scale(rotated_img, (30, 30)), 
+                                  (5 + x_index * 34, 125 + y_index * 34))
+                else:
+                    menu_surf.blit(pygame.transform.scale(tile_img, (30, 30)), 
+                                  (5 + x_index * 34, 125 + y_index * 34))
+        
+        # Blit the menu surface to the display
+        self.display.blit(menu_surf, (0, 0))
+
     def draw_ui(self, current_tile_img):
-        
-        self.display.blit(current_tile_img, (5, 5))
-        
+        # This function now only draws UI elements outside the menu
+        # Adjusted to account for wider menu
         spawner_count = self.count_spawners()
         spawner_text = self.font.render(f"Spawners: {spawner_count}/1", True, (255, 255, 255))
-        self.display.blit(spawner_text, (5, 40))
+        self.display.blit(spawner_text, (self.menu_width + 5, 5))
         
         current_type = self.tile_list[self.tile_group]
         tile_info = self.font.render(f"Type: {current_type} ({self.tile_variant})", True, (255, 255, 255))
-        self.display.blit(tile_info, (5, 60))
+        self.display.blit(tile_info, (self.menu_width + 5, 25))
         
+        grid_info = self.font.render(f"Grid: {'On' if self.ongrid else 'Off'} (G to toggle)", True, (255, 255, 255))
+        self.display.blit(grid_info, (self.menu_width + 5, 45))
         
         if current_type == 'spikes':
-            rotation_info = self.font.render(f"Rotation: {self.current_rotation}°", True, (255, 255, 255))
-            self.display.blit(rotation_info, (5, 80))
-            
-            controls_info = self.font.render("R: Rotate spike | Ctrl+Click: Rotate placed spike", True, (255, 255, 255))
-            self.display.blit(controls_info, (5, 100))
-        
+            rotation_info = self.font.render(f"Rotation: {self.current_rotation}° (R to rotate)", True, (255, 255, 255))
+            self.display.blit(rotation_info, (self.menu_width + 5, 65))
         
         if self.current_map_file:
             file_info = self.font.render(f"Editing: {self.current_map_file}", True, (255, 255, 255))
-            self.display.blit(file_info, (5, DISPLAY_SIZE[1] - 50))
+            self.display.blit(file_info, (self.menu_width + 5, DISPLAY_SIZE[1] - 50))
         else:
             new_map_info = self.font.render("Creating new map", True, (255, 255, 255))
-            self.display.blit(new_map_info, (5, DISPLAY_SIZE[1] - 50))
-        
+            self.display.blit(new_map_info, (self.menu_width + 5, DISPLAY_SIZE[1] - 50))
         
         menu_info = self.font.render("ESC: Return to Menu | O: Save Map", True, (255, 255, 255))
-        self.display.blit(menu_info, (5, DISPLAY_SIZE[1] - 30))
+        self.display.blit(menu_info, (self.menu_width + 5, DISPLAY_SIZE[1] - 30))
         
     def run(self):
         clock = pygame.time.Clock()
@@ -921,11 +1089,16 @@ class Editor:
         while True:
             self.display.fill((20, 20, 20))
             
-            self.draw_grid()
-            
             render_scroll = self.update_scroll()
             
-            self.tilemap.render(self.display, offset=render_scroll, zoom=self.zoom)
+            # Calculate offset for tilemap display due to menu
+            render_offset = (render_scroll[0], render_scroll[1])
+            
+            # Draw the grid
+            self.draw_grid()
+            
+            # Render the tilemap but offset by menu width
+            self.tilemap.render(self.display, offset=render_offset, zoom=self.zoom)
             
             current_tile_img = self.assets[self.tile_list[self.tile_group]][self.tile_variant].copy()
             
@@ -940,20 +1113,28 @@ class Editor:
                 int((mpos[1] + self.scroll[1]) // self.tilemap.tile_size)
             )
             
-            if self.ongrid:
-                self.display.blit(
-                    current_tile_img, 
-                    (tile_pos[0] * self.tilemap.tile_size - self.scroll[0], 
-                    tile_pos[1] * self.tilemap.tile_size - self.scroll[1])
-                )
-            else:
-                self.display.blit(current_tile_img, mpos)
+            # Only show tile preview if not in menu area
+            if mpos[0] >= self.menu_width:
+                if self.ongrid:
+                    self.display.blit(
+                        current_tile_img, 
+                        (tile_pos[0] * self.tilemap.tile_size - self.scroll[0], 
+                        tile_pos[1] * self.tilemap.tile_size - self.scroll[1])
+                    )
+                else:
+                    self.display.blit(current_tile_img, mpos)
             
-            self.handle_tile_placement(tile_pos, mpos)
-            self.handle_tile_removal(tile_pos, mpos)
+                # Only allow placement outside menu area
+                self.handle_tile_placement(tile_pos, mpos)
+                self.handle_tile_removal(tile_pos, mpos)
             
+            # Draw the menu
+            self.draw_menu()
+            
+            # Draw UI elements outside the menu
             self.draw_ui(current_tile_img)
             
+            # Draw save notification
             self.draw_save_notification()
             
             for event in pygame.event.get():

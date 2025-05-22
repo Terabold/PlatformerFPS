@@ -188,3 +188,4 @@ class Tilemap:
     
     def set_background_map(self, map_path):
         self.map_background = map_path
+        

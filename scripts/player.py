@@ -190,3 +190,4 @@ class Player:
                                                 self.pos[1] + self.size[1] // 2 - offset[1]))
         # Draw the rotated image
         surf.blit(image, image_rect)
+        

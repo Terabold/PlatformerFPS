@@ -440,3 +440,4 @@ class Environment:
             self.keys = action
             self.buffer_times['jump'] = min(self.buffer_times['jump'] + 1, PLAYER_BUFFER + 1) if action['jump'] else 0
             self.buffer_time = self.buffer_times['jump']  # Keep buffer_time in sync
+            

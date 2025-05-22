@@ -71,3 +71,4 @@ class GameTimer:
     def get_formatted_time(self):
         """Get the formatted display time"""
         return self.format_time(self.get_display_time())
+    

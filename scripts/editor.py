@@ -937,3 +937,4 @@ class Editor:
             
             pygame.display.update()
             self.clock.tick(FPS)
+            

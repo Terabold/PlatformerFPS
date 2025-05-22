@@ -663,3 +663,4 @@ class TextInput:
             cursor_y = text_y
             cursor_height = text_surface.get_height()
             pygame.draw.line(surface, (255, 255, 255), (cursor_x, cursor_y), (cursor_x, cursor_y + cursor_height), 2)
+

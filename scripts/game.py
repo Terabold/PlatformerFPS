@@ -47,3 +47,4 @@ class Game:
         self.environment.update()
         
         self.environment.render()
+        

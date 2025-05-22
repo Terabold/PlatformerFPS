@@ -534,7 +534,7 @@ class ControllerInput:
                 if event.key == pygame.K_RIGHT:
                     self.menu_actions['right'] = True
                     self.last_menu_action = 'right'
-                if event.key == pygame.K_RETURN or event.key == pygame.K_SPACE:
+                if event.key == pygame.K_RETURN:
                     self.menu_actions['select'] = True
                 if event.key == pygame.K_ESCAPE:
                     self.menu_actions['back'] = True

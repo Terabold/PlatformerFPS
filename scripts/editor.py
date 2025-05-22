@@ -594,8 +594,10 @@ class Editor:
         os.makedirs(directory, exist_ok=True)
     
         if self.current_map_file:
-            file_path = os.path.join(directory, self.current_map_file)
-            saved_map_name = self.current_map_file
+            filename = os.path.basename(self.current_map_file)  
+            file_path = os.path.join(directory, filename)
+            self.tilemap.save(file_path)
+            saved_map_name = filename
         else:
             next_filename = find_next_numeric_filename(directory, extension='.json')            
             file_path = os.path.join(directory, next_filename)

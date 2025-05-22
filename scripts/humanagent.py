@@ -100,3 +100,4 @@ class InputHandler:
                 self.buffer_times['jump'] = PLAYER_BUFFER + 1
                         
         return self.keys, self.buffer_times
+    

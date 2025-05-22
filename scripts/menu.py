@@ -697,3 +697,4 @@ class MapSelectionScreen(MenuScreen):
         if self.current_page > 0:
             self.current_page -= 1
             self.recreate_buttons()
+            

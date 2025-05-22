@@ -64,3 +64,4 @@ def calculate_ui_constants(display_size):
         'GRID_COLUMNS': 5,  
         'MAPS_PER_PAGE': 20  
     }
+

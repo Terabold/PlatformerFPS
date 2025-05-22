@@ -97,7 +97,6 @@ class EditorMapSelectionScreen(MenuScreen):
         self.map_numbers = []
         self.map_metadata = {}
         
-        # Consolidated font setup
         self.fonts = {
             'info': pygame.font.Font(FONT, int(DISPLAY_SIZE[1] * 0.02)),
             'detail': pygame.font.Font(FONT, int(DISPLAY_SIZE[1] * 0.025)),
@@ -108,7 +107,6 @@ class EditorMapSelectionScreen(MenuScreen):
         self.showing_edit_page = False
         self.text_inputs = {}
         
-        # Difficulty system
         self.difficulty_options = ['easy', 'normal', 'hard', 'expert', 'insane']
         self.selected_difficulty = 0
         self.difficulty_colors = {
@@ -116,29 +114,62 @@ class EditorMapSelectionScreen(MenuScreen):
             'expert': (255, 0, 0), 'insane': (128, 0, 128)
         }
         
-        # Save confirmation
-        self.show_save_confirmation = False
-        self.save_time = 0
-        
         self.load_metadata()
-        
+
+    def check_file_permissions(self):
+        try:
+            metadata_path = 'metadata.json'
+            if os.path.exists(metadata_path):
+                return os.access(metadata_path, os.W_OK)
+            return os.access(os.path.dirname(metadata_path), os.W_OK)
+        except Exception:
+            return False
+
+    def atomic_write(self, data, filename):
+        temp_file = filename + '.tmp'
+        try:
+            with open(temp_file, 'w') as f:
+                json.dump(data, f, indent=2)
+            os.replace(temp_file, filename)
+            return True
+        except Exception:
+            if os.path.exists(temp_file):
+                os.remove(temp_file)
+            return False
+
     def load_metadata(self):
         try:
-            with open('metadata.json', 'r') as f:
-                self.map_metadata = json.load(f)
-        except Exception as e:
-            print(f"Error loading metadata.json: {e}")
+            if os.path.exists('metadata.json'):
+                with open('metadata.json', 'r') as f:
+                    self.map_metadata = json.load(f)
+            else:
+                self.map_metadata = {}
+        except Exception:
             self.map_metadata = {}
+
+    def validate_metadata(self):
+        if not self.selected_map_id:
+            return False
+        
+        metadata = self.map_metadata.get(self.selected_map_id, {})
+        
+        if not metadata.get('name'):
+            return False
+        if not metadata.get('creator'):
+            return False
+        if not metadata.get('difficulty') in self.difficulty_options:
+            return False
             
+        return True
+
     def save_metadata(self):
-        self.load_metadata()
+        if not self.check_file_permissions():
+            return False
+
+        metadata_path = 'metadata.json'
         try:
-            with open('metadata.json', 'w') as f:
-                json.dump(self.map_metadata, f, indent=2)
-            print("Metadata saved successfully!")
-            return True
-        except Exception as e:
-            print(f"Error saving metadata.json: {e}")
+            return self.atomic_write(self.map_metadata, metadata_path)
+        except Exception:
             return False
     
     def initialize(self):
@@ -178,7 +209,6 @@ class EditorMapSelectionScreen(MenuScreen):
         grid_width = columns * (button_width + padding) - padding
         start_x = (DISPLAY_SIZE[0] - grid_width) // 2
         
-        # Create grid buttons
         actions = [lambda idx=self.map_files[start_index + i].split('.')[0]: self.show_edit_page(idx) 
                   for i in range(len(current_page_files))]
             
@@ -187,21 +217,17 @@ class EditorMapSelectionScreen(MenuScreen):
             int(DISPLAY_SIZE[1] * 0.25), button_width
         )
         
-        # Navigation and control buttons
         self._create_navigation_buttons()
         
     def _create_navigation_buttons(self):
-        # Back button
         self.create_button("←", self.return_to_editor_menu, 
                           int(DISPLAY_SIZE[0] * 0.02), int(DISPLAY_SIZE[1] * 0.02), 
                           int(DISPLAY_SIZE[0] * 0.08))
         
-        # Add Map button
         self.create_button("Add", self.menu.create_new_map, 
                           int(DISPLAY_SIZE[0] * 0.75), int(DISPLAY_SIZE[1] * 0.15), 
                           int(DISPLAY_SIZE[0] * 0.1))
         
-        # Page navigation
         middle_y = DISPLAY_SIZE[1] * 0.37
         nav_width = int(DISPLAY_SIZE[0] * 0.09)
         
@@ -211,7 +237,6 @@ class EditorMapSelectionScreen(MenuScreen):
         if self.current_page < self.total_pages - 1:
             self.create_button("▶", self.next_page, int(DISPLAY_SIZE[0] * 0.8), middle_y, nav_width)
         
-        # Page counter
         if self.total_pages > 1:
             page_info = f"Page {self.current_page + 1}/{self.total_pages}"
             page_width = int(DISPLAY_SIZE[0] * 0.25)
@@ -227,12 +252,10 @@ class EditorMapSelectionScreen(MenuScreen):
         panel_x = (DISPLAY_SIZE[0] - panel_width) // 2
         panel_y = DISPLAY_SIZE[1] * 0.15
         
-        # Back button
         self.create_button("←", self.return_to_map_list, 
                           int(DISPLAY_SIZE[0] * 0.02), int(DISPLAY_SIZE[1] * 0.02), 
                           int(DISPLAY_SIZE[0] * 0.08))
         
-        # Action buttons
         button_y = panel_y + panel_height - int(DISPLAY_SIZE[1] * 0.12)
         
         self.create_button("Save Changes", self.save_map_metadata, 
@@ -264,14 +287,13 @@ class EditorMapSelectionScreen(MenuScreen):
         input_height = int(DISPLAY_SIZE[1] * 0.05)
         panel_x = (DISPLAY_SIZE[0] - int(DISPLAY_SIZE[0] * 0.8)) // 2
         
-        # Get current map data
-        map_data = self.map_metadata.get(self.selected_map_id, {})
+        map_data = {}
+        if self.selected_map_id in self.map_metadata:
+            map_data = self.map_metadata[self.selected_map_id]
         
-        # Name input
         name_rect = pygame.Rect(DISPLAY_SIZE[0] // 2 - input_width // 2, 
                                DISPLAY_SIZE[1] * 0.33, input_width, input_height)
         
-        # Creator input
         creator_rect = pygame.Rect(panel_x + int(DISPLAY_SIZE[0] * 0.05), 
                                   DISPLAY_SIZE[1] * 0.44, 
                                   int(input_width * 0.6), input_height)
@@ -283,11 +305,9 @@ class EditorMapSelectionScreen(MenuScreen):
                                max_chars=20, placeholder="Creator name...")
         }
         
-        # Set existing values
         self.text_inputs['name'].text = map_data.get('name', "")
         self.text_inputs['creator'].text = map_data.get('creator', "")
         
-        # Set difficulty
         current_difficulty = map_data.get('difficulty', 'normal')
         self.selected_difficulty = (self.difficulty_options.index(current_difficulty) 
                                   if current_difficulty in self.difficulty_options else 1)
@@ -322,22 +342,24 @@ class EditorMapSelectionScreen(MenuScreen):
     def save_map_metadata(self):
         self.menu._play_sound('click')
         
+        if not self.selected_map_id:
+            return
+
         if self.selected_map_id not in self.map_metadata:
             self.map_metadata[self.selected_map_id] = {}
-        
+
         self.map_metadata[self.selected_map_id].update({
             'path': f"data/maps/{self.selected_map_id}.json",
-            'name': self.text_inputs['name'].text,
-            'creator': self.text_inputs['creator'].text,
+            'name': self.text_inputs['name'].text.strip(),
+            'creator': self.text_inputs['creator'].text.strip(),
             'difficulty': self.difficulty_options[self.selected_difficulty],
         })
-        
+
         if 'best_time' not in self.map_metadata[self.selected_map_id]:
-            self.map_metadata[self.selected_map_id]['best_time'] = None
-        
-        if self.save_metadata():
-            self.show_save_confirmation = True
-            self.save_time = pygame.time.get_ticks()
+            self.map_metadata[self.selected_map_id]['best_time'] = []
+
+        if self.validate_metadata():
+            self.save_metadata()
         
     def next_difficulty(self):
         self.selected_difficulty = (self.selected_difficulty + 1) % len(self.difficulty_options)
@@ -374,7 +396,6 @@ class EditorMapSelectionScreen(MenuScreen):
         center_x = DISPLAY_SIZE[0] // 2
         shadow_offset = max(1, int(2 * (DISPLAY_SIZE[1] / 1080)))
         
-        # Background panel
         panel_width = int(DISPLAY_SIZE[0] * 0.8)
         panel_height = int(DISPLAY_SIZE[1] * 0.6)
         panel_x = center_x - panel_width // 2
@@ -384,34 +405,24 @@ class EditorMapSelectionScreen(MenuScreen):
         panel.fill((0, 0, 0, 120))
         surface.blit(panel, (panel_x, panel_y))
         
-        # Title
         edit_title = f"Editing Map #{self.selected_map_id}"
         render_text_with_shadow(surface, edit_title, self.fonts['title'], (255, 255, 160),
                                center_x, panel_y + int(DISPLAY_SIZE[1] * 0.05), shadow_offset, True)
-        
-        # Draw buttons
+
         super().draw(surface)
         
-        # Labels and content
         self._draw_labels_and_content(surface, shadow_offset, center_x, panel_x)
         
-        # Text inputs
         for input_field in self.text_inputs.values():
             input_field.draw(surface)
-        
-        # Save confirmation
-        self._draw_save_confirmation(surface, shadow_offset, center_x, panel_y, panel_height)
     
     def _draw_labels_and_content(self, surface, shadow_offset, center_x, panel_x):
-        # Map name label
         render_text_with_shadow(surface, "Map Name:", self.fonts['detail'], (200, 200, 255),
                                center_x, DISPLAY_SIZE[1] * 0.30, shadow_offset, True)
         
-        # Creator label
         render_text_with_shadow(surface, "Creator:", self.fonts['detail'], (200, 200, 255),
                                panel_x + int(DISPLAY_SIZE[0] * 0.05), DISPLAY_SIZE[1] * 0.41, shadow_offset, False)
         
-        # Difficulty section
         right_x = DISPLAY_SIZE[0] * 0.75
         render_text_with_shadow(surface, "Difficulty:", self.fonts['detail'], (200, 200, 255),
                                right_x, DISPLAY_SIZE[1] * 0.44, shadow_offset, True)
@@ -421,24 +432,6 @@ class EditorMapSelectionScreen(MenuScreen):
 
         render_text_with_shadow(surface, current_difficulty.upper(), self.fonts['detail'], diff_color,
                                right_x, DISPLAY_SIZE[1] * 0.48, shadow_offset, True)
-    
-    def _draw_save_confirmation(self, surface, shadow_offset, center_x, panel_y, panel_height):
-        if self.show_save_confirmation:
-            current_time = pygame.time.get_ticks()
-            if current_time - self.save_time < 2000:
-                confirm_y = panel_y + panel_height - int(DISPLAY_SIZE[1] * 0.2)
-                confirm_text = "Metadata saved successfully!"
-                
-                text_width = self.fonts['detail'].size(confirm_text)[0] + int(DISPLAY_SIZE[0] * 0.1)
-                text_height = int(DISPLAY_SIZE[1] * 0.05)
-                confirm_bg = pygame.Surface((text_width, text_height), pygame.SRCALPHA)
-                confirm_bg.fill((0, 0, 0, 100))
-                
-                surface.blit(confirm_bg, (center_x - text_width // 2, confirm_y - text_height // 2))
-                render_text_with_shadow(surface, confirm_text, self.fonts['detail'], (100, 255, 100),
-                                       center_x, confirm_y, shadow_offset, True)
-            else:
-                self.show_save_confirmation = False
 
 class Editor:
     def __init__(self, menu, map_file=None):

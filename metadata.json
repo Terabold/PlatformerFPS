@@ -1,7 +1,7 @@
 {
   "0": {
     "path": "data/maps/0.json",
-    "name": "The Start",
+    "name": "The Startttt",
     "creator": "Terbold",
     "difficulty": "hard",
     "best_time": [
@@ -140,5 +140,12 @@
       9.077,
       9.334
     ]
+  },
+  "14": {
+    "path": "data/maps/14.json",
+    "name": "a",
+    "creator": "a",
+    "difficulty": "easy",
+    "best_time": []
   }
 }

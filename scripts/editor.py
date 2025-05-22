@@ -591,7 +591,8 @@ class Editor:
                 
     def save_map(self):
         directory = 'data/maps'
-        os.makedirs(directory, exist_ok=True)
+        if not os.path.exists(directory):
+            os.makedirs(directory)  
     
         if self.current_map_file:
             filename = os.path.basename(self.current_map_file)  
@@ -600,11 +601,13 @@ class Editor:
             saved_map_name = filename
         else:
             next_filename = find_next_numeric_filename(directory, extension='.json')            
-            file_path = os.path.join(directory, next_filename)
+            file_path = self.current_map_file
+            
+            self.tilemap.save(file_path)
+
             self.current_map_file = next_filename
             saved_map_name = next_filename
         
-        self.tilemap.save(file_path)
         self.show_save_message = True
         self.save_message_timer = 0
         self.saved_map_name = saved_map_name        

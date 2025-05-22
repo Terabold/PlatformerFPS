@@ -18,65 +18,39 @@ class PauseMenuScreen(MenuScreen):
     def initialize(self):
         self.title = "Game Paused"
         self.clear_buttons()
-        
         center_x = self.menu.display_size[0] // 2
-        start_y = int(self.menu.display_size[1] * 0.4)  # 40% from top
-        
-        button_texts = ['Resume Game', 'Restart Level', 'Main Menu']
-        button_actions = [
-            self.menu.resume_game,
-            self.menu.reset,
-            self.menu.return_to_main
-        ]
+        start_y = int(self.menu.display_size[1] * 0.4)
         
         self.create_centered_button_list(
-            button_texts, 
-            button_actions, 
-            center_x, 
-            start_y
+            ['Resume Game', 'Restart Level', 'Main Menu'],
+            [self.menu.resume_game, self.menu.reset, self.menu.return_to_main],
+            center_x, start_y
         )
 
 class LevelCompleteMenuScreen(MenuScreen):
     def initialize(self):
         self.title = "Level Complete!"
         self.clear_buttons()
-        
         center_x = self.menu.display_size[0] // 2
-        start_y = int(self.menu.display_size[1] * 0.4)  # 40% from top
-        
-        button_texts = ['Next Map', 'Play Again', 'Main Menu']
-        button_actions = [
-            self.menu.load_next_map,
-            self.menu.reset,
-            self.menu.return_to_main
-        ]
+        start_y = int(self.menu.display_size[1] * 0.4)
         
         self.create_centered_button_list(
-            button_texts, 
-            button_actions, 
-            center_x, 
-            start_y
+            ['Next Map', 'Play Again', 'Main Menu'],
+            [self.menu.load_next_map, self.menu.reset, self.menu.return_to_main],
+            center_x, start_y
         )
 
 class CongratulationsScreen(MenuScreen):
     def initialize(self):
         self.title = "Congratulations!"
         self.clear_buttons()
-        
         center_x = self.menu.display_size[0] // 2
-        start_y = int(self.menu.display_size[1] * 0.4)  # 40% from top
-        
-        button_texts = ['Restart Game', 'Main Menu']
-        button_actions = [
-            self.menu.restart_game,
-            self.menu.return_to_main
-        ]
+        start_y = int(self.menu.display_size[1] * 0.4)
         
         self.create_centered_button_list(
-            button_texts, 
-            button_actions, 
-            center_x, 
-            start_y
+            ['Restart Game', 'Main Menu'],
+            [self.menu.restart_game, self.menu.return_to_main],
+            center_x, start_y
         )
 
 class GameMenu:
@@ -84,7 +58,6 @@ class GameMenu:
         self.environment = environment
         self.screen = environment.display
         self.display_size = DISPLAY_SIZE
-        self.font_path = FONT
         
         # Get UI constants based on display size
         self.UI_CONSTANTS = calculate_ui_constants(self.display_size)
@@ -93,7 +66,6 @@ class GameMenu:
         self.pause_menu = PauseMenuScreen(self, "Game Paused")
         self.level_complete_menu = LevelCompleteMenuScreen(self, "Level Complete!")
         self.congratulations_menu = CongratulationsScreen(self, "Congratulations!")
-        
         self.active_menu = None
     
     def _play_sound(self, sound_key):
@@ -118,22 +90,22 @@ class GameMenu:
         self._play_sound('click')
     
     def show_pause_menu(self):
+        self.active_menu = self.pause_menu
         self.pause_menu.enable()
         self.level_complete_menu.disable()
         self.congratulations_menu.disable()
-        self.active_menu = self.pause_menu
     
     def show_level_complete_menu(self):
+        self.active_menu = self.level_complete_menu
         self.pause_menu.disable()
         self.level_complete_menu.enable()
         self.congratulations_menu.disable()
-        self.active_menu = self.level_complete_menu
     
     def show_congratulations_menu(self):
+        self.active_menu = self.congratulations_menu
         self.pause_menu.disable()
         self.level_complete_menu.disable()
         self.congratulations_menu.enable()
-        self.active_menu = self.congratulations_menu
     
     def load_next_map(self):
         self.environment.load_next_map()
@@ -144,12 +116,10 @@ class GameMenu:
     
     def draw(self, surface):
         if self.active_menu:
-            # Create semi-transparent overlay
-            overlay = pygame.Surface((self.display_size[0], self.display_size[1]), pygame.SRCALPHA)
-            overlay.fill((0, 0, 0, 175))  # Semi-transparent black
+            # Semi-transparent overlay
+            overlay = pygame.Surface(self.display_size, pygame.SRCALPHA)
+            overlay.fill((0, 0, 0, 175))
             surface.blit(overlay, (0, 0))
-            
-            # Draw active menu
             self.active_menu.draw(surface)
 
 class Environment:
@@ -159,51 +129,28 @@ class Environment:
         self.display = display
         self.clock = clock
         self.menu = False
-        self.rotated_assets = {}
-        self.show_rotation_values = False
         
-        # Initialize important state variables upfront
+        # Game state variables
         self.death_sound_played = False
         self.finish_sound_played = False
         self.countdeathframes = 0
         self.debug_mode = False
-        self.player_finished = False
-        self.buffer_time = 0
-
-        # Initialize scroll variable here, before it's used in center_scroll_on_player
+        self.movement_started = False
         self.scroll = [0, 0]
         self.render_scroll = [0, 0]
+        self.rotated_assets = {}  # Cache for rotated tile images
 
-        # Initialize font with scaled size based on display
-        font_size = scale_font(36, DISPLAY_SIZE)
+        # Initialize fonts
         pygame.font.init()
-        self.fps_font = pygame.font.Font(FONT, font_size)
+        self.fps_font = pygame.font.Font(FONT, scale_font(36, DISPLAY_SIZE))
+        self.timer_font = pygame.font.Font(FONT, scale_font(24, DISPLAY_SIZE))
         
-        # Initialize tilemap and load map
+        # Initialize components
         self.tilemap = Tilemap(self, tile_size=TILE_SIZE)
-        
-        # Initialize game timer
-        self.initialize_timer()
-        
-        # Load the current map
-        self.load_current_map()
-        
-        # Initialize input handler
-        self.input_handler = InputHandler()
-        
-        # Initialize game menu with scaled UI
-        self.game_menu = GameMenu(self)
-    
-    def initialize_timer(self):
         self.timer = GameTimer()
-        self.movement_started = False
-        
-        # Timer display settings
-        timer_font_size = scale_font(24, DISPLAY_SIZE)
-        self.timer_font = pygame.font.Font(FONT, timer_font_size)
-        self.timer_color = (255, 255, 255)
-        self.timer_highlight_color = (255, 255, 0)
-        self.show_timer = True
+        self.load_current_map()
+        self.input_handler = InputHandler()
+        self.game_menu = GameMenu(self)
 
     def update_timer(self):
         # Start timer on first movement
@@ -211,7 +158,7 @@ class Environment:
             self.movement_started = True
             self.timer.start()
         
-        # Handle timer pausing based on game state
+        # Handle timer pausing
         if self.menu and not self.timer.is_paused:
             self.timer.pause()
         elif not self.menu and self.timer.is_paused and not self.player.death and not self.player.finishLevel:
@@ -222,25 +169,18 @@ class Environment:
             time = self.timer.stop()
             print('new record:', self.set_map_best_time(time=time))
         
-        # Update timer if running
         self.timer.update()
 
     def render_timer(self):
-        if not self.show_timer:
-            return
-            
-        # Position in top right corner with padding
-        padding = 10
-        timer_pos = (25, padding)
+        timer_pos = (25, 10)
+        display_time = self.timer.final_time if not self.timer.is_running else self.timer.current_time
+        time_str = self.timer.format_time(display_time)
+        timer_text = self.timer_font.render(time_str, True, (255, 255, 255))
         
-        # Use the new direct rendering method
-        self.timer.render(self.display, timer_pos, self.timer_font)
-
-    def toggle_timer_highlight(self):
-        self.timer.toggle_highlight()
-
-    def toggle_timer_visibility(self):
-        self.show_timer = not self.show_timer
+        # Simple shadow effect
+        shadow_text = self.timer_font.render(time_str, True, (0, 0, 0))
+        self.display.blit(shadow_text, (timer_pos[0] + 2, timer_pos[1] + 2))
+        self.display.blit(timer_text, timer_pos)
 
     def reset_timer(self):
         self.timer.reset()
@@ -276,10 +216,9 @@ class Environment:
             'saws': load_images('tiles/saws', scale=IMGscale),
         }
         
-        if self.tilemap.get_background_map() is not None:
-            self.background = load_image(self.tilemap.get_background_map(), scale=DISPLAY_SIZE, remove_color=None)
-        else:
-            self.background = load_image('background/background.png', scale=DISPLAY_SIZE, remove_color=None)
+        # Load background
+        background_path = self.tilemap.get_background_map() or 'background/background.png'
+        self.background = load_image(background_path, scale=DISPLAY_SIZE, remove_color=None)
 
         # Load sounds
         self.sfx = {
@@ -290,52 +229,40 @@ class Environment:
             'click': load_sounds('click'),
         }
 
-        # Get spawner positions
+        # Setup player
         self.pos = self.tilemap.extract([('spawners', 0), ('spawners', 1)])
-        
-        if not self.pos:
-            self.default_pos = [10, 10]
-        else:
-            self.default_pos = self.pos[0]['pos'].copy()
-        
+        self.default_pos = self.pos[0]['pos'].copy() if self.pos else [10, 10]
         self.player = Player(self, self.default_pos.copy(), PLAYERS_SIZE, self.sfx)
         
         self.center_scroll_on_player()
-        
-        # Initialize input state
         self.keys = {'left': False, 'right': False, 'jump': False}
         self.buffer_times = {'jump': 0}
+        self.buffer_time = 0  # For jump buffer timing
     
     def center_scroll_on_player(self):
         player_rect = self.player.rect()
-        display_width = self.display.get_width()
-        display_height = self.display.get_height()
-        
-        self.scroll[0] = player_rect.centerx - display_width // 2
-        self.scroll[1] = player_rect.centery - display_height // 2
-        
+        self.scroll[0] = player_rect.centerx - self.display.get_width() // 2
+        self.scroll[1] = player_rect.centery - self.display.get_height() // 2
         self.render_scroll = (int(self.scroll[0]), int(self.scroll[1]))
     
     def reset(self):
+        # Reset all state variables
         self.death_sound_played = False
         self.finish_sound_played = False
         self.countdeathframes = 0
+        self.menu = False
+        self.debug_mode = False
+        
+        # Reset player and input
         self.player.reset()
-        
         self.player.pos = self.default_pos.copy()
-        
         self.keys = {'left': False, 'right': False, 'jump': False}
         self.buffer_times = {'jump': 0}
-        self.menu = False
-        self.input_handler = InputHandler()
-        self.debug_mode = False
         self.buffer_time = 0
-        self.player_finished = False
+        self.input_handler = InputHandler()
         
-        # Reset the timer
+        # Reset timer and camera
         self.reset_timer()
-        
-        # Re-center the scroll on the player's position
         self.center_scroll_on_player()
 
     def restart_game(self):
@@ -344,109 +271,66 @@ class Environment:
     def load_map_id(self, map_id):
         next_map = f'data/maps/{map_id}.json'
         game_state_manager.selected_map = next_map
-        
-        # Reset the environment
         self.reset()
-        
-        # Load the new map
         self.tilemap.load(next_map)
         
-        # Update player spawn position
+        # Update spawn position
         self.pos = self.tilemap.extract([('spawners', 0), ('spawners', 1)])
-        if self.pos:
-            # Always use a copy of the position to avoid reference issues
-            self.default_pos = self.pos[0]['pos'].copy()
-        else:
-            self.default_pos = [10, 10]
-            
+        self.default_pos = self.pos[0]['pos'].copy() if self.pos else [10, 10]
         self.player.pos = self.default_pos.copy()
         
-        # Reset the timer for the new map
         self.reset_timer()
-        
-        # Center the view on the player
         self.center_scroll_on_player()
-        
         self.menu = False
 
     def set_map_best_time(self, time):
-        # Get the current map ID
         current_map = game_state_manager.selected_map
-        
-        # Use proper string splitting that's compatible with both slash types
         current_index = str(os.path.basename(current_map).split('.')[0])
 
-        # Load the map times from the JSON file
-        map_times_file = 'metadata.json'
-        with open(map_times_file, 'r') as f:
+        with open('metadata.json', 'r') as f:
             all_maps_data = json.load(f)
-        # Get the time for the current map
+        
         best_times = all_maps_data[current_index]['best_time']
-
-        # new_best_time = best_time == None or time < best_time
-        # if new_best_time:
-        #     # Update the best time in the JSON file
-        #     all_maps_data[current_index]['best_time'] = time
-            
-        #     # Save the updated data back to the JSON file
-        #     with open(map_times_file, 'w') as f:
-        #         json.dump(all_maps_data, f, indent=4)
-
-        is_new_record = len(best_times) < 3 or time > min(best_times)
+        is_new_record = len(best_times) < 3 or time < max(best_times)
+        
         best_times.append(time)
-        best_times = sorted(best_times)[:3]  # Keep only the top 3 times
-
+        best_times = sorted(best_times)[:3]  # Keep top 3
         all_maps_data[current_index]['best_time'] = best_times
-        # Save the updated data back to the JSON file
-        with open(map_times_file, 'w') as f:
+        
+        with open('metadata.json', 'w') as f:
             json.dump(all_maps_data, f, indent=4)
 
         return is_new_record
     
-    def resume_game(self):
-        self.menu = False
-        
     def return_to_main(self):
         self.reset()
         game_state_manager.returnToPrevState()
 
     def is_last_map(self):
-        # Get current level index
         current_map = game_state_manager.selected_map
-        
-        # Use proper string splitting that's compatible with both slash types
         current_index = int(os.path.basename(current_map).split('.')[0])
         
-        # Get all maps
         maps_folder = os.path.join('data', 'maps')
         map_files = [f for f in os.listdir(maps_folder) if f.endswith('.json')]
         
-        # Return true if this is NOT the last map (i.e., there are more maps to play)
         return current_index < len(map_files) - 1
 
     def load_next_map(self):
-        # Get current map and find next map
         current_map = game_state_manager.selected_map
         if current_map:
-                import os
-                # Check if we're on the last map
-                maps_folder = os.path.join('data', 'maps')
-                map_files = sorted([f for f in os.listdir(maps_folder) if f.endswith('.json')])
-
-                # Properly extract the current index from the filename
-                current_index = int(os.path.basename(current_map).split('.')[0])
-                
-                if f'{current_index}.json' in map_files:
-                    if current_index < len(map_files) - 1:
-                        # Load next map
-                        self.load_map_id(current_index + 1)
-                else:
-                    # Can't find current map, just reset
-                    self.reset()
+            maps_folder = os.path.join('data', 'maps')
+            map_files = sorted([f for f in os.listdir(maps_folder) if f.endswith('.json')])
+            current_index = int(os.path.basename(current_map).split('.')[0])
+            
+            if f'{current_index}.json' in map_files and current_index < len(map_files) - 1:
+                self.load_map_id(current_index + 1)
+            else:
+                self.reset()
         else:
             self.reset()
 
     def get_rotated_image(self, tile_type, variant, rotation):
+        """Get a cached rotated image for tiles"""
         key = f"{tile_type}_{variant}_{rotation}"
         
         if key not in self.rotated_assets:
@@ -457,24 +341,20 @@ class Environment:
     
     def process_human_input(self, events):
         if not self.ai_train_mode:
-            # Handle escape key to toggle pause menu
+            # Handle escape key
             for event in events:
                 if event.type == pygame.KEYDOWN and event.key == pygame.K_ESCAPE:
                     if not self.menu and not self.player.death and not self.player.finishLevel:
-                        # Open pause menu
                         self.menu = True
                         self.game_menu.show_pause_menu()
                     elif self.menu and not self.player.death and not self.player.finishLevel:
-                        # Close pause menu
                         self.menu = False
                         self.game_menu.active_menu = None
                     
-            # Continue with normal input processing
             self.keys, self.buffer_times = self.input_handler.process_events(events, self.menu)
-            self.buffer_time = self.buffer_times['jump']
+            self.buffer_time = self.buffer_times['jump']  # Keep buffer_time in sync
     
     def update(self):
-        # Update the timer first
         self.update_timer()
         
         if self.player.death:
@@ -509,13 +389,10 @@ class Environment:
             self.debug_render()
 
         self.player.render(self.display, offset=self.render_scroll)
-        
-        # Render the timer
         self.render_timer()
         
         if self.menu:
-            # Get the current mouse position every frame to update button hover states
-            # This ensures hover effects work in every menu screen
+            # Update button hover states
             mouse_pos = pygame.mouse.get_pos()
             if self.game_menu.active_menu:
                 for button in self.game_menu.active_menu.buttons:
@@ -527,15 +404,9 @@ class Environment:
         if self.menu:
             for event in events:
                 if event.type == pygame.KEYDOWN and event.key == pygame.K_ESCAPE:
-                    # Handle escape in different menus
-                    if self.player.finishLevel:
-                        # From level complete menu -> return to main
-                        self.return_to_main()
-                    elif self.player.death:
-                        # From game over menu -> return to main
+                    if self.player.finishLevel or self.player.death:
                         self.return_to_main()
                     else:
-                        # From pause menu -> resume game
                         self.menu = False
                         self.game_menu.active_menu = None
             
@@ -550,38 +421,21 @@ class Environment:
     def get_state(self):
         if self.ai_train_mode:
             player_rect = self.player.rect()
-            player_x = player_rect.centerx
-            player_y = player_rect.centery
-            player_vel_x = self.player.velocity[0]
-            player_vel_y = self.player.velocity[1]
-            
-            # Get nearby physics tiles (platforms)
-            physics_tiles = self.tilemap.physics_rects_around(self.player.pos)
-            
-            # Get nearby interactive tiles (spikes, finish, etc.)
-            interactive_tiles = self.tilemap.interactive_rects_around(self.player.pos)
-            
-            # Create a state dictionary
-            state = {
-                'player_pos': (player_x, player_y),
-                'player_vel': (player_vel_x, player_vel_y),
+            return {
+                'player_pos': (player_rect.centerx, player_rect.centery),
+                'player_vel': self.player.velocity,
                 'player_grounded': self.player.grounded,
                 'player_air_time': self.player.air_time,
-                'physics_tiles': physics_tiles,
-                'interactive_tiles': interactive_tiles,
+                'physics_tiles': self.tilemap.physics_rects_around(self.player.pos),
+                'interactive_tiles': self.tilemap.interactive_rects_around(self.player.pos),
                 'collisions': self.player.collisions,
                 'finished': self.player.finishLevel,
                 'dead': self.player.death
             }
-            return state
         return None
     
     def set_action(self, action):
         if self.ai_train_mode:
             self.keys = action
-            if action['jump']:
-                self.buffer_times['jump'] = min(self.buffer_times['jump'] + 1, PLAYER_BUFFER + 1)
-            else:
-                self.buffer_times['jump'] = 0
-                
-            self.buffer_time = self.buffer_times['jump']
+            self.buffer_times['jump'] = min(self.buffer_times['jump'] + 1, PLAYER_BUFFER + 1) if action['jump'] else 0
+            self.buffer_time = self.buffer_times['jump']  # Keep buffer_time in sync

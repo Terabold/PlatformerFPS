@@ -592,7 +592,7 @@ class Editor:
         self.rotated_assets = {}
         
         # Menu system - INCREASED WIDTH FROM 70 to 140
-        self.menu_width = 140
+        self.menu_width = 170
         self.menu_scroll = [0, 0, 0]  # [spritesheet scroll, horizontal tile scroll, vertical tile scroll]
         self.tile_list = list(self.assets)
         self.tile_group = 0

@@ -28,7 +28,7 @@ WALL_MOMENTUM_FRAMES = 3 # amount of frames activated
 
 PLAYER_BUFFER = 5 # amount of frame buffer
 
-PLAYERS_SIZE = (TILE_SIZE*0.8, TILE_SIZE*0.8) # size of actual player hitbox
+PLAYERS_SIZE = (TILE_SIZE, TILE_SIZE) # size of actual player hitbox
 PLAYERS_IMAGE_SIZE = (PLAYERS_SIZE[0], PLAYERS_SIZE[1]) # size of the player image
 
 PHYSICS_TILES = {'grass', 'stone', 'hardened_clay', 'ores', 'weather', 'nether', 'wood'}

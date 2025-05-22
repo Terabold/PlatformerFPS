@@ -139,6 +139,7 @@ class Environment:
         self.scroll = [0, 0]
         self.render_scroll = [0, 0]
         self.rotated_assets = {}  # Cache for rotated tile images
+        self.show_rotation_values = False
 
         # Initialize fonts
         pygame.font.init()
@@ -232,7 +233,7 @@ class Environment:
         # Setup player
         self.pos = self.tilemap.extract([('spawners', 0), ('spawners', 1)])
         self.default_pos = self.pos[0]['pos'].copy() if self.pos else [10, 10]
-        self.player = Player(self, self.default_pos.copy(), PLAYERS_SIZE, self.sfx)
+        self.player = Player(self, self.default_pos.copy(), (PLAYERS_SIZE[0]*0.9, PLAYERS_SIZE[1]), self.sfx)
         
         self.center_scroll_on_player()
         self.keys = {'left': False, 'right': False, 'jump': False}

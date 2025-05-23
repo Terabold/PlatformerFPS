@@ -11,18 +11,6 @@ class Game:
         
     def initialize_environment(self):
         self.environment = Environment(self.display, self.clock)
-        
-    def resume_game(self):
-        if self.environment:
-            self.environment.resume_game()
-        
-    def return_to_main(self):
-        if self.environment:
-            self.environment.return_to_main()
-        
-    def reset(self):
-        if self.environment:
-            self.environment.reset()
 
     def run(self):
         if not self.environment:
@@ -45,6 +33,4 @@ class Game:
             self.environment.process_human_input(events)
         
         self.environment.update()
-        
         self.environment.render()
-        

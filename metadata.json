@@ -1,13 +1,13 @@
 {
     "0": {
         "path": "data/maps/0.json",
-        "name": "The Startttt",
+        "name": "The Start",
         "creator": "Terbold",
-        "difficulty": "hard",
+        "difficulty": "easy",
         "best_time": [
+            2.069,
             2.076,
-            2.08,
-            2.082
+            2.08
         ],
         "description": "No description available."
     },
@@ -26,9 +26,10 @@
         "path": "data/maps/2.json",
         "name": "First Challenge",
         "creator": "Terbold",
-        "difficulty": "normal",
+        "difficulty": "hard",
         "best_time": [
             8.623,
+            10.327,
             12.134
         ]
     },
@@ -36,7 +37,7 @@
         "path": "data/maps/3.json",
         "name": "Percise",
         "creator": "Terbold",
-        "difficulty": "normal",
+        "difficulty": "hard",
         "best_time": [
             1.653,
             1.66,
@@ -47,7 +48,7 @@
         "path": "data/maps/4.json",
         "name": "Feel the Nether",
         "creator": "Terbold",
-        "difficulty": "normal",
+        "difficulty": "hard",
         "best_time": [
             8.735,
             9.677,

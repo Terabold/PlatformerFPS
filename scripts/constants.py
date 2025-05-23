@@ -1,11 +1,13 @@
-import tkinter as tk
-root = tk.Tk()
-screen_width = root.winfo_screenwidth()
-screen_height = root.winfo_screenheight()
-root.destroy()
+import pygame
+
+pygame.init()
+info = pygame.display.Info()
+
+screen_width, screen_height = info.current_w, info.current_h
 DISPLAY_SIZE = (screen_width, screen_height)
-if DISPLAY_SIZE[0] / 16 != 0 or DISPLAY_SIZE[1] / 9 != 0:
-    DISPLAY_SIZE = (DISPLAY_SIZE[0] - DISPLAY_SIZE[0] % 16, DISPLAY_SIZE[1] - DISPLAY_SIZE[1] % 9)
+aspect_x = DISPLAY_SIZE[0] - (DISPLAY_SIZE[0] % 16)
+aspect_y = DISPLAY_SIZE[1] - (DISPLAY_SIZE[1] % 9)
+DISPLAY_SIZE = (aspect_x, aspect_y)
 
 FPS = 60
 
@@ -27,8 +29,10 @@ WALL_MOMENTUM_PRESERVE = 0.15  # Percentage of upward velocity preserved when hi
 WALL_MOMENTUM_FRAMES = 3 # amount of frames activated
 
 PLAYER_BUFFER = 5 # amount of frame buffer
+COYOTE_TIME = 3  # Player can jump for 6 frames after leaving a platform
 
-PLAYERS_SIZE = (TILE_SIZE, TILE_SIZE) # size of actual player hitbox
+
+PLAYERS_SIZE = (TILE_SIZE*0.8, TILE_SIZE*0.8) # size of actual player hitbox
 PLAYERS_IMAGE_SIZE = (PLAYERS_SIZE[0], PLAYERS_SIZE[1]) # size of the player image
 
 PHYSICS_TILES = {'grass', 'stone', 'hardened_clay', 'ores', 'weather', 'nether', 'wood'}
@@ -58,9 +62,9 @@ def calculate_ui_constants(display_size):
         'BUTTON_MIN_WIDTH': int(200 * width_scale),
         'BUTTON_TEXT_PADDING': int(40 * general_scale),
         'BUTTON_SPACING': int(20 * general_scale),
-        'BUTTON_COLOR': (40, 40, 70, 220),
-        'BUTTON_HOVER_COLOR': (60, 60, 100, 240),
-        'BUTTON_GLOW_COLOR': (100, 150, 255),
+        'BUTTON_COLOR': (30, 45, 90, 220),      # Deep navy with slight transparency
+        'BUTTON_HOVER_COLOR': (15, 25, 50, 200), # Darker navy with more transparency
+        'BUTTON_GLOW_COLOR': (80, 130, 220),      # Bright blue (no opacity - for glow effects)
         'GRID_COLUMNS': 5,  
         'MAPS_PER_PAGE': 20  
     }

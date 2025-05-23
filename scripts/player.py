@@ -18,6 +18,7 @@ class Player:
         self.grounded = False
         self.facing_right = True
         self.jump_available = True  # Single flag to control jump availability
+        self.coyote_time = 0  # Track time since leaving ground
         self.action = ''
         self.death = False 
         self.finishLevel = False 
@@ -38,6 +39,9 @@ class Player:
         if action != self.action:
             self.action = action
             self.animation = self.game.assets['player/' + self.action].copy()
+    
+    def can_coyote_jump(self):
+        return self.coyote_time <= COYOTE_TIME and not self.grounded
     
     def update(self, tilemap, keys, countdeathframes):
         self.animation.update()
@@ -115,10 +119,21 @@ class Player:
             random.choice(self.sfx['collide']).play()
         self.was_colliding_wall = now_colliding_wall
 
+        # Update air time and grounded state
         self.air_time += 1
+        was_grounded = self.grounded
+        
         if self.collisions['down']:
             self.air_time = 0
+            self.coyote_time = 0  # Reset coyote time when landing
+        
         self.grounded = self.air_time <= 4
+        
+        # Update coyote time - only increment if we just left the ground
+        if was_grounded and not self.grounded:
+            self.coyote_time = 0  # Start coyote timer when leaving ground
+        elif not self.grounded:
+            self.coyote_time += 1  # Increment coyote time while in air
 
         if self.death:
             self.set_action('death') 
@@ -150,11 +165,12 @@ class Player:
                 if self.collisions['left']: self.velocity[0] = WALLJUMP_X_SPEED
                 random.choice(self.sfx['jump']).play()  # Play jump sound directly
             
-            # Regular jump logic
-            elif self.grounded and self.game.buffer_time <= PLAYER_BUFFER:
+            # Regular jump logic (includes coyote jump)
+            elif (self.grounded or self.can_coyote_jump()) and self.game.buffer_times['jump'] <= PLAYER_BUFFER:
                 self.velocity[1] = -JUMP_SPEED
                 self.air_time = 5
                 self.grounded = False
+                self.coyote_time = COYOTE_TIME + 1  # Disable coyote time after jumping
                 random.choice(self.sfx['jump']).play()
         
         # Wall slide, wall slide momentum logic
@@ -190,4 +206,3 @@ class Player:
                                                 self.pos[1] + self.size[1] // 2 - offset[1]))
         # Draw the rotated image
         surf.blit(image, image_rect)
-        

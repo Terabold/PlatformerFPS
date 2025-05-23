@@ -158,6 +158,7 @@ def draw_debug_info(game, surface, offset):
     debug_text = debug_font.render("Debug: Hitboxes Visible", True, (0, 255, 0))
     surface.blit(debug_text, (10, 80))
 
+
 def update_camera_with_box(player, scroll, display_width, display_height):
     box_width = 200
     box_height = 55

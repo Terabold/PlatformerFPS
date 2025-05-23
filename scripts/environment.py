@@ -138,7 +138,7 @@ class Environment:
         self.movement_started = False
         self.scroll = [0, 0]
         self.render_scroll = [0, 0]
-        self.rotated_assets = {}  # Cache for rotated tile images
+        self.rotated_assets = {}
         self.show_rotation_values = False
 
         # Initialize fonts
@@ -171,7 +171,7 @@ class Environment:
             print('new record:', self.set_map_best_time(time=time))
         
         self.timer.update()
-
+    
     def render_timer(self):
         timer_pos = (25, 10)
         display_time = self.timer.final_time if not self.timer.is_running else self.timer.current_time
@@ -238,7 +238,6 @@ class Environment:
         self.center_scroll_on_player()
         self.keys = {'left': False, 'right': False, 'jump': False}
         self.buffer_times = {'jump': 0}
-        self.buffer_time = 0  # For jump buffer timing
     
     def center_scroll_on_player(self):
         player_rect = self.player.rect()
@@ -259,7 +258,6 @@ class Environment:
         self.player.pos = self.default_pos.copy()
         self.keys = {'left': False, 'right': False, 'jump': False}
         self.buffer_times = {'jump': 0}
-        self.buffer_time = 0
         self.input_handler = InputHandler()
         
         # Reset timer and camera
@@ -329,9 +327,8 @@ class Environment:
                 self.reset()
         else:
             self.reset()
-
+                
     def get_rotated_image(self, tile_type, variant, rotation):
-        """Get a cached rotated image for tiles"""
         key = f"{tile_type}_{variant}_{rotation}"
         
         if key not in self.rotated_assets:
@@ -353,7 +350,6 @@ class Environment:
                         self.game_menu.active_menu = None
                     
             self.keys, self.buffer_times = self.input_handler.process_events(events, self.menu)
-            self.buffer_time = self.buffer_times['jump']  # Keep buffer_time in sync
     
     def update(self):
         self.update_timer()
@@ -439,5 +435,3 @@ class Environment:
         if self.ai_train_mode:
             self.keys = action
             self.buffer_times['jump'] = min(self.buffer_times['jump'] + 1, PLAYER_BUFFER + 1) if action['jump'] else 0
-            self.buffer_time = self.buffer_times['jump']  # Keep buffer_time in sync
-            
